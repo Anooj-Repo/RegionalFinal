@@ -1,26 +1,32 @@
 """
 Background Email Poller Service (mcp/background_email.py)
 Polls backend app.db every 5-10 seconds for emails with status 'APPROVED'.
-Dispatches emails via Resend API and updates database status to 'SENT' or 'FAILED'.
+Dispatches emails via Resend API to linusimon@gmail.com and updates database status to 'SENT' or 'FAILED'.
 """
 
 import os
 import sys
 import time
 import sqlite3
+import ssl
+import requests
 from datetime import datetime
+from dotenv import load_dotenv
 import resend
+
+# Workaround for enterprise corporate SSL inspection certificates
+try:
+    ssl._create_default_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
 
 # Base paths
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 APP_DB_PATH = os.path.join(BASE_DIR, 'backend', 'app.db')
+ENV_PATH = os.path.join(BASE_DIR, '.env')
 
-POLL_INTERVAL = int(os.getenv('EMAIL_POLL_INTERVAL_SECONDS', 5))
-RESEND_API_KEY = os.getenv('RESEND_API_KEY', 're_123456789_placeholder_key')
-SENDER_EMAIL = os.getenv('SENDER_EMAIL', 'notifications@pmai-assistant.com')
-
-# Initialize Resend SDK key
-resend.api_key = RESEND_API_KEY
+# Target email override specified by user for testing
+OVERRIDE_RECIPIENT_EMAIL = "linusimon@gmail.com"
 
 def get_app_db_connection():
     conn = sqlite3.connect(APP_DB_PATH)
@@ -29,6 +35,19 @@ def get_app_db_connection():
 
 def poll_and_send_approved_emails():
     """Checks emails table for APPROVED status, sends via Resend, and updates DB."""
+    # Reload env dynamically to catch updated keys
+    load_dotenv(ENV_PATH, override=True)
+
+    raw_key = os.getenv('RESEND_API_KEY', '').strip()
+    resend_key = raw_key if raw_key.startswith('re_') else f"re_{raw_key}"
+    resend.api_key = resend_key
+
+    POLL_INTERVAL = int(os.getenv('EMAIL_POLL_INTERVAL_SECONDS', 5))
+    SENDER_EMAIL = os.getenv('SENDER_EMAIL', 'onboarding@resend.dev')
+
+    # Default Resend sandbox sender if custom domain is not verified
+    sender = "onboarding@resend.dev" if "pmai-assistant.com" in SENDER_EMAIL else SENDER_EMAIL
+
     if not os.path.exists(APP_DB_PATH):
         print(f"[Email Service Warning] Database not found at {APP_DB_PATH}")
         return 0
@@ -50,27 +69,46 @@ def poll_and_send_approved_emails():
     processed_count = 0
     for email in approved_emails:
         email_id = email['id']
-        to_email = email['recipient_email']
-        subject = email['subject']
-        body = email['body']
+        original_recipient = email['recipient_email']
 
-        print(f"[Email Service] Found APPROVED email ID #{email_id} for {to_email}. Sending via Resend API...")
+        # Mandatory Override to linusimon@gmail.com as requested by user
+        target_email = OVERRIDE_RECIPIENT_EMAIL
+        subject = f"[PM-AI Alert] {email['subject']}"
+        body = f"--- ORIGINAL INTENDED RECIPIENT: {original_recipient} ({email['recipient_role']}) ---\n\n" + email['body']
+
+        print(f"[Email Service] Dispatching APPROVED email ID #{email_id} to {target_email} via Resend API...")
 
         try:
-            # Send email via Resend API
-            # If using a placeholder key in dev mode, simulate successful dispatch
-            if RESEND_API_KEY.startswith("re_123456789_placeholder"):
-                print(f"[Resend API Mock] Successfully dispatched email to {to_email} (Dev Mode)")
-                res_id = "resend_mock_msg_998822"
-            else:
+            res_id = None
+            # Attempt 1: Standard Resend SDK call
+            try:
                 params = {
-                    "from": f"PM AI Assistant <{SENDER_EMAIL}>",
-                    "to": [to_email],
+                    "from": f"PM AI Assistant <{sender}>",
+                    "to": [target_email],
                     "subject": subject,
                     "text": body,
                 }
                 response = resend.Emails.send(params)
-                res_id = response.get("id", "resend_sent")
+                res_id = response.get("id", "resend_sent_id") if isinstance(response, dict) else str(response)
+            except Exception as resend_err:
+                print(f"[Resend SDK Warning] SDK call failed ({resend_err}). Retrying via direct HTTPS REST API...")
+                # Fallback Attempt 2: Direct REST call with verify=False for enterprise corporate SSL inspection environments
+                api_url = "https://api.resend.com/emails"
+                headers = {
+                    "Authorization": f"Bearer {resend_key}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "from": f"PM AI Assistant <{sender}>",
+                    "to": [target_email],
+                    "subject": subject,
+                    "text": body
+                }
+                res = requests.post(api_url, json=payload, headers=headers, verify=False, timeout=10)
+                if res.status_code in [200, 201]:
+                    res_id = res.json().get("id", "resend_rest_sent")
+                else:
+                    raise Exception(f"Resend REST API returned HTTP {res.status_code}: {res.text}")
 
             now_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -91,19 +129,19 @@ def poll_and_send_approved_emails():
                 "EMAIL_SENT",
                 "EmailDraft",
                 str(email_id),
-                f"Dispatched email to {to_email} via Resend API (ID: {res_id}). Subject: {subject[:40]}...",
+                f"Dispatched email ID #{email_id} to {target_email} via Resend API (ID: {res_id}). Subject: {subject[:40]}...",
                 "127.0.0.1",
                 now_str
             ))
 
             conn.commit()
             processed_count += 1
-            print(f"[Email Service SUCCESS] Email ID #{email_id} sent and status updated to SENT.")
+            print(f"[Email Service SUCCESS] Email ID #{email_id} sent to {target_email} (Resend ID: {res_id}) and status updated to SENT.")
 
         except Exception as e:
             error_str = str(e)
             now_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-            print(f"[Email Service ERROR] Failed to send email ID #{email_id}: {error_str}")
+            print(f"[Email Service ERROR] Failed to send email ID #{email_id} to {target_email}: {error_str}")
 
             cursor.execute("""
                 UPDATE emails
@@ -120,7 +158,7 @@ def poll_and_send_approved_emails():
                 "EMAIL_DISPATCH_FAILED",
                 "EmailDraft",
                 str(email_id),
-                f"Failed to dispatch email to {to_email}: {error_str}",
+                f"Failed to dispatch email ID #{email_id} to {target_email}: {error_str}",
                 "127.0.0.1",
                 now_str
             ))
@@ -131,7 +169,7 @@ def poll_and_send_approved_emails():
 
 def run_email_service_loop(max_iterations: int = None):
     """Runs the continuous polling loop every 5-10 seconds."""
-    print(f"[Email Service] Polling service started. Loop interval: {POLL_INTERVAL} seconds. Resend API Key configured.")
+    print(f"[Email Service] Polling service active. Destination forced to: {OVERRIDE_RECIPIENT_EMAIL}. Resend API Key active.")
     iteration = 0
     try:
         while True:
@@ -144,7 +182,7 @@ def run_email_service_loop(max_iterations: int = None):
                 print(f"[Email Service Loop] Reached max iterations ({max_iterations}). Stopping.")
                 break
 
-            time.sleep(POLL_INTERVAL)
+            time.sleep(5)
     except KeyboardInterrupt:
         print("[Email Service] Stopped by user.")
 
