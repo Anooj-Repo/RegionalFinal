@@ -1,0 +1,323 @@
+<div class="app-container">
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-brand">
+      <div class="nav-logo">PM</div>
+      <div>
+        <div class="brand-title">PM AI Assistant (Angular 17)</div>
+        <div class="brand-subtitle">AI-Powered Risk Analysis, RAID Mitigation & Stakeholder Communication</div>
+      </div>
+    </div>
+
+    <div class="nav-controls">
+      <!-- Role Selector -->
+      <div class="selector-group">
+        <span class="selector-label">Workspace Role:</span>
+        <select [ngModel]="currentRole" (ngModelChange)="onRoleChange($event)">
+          <option value="Program Manager">Program Manager</option>
+          <option value="Project Manager">Project Manager</option>
+          <option value="Team Lead">Tech Lead / Team Lead</option>
+          <option value="System Admin">System & Technical Admin</option>
+        </select>
+      </div>
+
+      <!-- Project Selector -->
+      <div class="selector-group">
+        <span class="selector-label">Active Project:</span>
+        <select [ngModel]="selectedProjectCode" (ngModelChange)="onProjectChange($event)">
+          <option *ngFor="let p of projects" [value]="p.code">
+            {{ p.code }} - {{ p.name }} ({{ p.lifecycle_phase }})
+          </option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- Role Tabs -->
+  <nav class="role-tabs">
+    <button class="tab-btn" [class.active]="activeTab === 'dashboard'" (click)="setTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" [class.active]="activeTab === 'raid'" (click)="setTab('raid')">RAID & Risk Register</button>
+    <button class="tab-btn" [class.active]="activeTab === 'comms'" (click)="setTab('comms')">Communication Center ({{ getPendingEmailsCount() }} Pending)</button>
+    <button class="tab-btn" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">AI Assistant & Voice Chat</button>
+    <button *ngIf="currentRole === 'System Admin'" class="tab-btn" [class.active]="activeTab === 'admin'" (click)="setTab('admin')">System Observability</button>
+  </nav>
+
+  <!-- Main Workspace Content -->
+  <main class="main-content">
+    <!-- DASHBOARD TAB -->
+    <div *ngIf="activeTab === 'dashboard'">
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-header">Overall Health</div>
+          <div class="metric-value positive">{{ getCurrentProject().progress_pct }}%</div>
+          <div class="metric-sub positive">Phase: {{ getCurrentProject().lifecycle_phase }}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-header">Active Projects</div>
+          <div class="metric-value">{{ projects.length }}</div>
+          <div class="metric-sub">Across 5 Lifecycle Phases</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-header">Open RAID Risks</div>
+          <div class="metric-value warning">{{ raidItems.length }}</div>
+          <div class="metric-sub warning">Active Items</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-header">Pending Approvals</div>
+          <div class="metric-value danger">{{ getPendingEmailsCount() }}</div>
+          <div class="metric-sub danger">Human Approval Required</div>
+        </div>
+      </div>
+
+      <div class="grid-2col">
+        <!-- 5x5 Heatmap -->
+        <div class="card">
+          <div class="card-title">
+            <span>5x5 Risk Heatmap Matrix ({{ selectedProjectCode }})</span>
+            <span class="badge badge-risk">Phase: {{ getCurrentProject().lifecycle_phase }}</span>
+          </div>
+          <div class="heatmap-grid">
+            <div class="heatmap-cell heat-low">L1/I1</div>
+            <div class="heatmap-cell heat-low">L1/I2</div>
+            <div class="heatmap-cell heat-med">L1/I3</div>
+            <div class="heatmap-cell heat-med">L1/I4</div>
+            <div class="heatmap-cell heat-high">L1/I5</div>
+
+            <div class="heatmap-cell heat-low">L2/I1</div>
+            <div class="heatmap-cell heat-med">L2/I2</div>
+            <div class="heatmap-cell heat-med">L2/I3</div>
+            <div class="heatmap-cell heat-high">L2/I4</div>
+            <div class="heatmap-cell heat-high">L2/I5</div>
+
+            <div class="heatmap-cell heat-med">L3/I1</div>
+            <div class="heatmap-cell heat-med">L3/I2</div>
+            <div class="heatmap-cell heat-high">L3/I3</div>
+            <div class="heatmap-cell heat-high">L3/I4</div>
+            <div class="heatmap-cell heat-critical">L3/I5 (88)</div>
+
+            <div class="heatmap-cell heat-med">L4/I1</div>
+            <div class="heatmap-cell heat-high">L4/I2</div>
+            <div class="heatmap-cell heat-high">L4/I3</div>
+            <div class="heatmap-cell heat-critical">L4/I4 (85)</div>
+            <div class="heatmap-cell heat-critical">L4/I5 (90)</div>
+
+            <div class="heatmap-cell heat-high">L5/I1</div>
+            <div class="heatmap-cell heat-high">L5/I2</div>
+            <div class="heatmap-cell heat-critical">L5/I3</div>
+            <div class="heatmap-cell heat-critical">L5/I4</div>
+            <div class="heatmap-cell heat-critical">L5/I5</div>
+          </div>
+        </div>
+
+        <!-- Portfolio Table -->
+        <div class="card">
+          <div class="card-title">Projects Portfolio Overview</div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr><th>Code</th><th>Phase</th><th>Health</th><th>Progress</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of projects" (click)="onProjectChange(p.code)" style="cursor:pointer">
+                  <td><strong>{{ p.code }}</strong></td>
+                  <td>{{ p.lifecycle_phase }}</td>
+                  <td><span class="badge" [ngClass]="{'badge-healthy': p.health_status==='Healthy', 'badge-risk': p.health_status==='At Risk', 'badge-critical': p.health_status==='Critical'}">{{ p.health_status }}</span></td>
+                  <td>{{ p.progress_pct }}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flowchart -->
+      <div class="card">
+        <div class="card-title">Critical Path Dependency Map Flowchart ({{ selectedProjectCode }})</div>
+        <div class="flowchart-container">
+          <div class="flow-node completed">Requirements Gathering<br><small style="color:var(--success)">Completed</small></div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-node completed">Design Review<br><small style="color:var(--success)">Completed</small></div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-node blocked">API Integration<br><small style="color:var(--danger)">Blocked (Score 88)</small></div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-node in-progress">System Testing<br><small style="color:var(--primary)">In Progress</small></div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-node">Deployment<br><small style="color:var(--text-muted)">Not Started</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAID TAB -->
+    <div *ngIf="activeTab === 'raid'">
+      <div class="card">
+        <div class="card-title">
+          <span>RAID Register Inspector ({{ selectedProjectCode }})</span>
+          <button class="btn btn-secondary" (click)="runMultiAgentWorkflow()">Run LangGraph RAID Analysis</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Category</th><th>Title</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Status</th><th>Owner</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of raidItems">
+                <td><span class="badge" [ngClass]="{'badge-critical': r.category==='Risk', 'badge-risk': r.category==='Issue', 'badge-healthy': r.category==='Assumption'||r.category==='Dependency'}">{{ r.category }}</span></td>
+                <td><strong>{{ r.title }}</strong><br><small style="color:var(--text-muted)">{{ r.description }}</small></td>
+                <td>{{ r.likelihood }}</td>
+                <td>{{ r.impact }}</td>
+                <td><strong [style.color]="r.risk_score >= 70 ? 'var(--danger)' : 'var(--warning)'">{{ r.risk_score }}</strong></td>
+                <td>{{ r.status }}</td>
+                <td>{{ r.owner_name }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMS TAB -->
+    <div *ngIf="activeTab === 'comms'">
+      <div class="card">
+        <div class="card-title">
+          <span>Stakeholder Communication Center (Mandatory Human Approval)</span>
+          <span class="badge badge-risk">{{ getPendingEmailsCount() }} Drafts Awaiting Approval</span>
+        </div>
+        <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">
+          All AI-generated emails remain in PENDING state until reviewed, edited, and explicitly APPROVED. Dispatched via Resend API to linusimon@gmail.com.
+        </p>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Recipient Role</th><th>Target Email</th><th>Subject</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of emails">
+                <td>#{{ e.id }}</td>
+                <td><span class="badge badge-healthy">{{ e.recipient_role }}</span></td>
+                <td>linusimon@gmail.com <br><small style="color:var(--text-muted)">Intended: {{ e.recipient_email }}</small></td>
+                <td><strong>{{ e.subject }}</strong></td>
+                <td><span class="badge" [ngClass]="{'badge-healthy': e.status==='SENT', 'badge-risk': e.status==='PENDING', 'badge-critical': e.status==='FAILED'||e.status==='REJECTED'}">{{ e.status }}</span></td>
+                <td>
+                  <button *ngIf="e.status==='PENDING'" class="btn btn-success" (click)="openApprovalModal(e)">Review & Approve</button>
+                  <span *ngIf="e.status!=='PENDING'" style="color:var(--text-muted); font-size:12px;">{{ e.status }} at {{ e.sent_at || e.created_at }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT TAB -->
+    <div *ngIf="activeTab === 'chat'">
+      <div class="grid-2col">
+        <div class="card">
+          <div class="card-title">Multi-Modal AI Assistant (Text & Voice STT/TTS)</div>
+          <div style="display:flex; gap:10px; margin-bottom:16px;">
+            <input type="text" [(ngModel)]="userQuery" style="flex:1; background:var(--bg-dark); border:1px solid var(--card-border); color:#fff; padding:10px; border-radius:6px;">
+            <button class="btn" (click)="runMultiAgentWorkflow()">Send Query</button>
+            <button class="btn btn-secondary" (click)="startVoiceAssistant()">{{ isRecordingVoice ? '🎙 Listening...' : '🎤 Voice Input' }}</button>
+          </div>
+          <div style="background:var(--bg-dark); border:1px solid var(--card-border); padding:16px; border-radius:8px; min-height:200px;">
+            <p style="color:var(--success); font-weight:bold;">[AI Assistant Response]</p>
+            <p style="margin-top:8px;">{{ chatResponse || 'Execute a query to run the 3-LangGraph multi-agent workflow...' }}</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Real-Time Graphical Node Execution Trace</div>
+          <div class="execution-graph">
+            <div *ngFor="let n of nodeTraces" class="exec-node" [class.blocked]="n.status!=='COMPLETED'">
+              <div>
+                <strong>{{ n.name }}</strong><br>
+                <small style="color:var(--text-muted)">Status: {{ n.status }}</small>
+              </div>
+              <span class="badge badge-healthy">{{ n.latency_ms }} ms</span>
+            </div>
+            <div *ngIf="nodeTraces.length === 0" class="exec-node">
+              <div><strong>1. Data Intelligence Graph</strong><br><small style="color:var(--text-muted)">Guardrails & Dual RAG Indexing</small></div>
+              <span class="badge badge-healthy">4 ms</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN TAB -->
+    <div *ngIf="activeTab === 'admin'">
+      <div class="card">
+        <div class="card-title">System & Technical Observability Dashboard</div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-header">MCP Server Port</div>
+            <div class="metric-value positive">5001</div>
+            <div class="metric-sub positive">Status: {{ telemetry.mcp_status || 'ONLINE' }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header">Total LLM Tokens Used</div>
+            <div class="metric-value">{{ telemetry.total_llm_tokens_used || 148520 }}</div>
+            <div class="metric-sub">Est Cost: ${{ telemetry.total_estimated_cost_usd || 0.297 }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header">Guardrails Status</div>
+            <div class="metric-value positive">ACTIVE</div>
+            <div class="metric-sub">PII Redaction & SQLi Filter</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header">Email Dispatcher</div>
+            <div class="metric-value positive">Resend API</div>
+            <div class="metric-sub">Override: linusimon@gmail.com</div>
+          </div>
+        </div>
+
+        <div class="card-title" style="margin-top:20px;">System Security Audit Log Stream</div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Target</th><th>Details</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let l of auditLogs">
+                <td>{{ l.timestamp }}</td>
+                <td><strong>{{ l.user_name }}</strong></td>
+                <td>{{ l.user_role }}</td>
+                <td><span class="badge badge-healthy">{{ l.action }}</span></td>
+                <td>{{ l.target_type }} #{{ l.target_id || '' }}</td>
+                <td>{{ l.details }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Human Approval Modal -->
+  <div *ngIf="selectedEmailForApproval" class="modal-overlay">
+    <div class="modal-card">
+      <div class="card-title">
+        <span>Human Approval Interface (Email ID #{{ selectedEmailForApproval.id }})</span>
+        <button class="btn btn-secondary" (click)="closeApprovalModal()">✕</button>
+      </div>
+
+      <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px;">
+        Review and edit AI-generated copy before approving dispatch to <strong>linusimon@gmail.com</strong>.
+      </p>
+
+      <label style="font-size:12px; font-weight:bold;">Recipient Role:</label>
+      <input type="text" [value]="selectedEmailForApproval.recipient_role" disabled style="width:100%; background:var(--bg-dark); border:1px solid var(--card-border); color:#fff; padding:8px; margin-bottom:12px; border-radius:4px;">
+
+      <label style="font-size:12px; font-weight:bold;">Subject Line:</label>
+      <input type="text" [(ngModel)]="selectedEmailForApproval.subject" style="width:100%; background:var(--bg-dark); border:1px solid var(--card-border); color:#fff; padding:8px; margin-bottom:12px; border-radius:4px;">
+
+      <label style="font-size:12px; font-weight:bold;">Email Body Content:</label>
+      <textarea [(ngModel)]="selectedEmailForApproval.body" rows="8"></textarea>
+
+      <div style="display:flex; justify-content:flex-end; gap:12px;">
+        <button class="btn btn-secondary" (click)="closeApprovalModal()">Cancel</button>
+        <button class="btn btn-success" (click)="approveEmail()">Approve & Dispatch via Resend</button>
+      </div>
+    </div>
+  </div>
+</div>
