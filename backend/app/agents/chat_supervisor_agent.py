@@ -13,7 +13,6 @@ import json
 from typing import Dict, Any, List, Generator
 
 from backend.app.core.tcs_genai_client import TCSGenAIClient
-from backend.app.agents.memory_agent import execute_memory_agent
 from backend.graphs.data_graph import DataIntelligenceGraph
 from backend.graphs.risk_graph import RiskIntelligenceGraph
 
@@ -282,25 +281,6 @@ def stream_chat_supervisor(
     for i, word in enumerate(words):
         yield {'type': 'token', 'content': word + ('' if i == len(words) - 1 else ' ')}
 
-    # ── NODE 4: MemoryAgent ───────────────────────────────────────────────────
-    t4 = time.time()
-    mem_result = execute_memory_agent(project_code, user_message, {
-        'risk_intelligence': risk_state,
-        'communication': {'created_draft_id': None},
-        # Fix #3: store the assistant reply so multi-turn context is coherent
-        'assistant_reply': full_text
-    })
-    t4_ms = max(int((time.time() - t4) * 1000), 1)
-
-    node_traces.append({
-        'name': '4. Memory Agent (Conversation Window)',
-        'status': mem_result['status'],
-        'latency_ms': t4_ms,
-        'details': {
-            'stored_entries': mem_result.get('stored_entries_count', 0),
-            'window_size': len(mem_result.get('recent_context_window', []))
-        }
-    })
 
     total_ms = max(int((time.time() - start_time) * 1000), 1)
 
@@ -314,8 +294,8 @@ def stream_chat_supervisor(
             'cost_usd': llm_res.get('cost_usd', 0),
             'confidence_score': risk_state.get('reflection_validation', {}).get('confidence_score', 0.94),
             'top_risk_score': risk_state.get('top_risk_score', 0),
-            'node_traces': node_traces,
-            'memory_window': mem_result.get('stored_entries_count', 0)
+            'node_traces': node_traces
+            # memory_window removed — memory is now managed by chat_history API
         }
     }
 
