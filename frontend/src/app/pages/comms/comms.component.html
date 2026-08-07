@@ -1,0 +1,49 @@
+<div class="card">
+  <div class="card-title">
+    <span>Stakeholder Communication Center (Mandatory Human Approval)</span>
+  </div>
+  <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">
+    All AI-generated emails remain in PENDING state until reviewed, edited, and explicitly APPROVED. Dispatched via Resend API to linusimon@gmail.com.
+  </p>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Recipient Role</th><th>Target Email</th><th>Subject</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of emails">
+          <td>#{{ e.id }}</td>
+          <td><span class="badge badge-healthy">{{ e.recipient_role }}</span></td>
+          <td>linusimon@gmail.com <br><small style="color:var(--text-muted)">Intended: {{ e.recipient_email }}</small></td>
+          <td><strong>{{ e.subject }}</strong></td>
+          <td><span class="badge" [ngClass]="{'badge-healthy': e.status==='SENT', 'badge-risk': e.status==='PENDING', 'badge-critical': e.status==='FAILED'||e.status==='REJECTED'}">{{ e.status }}</span></td>
+          <td>
+            <button *ngIf="e.status==='PENDING'" class="btn btn-success" (click)="openApprovalModal(e)">Review & Approve</button>
+            <span *ngIf="e.status!=='PENDING'" style="color:var(--text-muted); font-size:12px;">{{ e.status }} at {{ e.sent_at || e.created_at }}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div *ngIf="selectedEmail" class="modal-overlay">
+  <div class="modal-card">
+    <div class="card-title">
+      <span>Human Approval Interface (Email ID #{{ selectedEmail.id }})</span>
+      <button class="btn btn-secondary" (click)="closeModal()">✕</button>
+    </div>
+    <label style="font-size:12px; font-weight:bold;">Recipient Role:</label>
+    <input type="text" [value]="selectedEmail.recipient_role" disabled style="width:100%; background:var(--bg-dark); border:1px solid var(--card-border); color:#fff; padding:8px; margin-bottom:12px; border-radius:4px;">
+    <label style="font-size:12px; font-weight:bold;">Subject Line:</label>
+    <input type="text" [(ngModel)]="selectedEmail.subject" style="width:100%; background:var(--bg-dark); border:1px solid var(--card-border); color:#fff; padding:8px; margin-bottom:12px; border-radius:4px;">
+    <label style="font-size:12px; font-weight:bold;">Email Body Content:</label>
+    <textarea [(ngModel)]="selectedEmail.body" rows="8"></textarea>
+    <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:12px;">
+      <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+      <button class="btn btn-success" (click)="approveEmail()">Approve & Dispatch via Resend</button>
+    </div>
+  </div>
+</div>

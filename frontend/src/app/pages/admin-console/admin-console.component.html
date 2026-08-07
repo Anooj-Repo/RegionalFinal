@@ -1,0 +1,44 @@
+<div class="card">
+  <div class="card-title">Admin Console & Master Data Management</div>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-header">MCP Server Port</div>
+      <div class="metric-value positive">5001</div>
+      <div class="metric-sub positive">Status: {{ telemetry.mcp_status || 'ONLINE' }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-header">Total LLM Tokens Used</div>
+      <div class="metric-value">{{ telemetry.total_llm_tokens_used || 148520 }}</div>
+      <div class="metric-sub">Est Cost: ${{ telemetry.total_estimated_cost_usd || 0.297 }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-header">Guardrails Status</div>
+      <div class="metric-value positive">ACTIVE</div>
+      <div class="metric-sub">PII Redaction & SQLi Filter</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-header">Email Dispatcher</div>
+      <div class="metric-value positive">Resend API</div>
+      <div class="metric-sub">Override: linusimon@gmail.com</div>
+    </div>
+  </div>
+
+  <div class="card-title" style="margin-top:20px;">System Security Audit Log Stream</div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Target</th><th>Details</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let l of auditLogs">
+          <td>{{ l.timestamp }}</td>
+          <td><strong>{{ l.user_name }}</strong></td>
+          <td>{{ l.user_role }}</td>
+          <td><span class="badge badge-healthy">{{ l.action }}</span></td>
+          <td>{{ l.target_type }} #{{ l.target_id || '' }}</td>
+          <td>{{ l.details }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

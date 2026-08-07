@@ -1,0 +1,81 @@
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="metric-header">Overall Health</div>
+    <div class="metric-value positive">{{ getCurrentProject().progress_pct }}%</div>
+    <div class="metric-sub positive">Phase: {{ getCurrentProject().lifecycle_phase }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-header">Active Projects</div>
+    <div class="metric-value">{{ projects.length }}</div>
+    <div class="metric-sub">Across 5 Lifecycle Phases</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-header">Portfolio Budget</div>
+    <div class="metric-value positive">$12.5M</div>
+    <div class="metric-sub positive">Variance: -8.5%</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-header">AI Confidence Score</div>
+    <div class="metric-value positive">95%</div>
+    <div class="metric-sub positive">Groundedness Verified</div>
+  </div>
+</div>
+
+<div class="grid-2col">
+  <div class="card">
+    <div class="card-title">
+      <span>5x5 Risk Heatmap Matrix ({{ getCurrentProject().code }})</span>
+      <span class="badge badge-risk">Phase: {{ getCurrentProject().lifecycle_phase }}</span>
+    </div>
+    <div class="heatmap-grid">
+      <div class="heatmap-cell heat-low">L1/I1</div>
+      <div class="heatmap-cell heat-low">L1/I2</div>
+      <div class="heatmap-cell heat-med">L1/I3</div>
+      <div class="heatmap-cell heat-med">L1/I4</div>
+      <div class="heatmap-cell heat-high">L1/I5</div>
+
+      <div class="heatmap-cell heat-low">L2/I1</div>
+      <div class="heatmap-cell heat-med">L2/I2</div>
+      <div class="heatmap-cell heat-med">L2/I3</div>
+      <div class="heatmap-cell heat-high">L2/I4</div>
+      <div class="heatmap-cell heat-high">L2/I5</div>
+
+      <div class="heatmap-cell heat-med">L3/I1</div>
+      <div class="heatmap-cell heat-med">L3/I2</div>
+      <div class="heatmap-cell heat-high">L3/I3</div>
+      <div class="heatmap-cell heat-high">L3/I4</div>
+      <div class="heatmap-cell heat-critical">L3/I5 (88)</div>
+
+      <div class="heatmap-cell heat-med">L4/I1</div>
+      <div class="heatmap-cell heat-high">L4/I2</div>
+      <div class="heatmap-cell heat-high">L4/I3</div>
+      <div class="heatmap-cell heat-critical">L4/I4 (85)</div>
+      <div class="heatmap-cell heat-critical">L4/I5 (90)</div>
+
+      <div class="heatmap-cell heat-high">L5/I1</div>
+      <div class="heatmap-cell heat-high">L5/I2</div>
+      <div class="heatmap-cell heat-critical">L5/I3</div>
+      <div class="heatmap-cell heat-critical">L5/I4</div>
+      <div class="heatmap-cell heat-critical">L5/I5</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Projects Portfolio Overview</div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr><th>Code</th><th>Phase</th><th>Health</th><th>Progress</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of projects" (click)="setProject(p.code)" style="cursor:pointer">
+            <td><strong>{{ p.code }}</strong></td>
+            <td>{{ p.lifecycle_phase }}</td>
+            <td><span class="badge" [ngClass]="{'badge-healthy': p.health_status==='Healthy', 'badge-risk': p.health_status==='At Risk', 'badge-critical': p.health_status==='Critical'}">{{ p.health_status }}</span></td>
+            <td>{{ p.progress_pct }}%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

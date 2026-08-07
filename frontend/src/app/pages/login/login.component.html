@@ -1,0 +1,29 @@
+<div class="modal-overlay" style="background:#0a0e17;">
+  <div class="modal-card" style="max-width:420px; border:1px solid var(--card-border);">
+    <div style="text-align:center; margin-bottom:24px;">
+      <div class="nav-logo" style="margin:0 auto 12px auto; width:48px; height:48px; font-size:22px;">PM</div>
+      <h2 style="color:#fff; font-size:20px;">Enterprise PM AI Login</h2>
+      <p style="color:var(--text-muted); font-size:12px; margin-top:4px;">Sign in to access Role Workspaces & Risk Intelligence</p>
+    </div>
+
+    <div *ngIf="errorMessage" class="badge badge-critical" style="display:block; text-align:center; margin-bottom:16px; padding:10px;">
+      {{ errorMessage }}
+    </div>
+
+    <form (ngSubmit)="onLogin()">
+      <label style="font-size:12px; font-weight:bold; color:var(--text-muted);">Username:</label>
+      <input type="text" [(ngModel)]="username" name="username" required style="width:100%; background:var(--bg-dark); border:1px solid var(--card-border); color:#fff; padding:10px; margin-bottom:16px; border-radius:6px; outline:none;">
+
+      <label style="font-size:12px; font-weight:bold; color:var(--text-muted);">Password:</label>
+      <input type="password" [(ngModel)]="password" name="password" required style="width:100%; background:var(--bg-dark); border:1px solid var(--card-border); color:#fff; padding:10px; margin-bottom:20px; border-radius:6px; outline:none;">
+
+      <button type="submit" class="btn" style="width:100%; padding:12px;" [disabled]="isLoading">
+        {{ isLoading ? 'Authenticating...' : 'Sign In with JWT' }}
+      </button>
+    </form>
+
+    <div style="margin-top:20px; text-align:center; font-size:11px; color:var(--text-muted);">
+      Sample Credentials: <strong>rohit / user123</strong> (Program Manager) | <strong>admin / admin123</strong> (Admin)
+    </div>
+  </div>
+</div>
