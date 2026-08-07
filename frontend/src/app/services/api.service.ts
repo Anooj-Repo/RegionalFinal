@@ -59,7 +59,12 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/emails/${id}/approve`, {}, { headers: this.getHeaders() });
   }
 
+  getGraphTriples(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/graph-triples`, { headers: this.getHeaders() });
+  }
+
   getAllDbTables(): Observable<any> {
+
     return this.http.get(`${this.baseUrl}/admin/db-tables`, { headers: this.getHeaders() });
   }
 

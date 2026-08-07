@@ -11,6 +11,7 @@ import { ApiService } from '../../services/api.service';
 export class AdminConsoleComponent implements OnInit {
   documents: any[] = [];
   ragChunks: any[] = [];
+  graphTriples: any[] = [];
   masterUsers: any[] = [];
   masterProjects: any[] = [];
   masterRaid: any[] = [];
@@ -35,6 +36,13 @@ export class AdminConsoleComponent implements OnInit {
         this.ragChunks = res.rag_chunks || [];
       }
     });
+
+    this.apiService.getGraphTriples().subscribe(res => {
+      if (res && res.triples) {
+        this.graphTriples = res.triples;
+      }
+    });
+
 
     this.apiService.getAllDbTables().subscribe(res => {
       if (res && res.tables) {

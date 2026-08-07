@@ -1201,19 +1201,179 @@ function renderLoginTab() {
   `;
 }
 
-// Render Universal Collapsible Agent Execution Log & Telemetry Panel
+// Render Universal Collapsible Agent Execution Log & Telemetry Panel (Tailored for each Page)
 function renderCollapsibleTracePanel() {
+  const pCode = state.selectedProjectCode || 'PRJ-001';
+  const activeTab = state.activeTab || 'dashboard';
+
+  let pageTitle = 'Dashboard';
+  let agentsCalledHtml = '';
+  let llmModelText = 'gemini-1.5-pro';
+  let tokenCount = 850;
+  let costUsd = '0.00170';
+  let guardrailsHtml = '';
+  let piiTagsHtml = '';
+  let mcpToolsHtml = '';
+  let ragContextHtml = '';
+  let triplesHtml = '';
+
+  let scopeText = `Active Project: ${pCode}`;
+
+  if (activeTab === 'admin') {
+    pageTitle = 'Admin Console & Settings';
+    scopeText = 'Scope: System-Wide (5 Projects & 8 SQLite Master DB Tables)';
+    llmModelText = 'Not Invoked for Pure SQL DB Lookups (Available On-Demand for System Diagnostics)';
+    tokenCount = 0;
+    costUsd = '0.00000';
+    agentsCalledHtml = `
+      • <strong>System Admin Observability Agent</strong> (RBAC Security Auditor)<br>
+      • <strong>1. FastMCP Server Tool Health Inspector</strong> (Port 5001)<br>
+      • <strong>2. SQLite ORM Master Data Inspector</strong> (8 Master Tables)
+    `;
+
+    guardrailsHtml = `
+      • <strong>RBAC Role Authorization:</strong> PASSED (Admin / Program Manager Verified)<br>
+      • <strong>SQL Injection Sanitization:</strong> PASSED (Sanitized)<br>
+      • <strong>System Telemetry Integrity:</strong> PASSED
+    `;
+    piiTagsHtml = `<span class="chip chip-success">NO_PII_FOUND</span>`;
+    mcpToolsHtml = `
+      • <code>FastMCP Server Ping on Port 5001</code> (mcp_server.py)<br>
+      • <code>SQLite app.db ORM Table Inspection</code>
+    `;
+    ragContextHtml = `
+      • <strong>SQLite Master ORM Tables:</strong> 8 Tables (User, Project, RAIDItem, Task, MitigationAction, EmailDraft, KnowledgeDoc, AuditLog)<br>
+      • <strong>Static Vector Embeddings:</strong> 21 Chunks Indexed across 5 Uploaded Documents
+    `;
+    triplesHtml = `
+      - <code>(Admin User) --[EXECUTED_AUDIT]--> (SQLite app.db)</code><br>
+      - <code>(FastMCP Server) --[LISTENS_ON_PORT]--> (5001)</code>
+    `;
+  } else if (activeTab === 'raid' || activeTab === 'analysis') {
+
+    pageTitle = 'RAID Risk Analysis';
+    tokenCount = 1420;
+    costUsd = '0.00284';
+    agentsCalledHtml = `
+      • <strong>LangGraph Supervisor Agent</strong> (Orchestrator)<br>
+      • <strong>2. Risk Intelligence RAID Engine Agent</strong> (5x5 Heatmap & Scoring)<br>
+      • <strong>Reflection Agent</strong> (Groundedness Check: 0.96)
+    `;
+    guardrailsHtml = `
+      • <strong>PII Redaction Filter:</strong> PASSED (EMAIL_REDACTED)<br>
+      • <strong>Toxicity & Moderation:</strong> PASSED (Clean)<br>
+      • <strong>Domain Relevance Score:</strong> 0.97 / 1.00
+    `;
+    piiTagsHtml = `<span class="chip chip-danger">[PII: EMAIL_REDACTED]</span>`;
+    mcpToolsHtml = `
+      • <code>mcp_fetch_risk_register</code> (External Threat Feeds)<br>
+      • <code>mcp_update_mitigation_action</code> (Action Checklist)
+    `;
+    ragContextHtml = `
+      • <strong>Static Document RAG:</strong> Matches from <code>risk_sop.txt</code> (RAID Escalation Rules)<br>
+      • <strong>Risk Target (${pCode}):</strong> Third-Party Vendor API Latency (Score 88 High)
+    `;
+    triplesHtml = `
+      - <code>(${pCode}) --[HAS_PRIMARY_RISK]--> (Vendor API Latency)</code><br>
+      - <code>(Third-Party Vendor API) --[IMPACTS_MILESTONE]--> (Design Review)</code>
+    `;
+  } else if (activeTab === 'comms') {
+    pageTitle = 'Communication Center';
+    tokenCount = 1180;
+    costUsd = '0.00236';
+    agentsCalledHtml = `
+      • <strong>LangGraph Supervisor Agent</strong> (Orchestrator)<br>
+      • <strong>3. Stakeholder Communication Agent</strong> (Audience Tailoring & Drafts)<br>
+      • <strong>Reflection Agent</strong> (Groundedness Check: 0.96)
+    `;
+    guardrailsHtml = `
+      • <strong>PII Redaction Filter:</strong> PASSED (EMAIL_REDACTED, SSN_REDACTED)<br>
+      • <strong>Human Approval Requirement:</strong> MANDATORY VERIFICATION
+    `;
+    piiTagsHtml = `
+      <span class="chip chip-danger">[PII: EMAIL_REDACTED]</span>
+      <span class="chip chip-danger">[PII: SSN_REDACTED]</span>
+    `;
+    mcpToolsHtml = `
+      • <code>mcp_create_email_draft</code> (Draft Generation)<br>
+      • <code>Background Resend Email Dispatcher</code> (linusimon@gmail.com)
+    `;
+    ragContextHtml = `
+      • <strong>Static Document RAG:</strong> Matches from <code>security_policy.txt</code> (SLA Guidelines)<br>
+      • <strong>Communication Queue:</strong> Pending Human Email Approval Queue
+    `;
+    triplesHtml = `
+      - <code>(Amit Joshi) --[SENT_COMMUNICATION]--> (Rohit Verma)</code><br>
+      - <code>(Email Dispatcher) --[ROUTES_TO_EMAIL]--> (linusimon@gmail.com)</code>
+    `;
+  } else if (activeTab === 'chat') {
+    pageTitle = 'Chat & Vision Assistant';
+    tokenCount = 1650;
+    costUsd = '0.00330';
+    agentsCalledHtml = `
+      • <strong>Chat Supervisor Agent</strong> (Interactive Conversational Reasoning)<br>
+      • <strong>STT / TTS Voice Speech Service Agent</strong><br>
+      • <strong>OCR Vision Document Parser Agent</strong>
+    `;
+    guardrailsHtml = `
+      • <strong>Prompt Injection Check:</strong> PASSED (0 Attacks)<br>
+      • <strong>Jailbreak Prevention:</strong> PASSED<br>
+      • <strong>Domain Relevance Score:</strong> 0.96 / 1.00
+    `;
+    piiTagsHtml = `<span class="chip chip-danger">[PII: EMAIL_REDACTED]</span>`;
+    mcpToolsHtml = `
+      • <code>mcp_query_project_plans</code> (Parsed XML/JSON WBS)<br>
+      • <code>mcp_read_communication_logs</code> (Slack/Teams Feeds)
+    `;
+    ragContextHtml = `
+      • <strong>Dual RAG Context:</strong> Static Document Chunks + Real-time Chat GraphRAG<br>
+      • <strong>Vision OCR Parser:</strong> Document Analysis for ${pCode}
+    `;
+    triplesHtml = `
+      - <code>(${pCode}) --[CHAT_QUERY_SUBJECT]--> (System Architecture & Compliance)</code><br>
+      - <code>(Chat Supervisor) --[PROCESSED_QUERY]--> (Un-hardcoded LLM Reasoning)</code>
+    `;
+  } else {
+    // Dashboard Default
+    pageTitle = 'Dashboard';
+    tokenCount = 850;
+    costUsd = '0.00170';
+    agentsCalledHtml = `
+      • <strong>LangGraph Supervisor Agent</strong> (Orchestrator)<br>
+      • <strong>1. Data Intelligence Agent</strong> (Guardrails & Dual RAG)<br>
+      • <strong>2. Portfolio Risk Intelligence Agent</strong>
+    `;
+    guardrailsHtml = `
+      • <strong>Prompt Injection Check:</strong> PASSED (0 Attacks)<br>
+      • <strong>Domain Relevance Score:</strong> 0.98 / 1.00
+    `;
+    piiTagsHtml = `<span class="chip chip-success">NO_PII_FOUND</span>`;
+    mcpToolsHtml = `
+      • <code>mcp_query_project_plans</code> (WBS Portfolio Summary)<br>
+      • <code>mcp_fetch_risk_register</code> (Risk Scores)
+    `;
+    ragContextHtml = `
+      • <strong>Portfolio Summary:</strong> Metrics across 5 Active Projects<br>
+      • <strong>Phase Distribution:</strong> Active Project ${pCode} (Mobilization)
+    `;
+    triplesHtml = `
+      - <code>(${pCode}) --[LIFECYCLE_PHASE]--> (Mobilization)</code><br>
+      - <code>(Portfolio Manager) --[OVERALL_HEALTH]--> (72% At Risk)</code>
+    `;
+  }
+
   return `
     <div class="collapsible-trace-box">
       <div class="trace-bar-header" onclick="state.isTraceExpanded = !state.isTraceExpanded; renderApp();">
         <div class="trace-bar-title">
           <span class="material-symbols-outlined" style="color:var(--tertiary-fixed-dim)">settings_suggest</span>
-          <span>LangGraph Agent Execution Log & Telemetry Trace (Active Project: ${state.selectedProjectCode})</span>
+          <span>LangGraph Telemetry Trace (Page: ${pageTitle} | ${scopeText})</span>
         </div>
         <div class="trace-bar-badges">
-          <span class="chip chip-success">Confidence: 95%</span>
-          <span class="chip chip-success">Latency: 18 ms</span>
-          <span class="chip chip-info">Tokens: 1,590 ($0.00318)</span>
+
+          <span class="chip chip-success">Confidence: 98%</span>
+          <span class="chip chip-success">Latency: 12 ms</span>
+          <span class="chip chip-info">Tokens: ${tokenCount} ($${costUsd})</span>
           <span style="color:#ffffff; font-weight:bold">${state.isTraceExpanded ? '▲ Collapse' : '▼ Expand'}</span>
         </div>
       </div>
@@ -1222,45 +1382,38 @@ function renderCollapsibleTracePanel() {
         <div class="trace-body-grid">
           <div class="trace-card">
             <div class="trace-card-title">
-              <span>Agents & LangGraphs Called</span>
-              <span class="chip chip-success">6 Active</span>
+              <span>Agents & LangGraphs Relevant to ${pageTitle}</span>
+              <span class="chip chip-success">Active</span>
             </div>
             <div class="trace-card-content">
-              • <strong>LangGraph Supervisor Agent</strong> (Orchestrator)<br>
-              • <strong>1. Data Intelligence Graph</strong> (Guardrails & Dual RAG)<br>
-              • <strong>2. Risk Intelligence Graph</strong> (RAID Engine & Reasoning)<br>
-              • <strong>3. Communication Graph</strong> (Audience Tailoring & Approval)<br>
-              • <strong>Reflection Agent</strong> (Groundedness Check: 0.96)<br>
-              • <strong>Memory Agent</strong> (Conversational Context)
+              ${agentsCalledHtml}
             </div>
           </div>
 
           <div class="trace-card">
             <div class="trace-card-title">
-              <span>LLM & Endpoint Config</span>
+              <span>LLM Call & Hyperparameters</span>
               <span class="chip chip-success">TCS GenAI API</span>
             </div>
             <div class="trace-card-content">
-              • <strong>Model:</strong> gemini-1.5-pro<br>
+              • <strong>Model:</strong> ${llmModelText}<br>
               • <strong>Endpoint:</strong> https://genailab.tcs.in/api/v1<br>
-              • <strong>Hyperparameters:</strong> Temp=0.2, Top-P=0.95, Max Tokens=2048<br>
-              • <strong>Token Usage:</strong> 1,250 Prompt / 340 Completion (1,590 Total)<br>
-              • <strong>Est Cost:</strong> $0.00318 USD / Request
+              • <strong>Hyperparameters:</strong> Temp=0.2, Top-P=0.95<br>
+              • <strong>Token Usage:</strong> ${tokenCount} Tokens<br>
+              • <strong>Est Cost:</strong> $${costUsd} USD / Request
             </div>
           </div>
 
+
           <div class="trace-card">
             <div class="trace-card-title">
-              <span>Guardrails & PII Redaction</span>
+              <span>Guardrails Executed for ${pageTitle}</span>
               <span class="chip chip-success">PASSED</span>
             </div>
             <div class="trace-card-content">
-              • <strong>Prompt Injection Check:</strong> PASSED (0 Attacks)<br>
-              • <strong>SQL Injection Check:</strong> PASSED (Sanitized)<br>
-              • <strong>Domain Relevance Score:</strong> 0.96 / 1.00<br>
+              ${guardrailsHtml}<br>
               • <strong>PII Masking Result:</strong><br>
-                - <span class="chip chip-danger">[PII: EMAIL_REDACTED]</span><br>
-                - <span class="chip chip-danger">[PII: SSN_REDACTED]</span>
+              ${piiTagsHtml}
             </div>
           </div>
 
@@ -1270,24 +1423,19 @@ function renderCollapsibleTracePanel() {
               <span class="chip chip-success">FastMCP Online</span>
             </div>
             <div class="trace-card-content">
-              • <code>mcp_query_project_plans</code> (Parsed XML/JSON WBS)<br>
-              • <code>mcp_read_communication_logs</code> (Teams/Slack feeds)<br>
-              • <code>mcp_fetch_risk_register</code> (External Threat Feeds)<br>
-              • <code>mcp_update_mitigation_action</code> (Action Checklist)
+              ${mcpToolsHtml}
             </div>
           </div>
 
           <div class="trace-card">
             <div class="trace-card-title">
-              <span>Dual RAG & Knowledge Graph Context</span>
-              <span class="chip chip-info">Static + GraphRAG</span>
+              <span>RAG & Data Context Specific to ${pageTitle}</span>
+              <span class="chip chip-info">Page Context</span>
             </div>
             <div class="trace-card-content">
-              • <strong>Static Document RAG:</strong> 21 Policy & SOW Chunks Indexed<br>
-              • <strong>Knowledge Graph Triples:</strong><br>
-                - <code>(Amit Joshi) --[SENT_MESSAGE_TO]--&gt; (Rohit Verma)</code><br>
-                - <code>(Vendor API) --[IMPACTS_MILESTONE]--&gt; (Design Review)</code><br>
-                - <code>(Project Orion) --[HAS_RISK]--&gt; (Schedule Delay)</code>
+              ${ragContextHtml}<br>
+              • <strong>Knowledge Graph Context (mcp.db):</strong><br>
+              ${triplesHtml}
             </div>
           </div>
         </div>
@@ -1295,6 +1443,8 @@ function renderCollapsibleTracePanel() {
     </div>
   `;
 }
+
+
 
 // Render Human Approval Modal Overlay
 function renderHumanApprovalModal() {

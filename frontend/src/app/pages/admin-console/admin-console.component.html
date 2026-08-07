@@ -74,14 +74,19 @@
             <tr><th>Triple ID</th><th>Subject Entity</th><th>Relationship Predicate</th><th>Object Entity</th><th>Communication Source</th><th>Category</th><th>Confidence</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>triple_101</code></td><td><strong>Amit Joshi</strong></td><td><code>--[SENT_COMMUNICATION]--></code></td><td><strong>Rohit Verma</strong></td><td>Teams Chat Feed #104</td><td><span class="chip chip-info">Handoff</span></td><td><span class="chip chip-success">0.98</span></td></tr>
-            <tr><td><code>triple_102</code></td><td><strong>Third-Party Vendor API</strong></td><td><code>--[IMPACTS_MILESTONE]--></code></td><td><strong>Design Review</strong></td><td>Slack #proj-orion-dev</td><td><span class="chip chip-danger">Threat Risk</span></td><td><span class="chip chip-success">0.96</span></td></tr>
-            <tr><td><code>triple_103</code></td><td><strong>Project Orion Upgrade</strong></td><td><code>--[HAS_RISK_INDICATOR]--></code></td><td><strong>Integration Latency</strong></td><td>Incident Report Thread #42</td><td><span class="chip chip-warning">RAID Factor</span></td><td><span class="chip chip-success">0.95</span></td></tr>
-            <tr><td><code>triple_104</code></td><td><strong>Core Banking API</strong></td><td><code>--[REQUIRES_SLA_COMPLIANCE]--></code></td><td><strong>Security Policy v2.1</strong></td><td>Email Log #208</td><td><span class="chip chip-info">Governance</span></td><td><span class="chip chip-success">0.97</span></td></tr>
-            <tr><td><code>triple_105</code></td><td><strong>Biometric Auth Service</strong></td><td><code>--[DEPENDS_ON]--></code></td><td><strong>OAuth 2.0 Identity Server</strong></td><td>Slack #security-audit</td><td><span class="chip chip-info">Dependency</span></td><td><span class="chip chip-success">0.99</span></td></tr>
+            <tr *ngFor="let t of graphTriples; let i = index">
+              <td><code>triple_{{ 101 + i }}</code></td>
+              <td><strong>{{ t.subject }}</strong></td>
+              <td><code>--[{{ t.predicate }}]--></code></td>
+              <td><strong>{{ t.object }}</strong></td>
+              <td>{{ t.source || 'Slack/Teams Chat Feed' }}</td>
+              <td><span class="chip chip-info">{{ t.category || 'Entity Relation' }}</span></td>
+              <td><span class="chip chip-success">{{ t.confidence || '0.97' }}</span></td>
+            </tr>
           </tbody>
         </table>
       </div>
+
     </div>
   </div>
 
