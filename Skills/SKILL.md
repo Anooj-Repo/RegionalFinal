@@ -17,7 +17,7 @@ Please create a detailed milestone-wise implementation plan for an enterprise-gr
 * Separate and unified setup and start batch files to run frontend, backend and mcp server.
 * Separate database for backend application logic and mcp server logic
 * Analyze TCS genai in https://genailab.tcs.in and identify the best gen lab api and models to use in an agent.
-* Dedicated client wrapper for tcs gen ai calls.
+* Dedicated client wrapper for tcs gen ai calls for RAG.
 * Use stich for the UI design through the MCP configured in the antigravity and later use that HTML to build the angular UI without any change in design.
 * Create documentation like readme and architectural diagram.
 * Create unit test project and provide option to run and save result of unit test.
@@ -55,9 +55,9 @@ Implement:
 * Login/Logout
 * JWT Authentication
 * Role-Based Access Control (RBAC)
-* Separate Admin and User login
+* Separate Admin, User login and other role based on requirement.
 * User Management
-* Admin Console and other consoles based om the roles
+* Admin Console and other consoles based on the roles
 * Master Data Management
 * Knowledge Document Management
 * Configuration Management
@@ -74,7 +74,7 @@ Implement a LangGraph-based multi-agent architecture.
 
 General Requirements:
 
-* Supervisor Agent
+* Use langraph for agents
 * Node-based workflow
 * Separate `agents` folder
 * Identify and implement all the agents required for the business use case
@@ -108,7 +108,7 @@ Requirements for chat in addition to general AI requirement considerations:
 
 # Knowledge Retrieval (RAG)
 
-Use RAG **only** for static knowledge sources such as:
+Use RAG for static knowledge sources such as:
 
 * Policy documents
 * Statements of Work (SOW)
@@ -119,6 +119,8 @@ Use RAG **only** for static knowledge sources such as:
 * Regulatory documents
 * Compliance documentation
 * Static reference documents
+
+Or based on requirement
 
 Seed sample rag documents
 Create upload folder in backend and add documents to upload to RAG
