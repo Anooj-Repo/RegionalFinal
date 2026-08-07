@@ -1,0 +1,62 @@
+[
+  {
+    "id": 5001,
+    "project_id": 2,
+    "title": "Data Corruption During GL_ACCOUNTS Migration",
+    "probability": "high",
+    "impact": "critical",
+    "owner": "Aisha Kamara",
+    "mitigation": "Full data quality audit initiated with target completion 22 Aug 2026. Three remediation options under technical review by Marcus Chen. No ETL pipeline development to proceed until Finance Director approves the chosen remediation approach. Parallel run strategy (3 weeks minimum) mandated before cutover to catch any residual data integrity issues. Data reconciliation framework to be built into ETL pipeline as standard control.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 5002,
+    "project_id": 2,
+    "title": "Year-End Regulatory Reporting Continuity",
+    "probability": "medium",
+    "impact": "critical",
+    "owner": "Lin Wei",
+    "mitigation": "Finance Director confirmed that legacy ERP must remain operational in parallel through at least 31 Jan 2027 to cover December year-end close. Parallel run period of minimum 8 weeks agreed with Programme Board. Contingency plan documented: if SAP go-live is delayed beyond 1 Feb 2027, year-end reporting to be executed fully on legacy system with SAP cutover deferred to Q2 2027.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 5003,
+    "project_id": 2,
+    "title": "SAP Go-Live Date Slip Beyond Financial Year-End",
+    "probability": "high",
+    "impact": "high",
+    "owner": "Priya Nair",
+    "mitigation": "Critical path revised following data quality discovery. Current critical path shows go-live feasible by 20 Jan 2027 if data audit completes by 22 Aug and ETL design starts no later than 5 Sep. Programme Board has authorised acceleration resources (2 additional data engineers contracted through 31 Oct). Schedule reviewed weekly at steering committee.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 5004,
+    "project_id": 2,
+    "title": "ABAP Custom Code Performance Under Production Load",
+    "probability": "medium",
+    "impact": "high",
+    "owner": "Marcus Chen",
+    "mitigation": "Performance benchmarks defined for all 14 custom ABAP developments. Load testing to be conducted in SAP QA environment using production-equivalent data volumes (anonymised). SAP Basis team to conduct system sizing review before UAT. Rollback procedure documented for each custom enhancement.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 5005,
+    "project_id": 2,
+    "title": "Change Management and User Adoption",
+    "probability": "medium",
+    "impact": "medium",
+    "owner": "Priya Nair",
+    "mitigation": "Dedicated change management workstream running in parallel to technical delivery. SAP Champions network established across Finance, Procurement, and Logistics. 120-hour training programme designed and scheduling commenced. Hypercare support model planned for first 60 days post-go-live. Risk accepted given maturity of change programme.",
+    "status": "accepted",
+    "created_at": null,
+    "updated_at": null
+  }
+]

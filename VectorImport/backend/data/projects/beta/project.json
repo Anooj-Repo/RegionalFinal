@@ -1,0 +1,13 @@
+{
+  "id": 2,
+  "project_id": "PROG-BETA-2026",
+  "name": "ERP System Upgrade \u2014 SAP S/4HANA Migration",
+  "description": "Full-scale migration of the corporate ERP platform from legacy SAP ECC 6.0 to SAP S/4HANA 2023. The programme encompasses system architecture redesign, custom ABAP re-engineering, master data cleansing, ETL pipeline development for GL and sub-ledger data, integration with peripheral systems (HR, Procurement, Treasury), and a phased finance UAT programme culminating in a hard go-live before the financial year-end close. Data migration is the critical-path workstream; a data quality issue discovered during profiling of the GL_ACCOUNTS table is currently blocking migration design.",
+  "start_date": "2026-03-01",
+  "end_date": "2027-02-28",
+  "status": "active",
+  "sponsor": "Robert Chang",
+  "program_manager": "Priya Nair",
+  "created_at": null,
+  "updated_at": null
+}

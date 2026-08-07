@@ -1,0 +1,183 @@
+[
+  {
+    "id": 3001,
+    "project_id": 2,
+    "meeting_title": "Weekly ERP Programme Steering \u2014 Week 31",
+    "attendees": [
+      "Priya Nair (Programme Manager)",
+      "Robert Chang (Executive Sponsor)",
+      "Marcus Chen (SAP Architect)",
+      "Aisha Kamara (Data Migration Lead)",
+      "Tom Bradley (Integration Lead)",
+      "Lin Wei (Finance Director)",
+      "Sarah Okafor (PMO)"
+    ],
+    "decisions": [
+      "Data migration workstream formally classified as RED status effective Week 31.",
+      "Emergency Data Quality Committee to be convened by 30 July 2026 with weekly cadence until issue resolved.",
+      "Task 203 (Data Migration Design) milestone of 31 July 2026 formally missed; revised target to be set by emergency committee.",
+      "Risk entry 5001 (Data Corruption During GL_ACCOUNTS Migration) to be upgraded to HIGH probability / CRITICAL impact on the programme risk register.",
+      "Programme go-live date of Q1 2027 remains the target but is under active review pending audit outcome.",
+      "Robert Chang authorised contingency budget of up to \u00a375,000 for additional specialist resources if required."
+    ],
+    "action_items": [
+      {
+        "description": "Register GL_ACCOUNTS data quality issue as formal programme blocker in the risk register with HIGH/CRITICAL rating.",
+        "owner": "Priya Nair",
+        "due_date": "2026-07-30",
+        "done": true
+      },
+      {
+        "description": "Convene Emergency Data Quality Committee with first session by 30 July 2026.",
+        "owner": "Priya Nair",
+        "due_date": "2026-07-30",
+        "done": true
+      },
+      {
+        "description": "Complete record-level profiling report and distribute to all steering committee members.",
+        "owner": "Aisha Kamara",
+        "due_date": "2026-07-29",
+        "done": true
+      },
+      {
+        "description": "Prepare one-page executive summary for sponsor briefing to CFO and CTO.",
+        "owner": "Priya Nair",
+        "due_date": "2026-07-31",
+        "done": true
+      },
+      {
+        "description": "Onboard Finance analysts (Emma Trent\u2019s team) to migration environment for data audit support.",
+        "owner": "Aisha Kamara",
+        "due_date": "2026-07-31",
+        "done": false
+      },
+      {
+        "description": "Issue updated programme critical path analysis reflecting data quality delay.",
+        "owner": "Priya Nair",
+        "due_date": "2026-08-01",
+        "done": true
+      }
+    ],
+    "transcript": "WEEK 31 ERP PROGRAMME STEERING \u2014 NOTES\nDate: 2026-07-28 | Chair: Priya Nair | Location: Board Room 3 / Teams\n\nPriya Nair opened the meeting and immediately flagged that the data profiling results received this morning represent a material change to programme status.\n\n[AISHA KAMARA]: The BODS profiling job completed overnight. I\u2019ve run full validation today and confirmed 43,847 records in GL_ACCOUNTS with at least one null mandatory field. This affects approximately 31% of the total GL account master dataset. The fields impacted are cost_centre (38,211 nulls), profit_centre (41,903 nulls), and account_type (12,540 nulls). Company codes GBUK and DEFRANKFURT are the most affected. My working hypothesis is that these records were migrated from a pre-ECC legacy system around 2014 and the mandatory fields were not populated at that time.\n\n[MARCUS CHEN]: This is consistent with what I know about those two company codes. They were brought onto ECC in a rush cut-over in 2014 and the data quality controls were not as mature as they are now. The question is: can we infer the correct values from the account group hierarchy, or does Finance need to manually review all 44k records?\n\n[LIN WEI]: I am not prepared to allow blanket default injection without review. These are general ledger accounts. An incorrect cost centre mapping will corrupt our management accounts from day one of go-live. We need a proper audit.\n\n[PRIYA NAIR]: Agreed. I\u2019m formally classifying the data migration workstream as RED. I will convene an emergency committee this week. Robert, I need your backing for contingency resource spend if we need external consultants.\n\n[ROBERT CHANG]: Approved. Up to \u00a375k without further escalation. Get this sorted, Priya. And please pull the lessons-learned from the 2021 payroll migration \u2014 we had similar issues then and I don\u2019t want to relearn the same lessons.\n\nMeeting closed at 15:45.",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 3002,
+    "project_id": 2,
+    "meeting_title": "Emergency Data Quality Committee Meeting \u2014 Session 1",
+    "attendees": [
+      "Priya Nair (Programme Manager, Chair)",
+      "Aisha Kamara (Data Migration Lead)",
+      "Marcus Chen (SAP Architect)",
+      "Emma Trent (Finance Data Manager)",
+      "Lin Wei (Finance Director, observer)",
+      "Sarah Okafor (PMO)"
+    ],
+    "decisions": [
+      "Option B (Intelligent Default Value Mapping with Finance Sign-Off) selected as the remediation approach for GL_ACCOUNTS null records.",
+      "BODS transformation rules to be drafted by Marcus Chen and reviewed by Aisha Kamara by 7 August 2026.",
+      "Finance sign-off workbook covering all 43,847 records to be prepared by Aisha Kamara, with Emma Trent\u2019s team completing individual record validation.",
+      "Records that cannot be mapped by BODS logic (estimated 9,600) to be escalated to Finance analysts for manual enrichment.",
+      "Weekly committee sessions to continue every Thursday until audit is complete and migration design is signed off.",
+      "Revised migration design target date set to 28 August 2026, subject to Finance review completing by 21 August."
+    ],
+    "action_items": [
+      {
+        "description": "Draft BODS transformation rules for Option B default value mapping, covering account group hierarchy logic.",
+        "owner": "Marcus Chen",
+        "due_date": "2026-08-07",
+        "done": true
+      },
+      {
+        "description": "Prepare Finance sign-off workbook with all 43,847 flagged records and proposed default mappings.",
+        "owner": "Aisha Kamara",
+        "due_date": "2026-08-07",
+        "done": true
+      },
+      {
+        "description": "Assign Finance analysts to record-level review workbook and begin validation of the 9,600 manual-review records.",
+        "owner": "Emma Trent",
+        "due_date": "2026-08-10",
+        "done": false
+      },
+      {
+        "description": "Complete BODS transformation logic peer review and submit for QA testing.",
+        "owner": "Marcus Chen",
+        "due_date": "2026-08-14",
+        "done": false
+      },
+      {
+        "description": "Confirm revised critical path impact to programme steering and update programme plan.",
+        "owner": "Priya Nair",
+        "due_date": "2026-08-05",
+        "done": true
+      },
+      {
+        "description": "Pull and distribute lessons-learned document from 2021 Legacy Payroll Migration to all committee members.",
+        "owner": "Sarah Okafor",
+        "due_date": "2026-08-04",
+        "done": true
+      }
+    ],
+    "transcript": "EMERGENCY DATA QUALITY COMMITTEE \u2014 SESSION 1\nDate: 2026-07-30 | Chair: Priya Nair | Location: Teams call\n\n[PRIYA NAIR]: Thank you all for joining at short notice. The purpose of this committee is to agree the remediation approach for the GL_ACCOUNTS data quality issue, manage the audit programme, and protect the ERP go-live timeline as much as possible.\n\n[MARCUS CHEN]: I\u2019ve prepared three options and circulated them in advance. Let me walk through them quickly. Option A is exclusion of null records from the initial go-live \u2014 clean but creates a two-wave migration and parallel system operation. Option B is intelligent default mapping driven by BODS rules derived from the account group hierarchy, with Finance validating each mapping. Option C is bulk default injection without Finance review \u2014 I\u2019m listing it for completeness but I\u2019m not recommending it.\n\n[LIN WEI]: Option C is off the table. I said that in my email and I mean it. The risk to the statutory accounts is too high. Option A is operationally very disruptive \u2014 my team cannot work across two systems during year-end.\n\n[EMMA TRENT]: Option B is workable. The proposed default mapping workbook format is clear. My four analysts can get through the 9,600 manual records in about two weeks if we prioritise it.\n\n[AISHA KAMARA]: The good news is that Marcus\u2019s BODS logic covers about 78% of records with high confidence \u2014 around 34,000 records. So the Finance manual review workload is about 9,600 records, not 44k. That\u2019s manageable.\n\n[PRIYA NAIR]: Decision taken: we proceed with Option B. Marcus and Aisha, I need the workbook and transformation rules ready for Finance by 7 August. Emma, can you confirm your team starts review on 10 August?\n\n[EMMA TRENT]: Confirmed.\n\n[PRIYA NAIR]: Revised migration design target is 28 August, subject to Finance sign-off completing by 21 August. I\u2019ll communicate this to steering. Next committee session: Thursday 6 August.",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 3003,
+    "project_id": 2,
+    "meeting_title": "Finance Continuity Risk Review",
+    "attendees": [
+      "Lin Wei (Finance Director, Chair)",
+      "Priya Nair (Programme Manager)",
+      "Emma Trent (Finance Data Manager)",
+      "Aisha Kamara (Data Migration Lead)",
+      "David Park (Head of Financial Reporting)",
+      "Sarah Okafor (PMO, note-taker)"
+    ],
+    "decisions": [
+      "ERP go-live must not occur during the period 1 November 2026 to 31 January 2027 (year-end financial close and statutory reporting window).",
+      "If the programme cannot achieve a stable go-live before 1 October 2026 (UAT complete + hypercare buffer), go-live will be deferred to March 2027 to avoid the year-end window.",
+      "Finance to prepare a manual contingency plan covering all month-end close activities for November and December 2026 in case ERP is live but unstable.",
+      "SAP parallel run (legacy ECC and S/4HANA operating simultaneously for at least one full month-end cycle) is mandatory before go-live approval.",
+      "Data migration must achieve 100% reconciliation of opening GL balances (within agreed tolerance of 0.01%) before Finance sign-off on go-live.",
+      "Lin Wei to brief the CFO by 5 August with a Finance Continuity Risk Summary, co-authored with Priya Nair."
+    ],
+    "action_items": [
+      {
+        "description": "Document year-end blackout period (1 Nov 2026 \u2014 31 Jan 2027) in the programme constraints register.",
+        "owner": "Priya Nair",
+        "due_date": "2026-08-05",
+        "done": true
+      },
+      {
+        "description": "Prepare Finance Continuity Risk Summary for CFO briefing.",
+        "owner": "Lin Wei",
+        "due_date": "2026-08-05",
+        "done": false
+      },
+      {
+        "description": "Draft Finance manual contingency plan for November and December 2026 month-end close.",
+        "owner": "David Park",
+        "due_date": "2026-08-21",
+        "done": false
+      },
+      {
+        "description": "Confirm parallel run requirements and duration with Marcus Chen and include in revised programme plan.",
+        "owner": "Priya Nair",
+        "due_date": "2026-08-10",
+        "done": false
+      },
+      {
+        "description": "Define GL balance reconciliation tolerance and acceptance criteria for go-live data sign-off.",
+        "owner": "Aisha Kamara",
+        "due_date": "2026-08-14",
+        "done": false
+      }
+    ],
+    "transcript": "FINANCE CONTINUITY RISK REVIEW\nDate: 2026-08-01 | Chair: Lin Wei | Location: Finance Committee Room\n\n[LIN WEI]: I called this meeting because I need the programme to understand our constraints very precisely. The ERP programme is important, but it cannot break Finance operations during the most critical period of our year. Let me state the non-negotiables.\n\n[DAVID PARK]: From a reporting perspective, we are completely locked down from 1 November. That\u2019s when we begin the year-end accruals process. By mid-November we are running the IFRS consolidation pack. December is statutory accounts and tax. Any system instability in that window is catastrophic.\n\n[LIN WEI]: Exactly. So my position is: if we are not in a stable, hypercare-complete state by 1 October 2026, the go-live must be deferred to March 2027. That is a binary decision.\n\n[PRIYA NAIR]: I understand and I will register that as a hard constraint. The current revised timeline, assuming the GL_ACCOUNTS remediation completes by 21 August, gives us a migration design sign-off in late August, ETL development through September-October, integration testing in November, and Finance UAT in December-January. That timetable does not hit a 1 October go-live. We are almost certainly looking at March 2027 unless we can significantly compress later phases.\n\n[LIN WEI]: Then we need to plan for March 2027 and ensure the year-end is protected regardless. Emma, David \u2014 I need a manual contingency plan for November and December so that if something unexpected happens with the ERP, Finance can still close the books.\n\n[EMMA TRENT]: Understood. We still have the old month-end runbooks from ECC. I\u2019ll update them and have a draft by 21 August.\n\n[AISHA KAMARA]: One thing I want to confirm: do you require a full parallel run, and if so, for how long?\n\n[LIN WEI]: Minimum one full month-end cycle. Non-negotiable. If we can do two cycles, even better.\n\n[PRIYA NAIR]: I\u2019ll build that into the revised programme plan. Thank you, Lin. I\u2019ll co-author the CFO briefing with you \u2014 can we get together Thursday morning?\n\n[LIN WEI]: Thursday works. Let\u2019s keep it factual and honest about the risks.",
+    "created_at": null,
+    "updated_at": null
+  }
+]

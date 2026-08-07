@@ -1,0 +1,62 @@
+[
+  {
+    "id": 4001,
+    "project_id": 1,
+    "title": "Vendor Delivery Failure (CloudSphere Inc.)",
+    "probability": "high",
+    "impact": "critical",
+    "owner": "James Okonkwo",
+    "mitigation": "1. Formal SLA penalty clause invoked under Section 14.3 of the CloudSphere contract (effective 22 July 2026); penalty invoice of £340,000 issued. 2. Director-level signed delivery commitment obtained from CloudSphere confirming Week 35 (28 August 2026) as revised handover date. 3. Weekly vendor governance call established; CloudSphere attending Monday 09:00. 4. API Integration pre-work (design documentation, interface specs) commenced in parallel to recover float. 5. Programme Board contingency of £120,000 approved and released to fund recovery activities. 6. Contract termination options paper prepared by Legal for contingency use if CloudSphere misses Week 35. 7. Daily delivery status monitoring to commence from 17 August with written confirmation requested by 21 August.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 4002,
+    "project_id": 1,
+    "title": "Programme Timeline Overrun",
+    "probability": "high",
+    "impact": "high",
+    "owner": "James Okonkwo",
+    "mitigation": "Revised critical path maintained with zero float from Week 35 onwards. Scope rationalisation exercise underway to identify MVP candidate for go-live deferring lower-priority integrations to Phase 2. Compressed UAT cycle being pre-planned by Tom Bradley with additional contractor resourcing approved. Weekly escalation reporting to Programme Board established. Any further schedule slippage to be escalated to Board within 24 hours.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 4003,
+    "project_id": 1,
+    "title": "Budget Overrun due to Vendor Delay",
+    "probability": "medium",
+    "impact": "high",
+    "owner": "Sarah Mitchell",
+    "mitigation": "£120,000 contingency reserve released by Programme Board (1 August 2026) to cover extended programme management overhead, parallel pre-work activities, and additional UAT resourcing. SLA penalty recovery of £340,000 invoiced to CloudSphere to partially offset programme cost impact. CFO briefed and monitoring budget position monthly. Further contingency release will require Board approval.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 4004,
+    "project_id": 1,
+    "title": "Cloud Security Misconfiguration",
+    "probability": "medium",
+    "impact": "critical",
+    "owner": "Carlos Rivera",
+    "mitigation": "Zero-trust security architecture being designed and validated by Carlos Rivera (Task 103, currently 60% complete). All Azure configuration to be reviewed against CIS Level 2 benchmark before any production workload onboarding. Automated compliance scanning via Microsoft Defender for Cloud configured in infrastructure-as-code pipeline. Penetration test commissioned for November 2026 prior to UAT go-live gate. Security sign-off required as a go-live readiness gate criterion.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 4005,
+    "project_id": 1,
+    "title": "Key Personnel Availability (UAT Phase)",
+    "probability": "low",
+    "impact": "medium",
+    "owner": "Tom Bradley",
+    "mitigation": "Business test leads pre-identified and informal availability confirmed for November UAT window. Two additional UAT contractor resources approved for procurement by 21 August 2026 to reduce dependency on single individuals. UAT scheduling to be confirmed with business units by end of September once API Integration delivery date is firmed up. Risk accepted at current probability given low likelihood of simultaneous unavailability.",
+    "status": "accepted",
+    "created_at": null,
+    "updated_at": null
+  }
+]

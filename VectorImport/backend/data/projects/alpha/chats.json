@@ -1,0 +1,98 @@
+[
+  {
+    "id": 2001,
+    "project_id": 1,
+    "channel": "#project-alpha",
+    "sender": "carlos.rivera",
+    "timestamp": "2026-07-14T10:22:00+00:00",
+    "message": "@james.okonkwo heads up — just got off a call with our CloudSphere contact. They haven't shipped the API gateway kit. Today was supposed to be the handover date (Week 28). Their account manager is being vague, talking about 'supply chain complications'. I've put a blocker on Task 102. We need to escalate this immediately.",
+    "thread_id": null,
+    "reactions": {"😬": 4, "🚨": 3},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2002,
+    "project_id": 1,
+    "channel": "#project-alpha",
+    "sender": "james.okonkwo",
+    "timestamp": "2026-07-14T10:51:00+00:00",
+    "message": "Thanks Carlos. I'm aware — I've been trying to get Dan Webb on the phone since 9am. No answer. I'm sending a formal written escalation to him and copying Sarah Mitchell this afternoon. Please document the blocker in the task tracker with today's date and keep a log of any communications from their side. This needs a paper trail.",
+    "thread_id": null,
+    "reactions": {"👍": 5, "✅": 2},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2003,
+    "project_id": 1,
+    "channel": "#project-alpha",
+    "sender": "aisha.kamara",
+    "timestamp": "2026-07-14T11:15:00+00:00",
+    "message": "Just to make sure everyone understands the cascade here — Task 104 (my API integration work) cannot start until the gateway is live. If we're looking at even a 2-week delay from CloudSphere, we eat through all our float on the critical path. I've already flagged this in the risk register. A 4-week slip puts go-live at serious risk. 😤",
+    "thread_id": null,
+    "reactions": {"😰": 6, "💯": 3},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2004,
+    "project_id": 1,
+    "channel": "#vendor-management",
+    "sender": "carlos.rivera",
+    "timestamp": "2026-07-18T16:05:00+00:00",
+    "message": "Logging this here for visibility: CloudSphere formal escalation was sent by James this morning (Fri 18 Jul). We've given them EOD today to respond with a committed delivery date. If there's nothing by close of business I'm recommending we look at whether we can source the gateway hardware ourselves and absorb the cost — might be faster than waiting on them. Has anyone done a market check on Azure-compatible API gateway appliances?",
+    "thread_id": null,
+    "reactions": {"🔥": 2, "👀": 5},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2005,
+    "project_id": 1,
+    "channel": "#vendor-management",
+    "sender": "priya.nair",
+    "timestamp": "2026-07-20T15:10:00+00:00",
+    "message": "I saw CloudSphere came back today committing to Week 35 (28 Aug). Honestly, I'm not reassured. They missed Week 28 with zero warning. What's to stop them missing Week 35 too? I'd strongly recommend we treat 28 Aug as their LATEST acceptable date and plan our data pipeline work on the assumption they'll be late. I've already restructured my sprint plan accordingly.",
+    "thread_id": null,
+    "reactions": {"💯": 7, "👍": 4},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2006,
+    "project_id": 1,
+    "channel": "#project-alpha",
+    "sender": "james.okonkwo",
+    "timestamp": "2026-07-22T09:00:00+00:00",
+    "message": "Team update: Emergency steering meeting completed this morning. Key outcomes — (1) SLA penalty clause formally invoked as of today, legal letter going out to CloudSphere today. (2) CloudSphere confirmed for weekly governance call every Monday 9am from next week. (3) Aisha's team to proceed with parallel API design work where possible. (4) Programme Board update scheduled for 1 Aug. No change to our commitment to hit the Dec 31 go-live — but zero float from here. Stay sharp everyone.",
+    "thread_id": null,
+    "reactions": {"💪": 8, "👍": 6, "😤": 3},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2007,
+    "project_id": 1,
+    "channel": "#project-alpha",
+    "sender": "tom.bradley",
+    "timestamp": "2026-07-22T09:35:00+00:00",
+    "message": "Noted James. From a UAT perspective — if the API integration doesn't land until mid-November, I need to start pre-planning now to compress the UAT cycle. I'm going to reach out to the business test leads today to start building the test team and prepping scripts, even though we can't execute yet. Better to be ready than scramble when the time comes.",
+    "thread_id": null,
+    "reactions": {"🙌": 5, "👍": 4},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2008,
+    "project_id": 1,
+    "channel": "#project-alpha",
+    "sender": "carlos.rivera",
+    "timestamp": "2026-08-07T08:45:00+00:00",
+    "message": "Week 32 check-in: still no movement from CloudSphere. They attended Monday's governance call but couldn't confirm the 28 Aug date is still on track — their delivery manager said 'we're still targeting it'. Not exactly confidence-inspiring. I've raised with James. We're three weeks out from their revised commitment and they can't confirm? Starting to think we need a Plan B conversation at the board.",
+    "thread_id": null,
+    "reactions": {"😡": 5, "😬": 7, "🚨": 4},
+    "created_at": null,
+    "updated_at": null
+  }
+]

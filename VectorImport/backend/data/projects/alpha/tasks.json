@@ -1,0 +1,111 @@
+[
+  {
+    "id": 101,
+    "project_id": 1,
+    "title": "Define Programme Scope and Objectives",
+    "description": "Establish the full scope, objectives, success criteria, and governance framework for the Digital Transformation Programme. Includes stakeholder alignment workshops, scope documentation, and sign-off by the Programme Board.",
+    "owner": "James Okonkwo",
+    "priority": "high",
+    "status": "completed",
+    "due_date": "2026-02-28",
+    "completion": 100,
+    "dependencies": [],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 102,
+    "project_id": 1,
+    "title": "Cloud Infrastructure Setup (Azure)",
+    "description": "Provision and configure the Azure landing zone including VNets, ExpressRoute connectivity, API gateway, network peering between on-premise and cloud environments, identity federation, and baseline security controls. Delivery of API gateway components is contracted to CloudSphere Inc.",
+    "owner": "Carlos Rivera",
+    "priority": "critical",
+    "status": "blocked",
+    "due_date": "2026-05-30",
+    "completion": 15,
+    "dependencies": [101],
+    "blockers": [
+      "CloudSphere Inc. has not delivered the contracted API gateway components and network peering configuration. Original delivery commitment was Week 28 (14 Jul 2026). No confirmed revised delivery date has been provided as of 07 Aug 2026."
+    ],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 103,
+    "project_id": 1,
+    "title": "Security Architecture and Zero-Trust Design",
+    "description": "Design and implement the enterprise zero-trust security architecture across cloud and hybrid environments. Includes identity and access management (IAM) policies, network segmentation, privileged access workstations (PAW), endpoint detection and response (EDR) integration, and security baseline hardening aligned to CIS Level 2.",
+    "owner": "Carlos Rivera",
+    "priority": "high",
+    "status": "in_progress",
+    "due_date": "2026-06-30",
+    "completion": 60,
+    "dependencies": [101],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 104,
+    "project_id": 1,
+    "title": "API Integration Development (SAP-Azure Bridge)",
+    "description": "Develop and test the integration layer bridging the on-premise SAP ERP system with the Azure cloud platform. Includes API design, middleware development, data transformation pipelines, error handling, retry logic, and end-to-end integration testing. This task is critically dependent on the Azure API gateway being operational (Task 102).",
+    "owner": "Aisha Kamara",
+    "priority": "critical",
+    "status": "open",
+    "due_date": "2026-08-31",
+    "completion": 0,
+    "dependencies": [102],
+    "blockers": [
+      "Cannot begin until Cloud Infrastructure Setup (Task 102) is complete. Currently blocked pending CloudSphere Inc. delivery of API gateway components. Earliest start date is now estimated at 03 Sep 2026 based on CloudSphere's revised Week 35 commitment."
+    ],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 105,
+    "project_id": 1,
+    "title": "Data Pipeline Migration",
+    "description": "Migrate existing on-premise ETL pipelines and data warehouse workloads to Azure Data Factory and Azure Synapse Analytics. Includes pipeline re-engineering, data quality validation, historical data backfill, and performance benchmarking. Currently proceeding in parallel where infrastructure-independent components allow.",
+    "owner": "Priya Nair",
+    "priority": "high",
+    "status": "in_progress",
+    "due_date": "2026-09-30",
+    "completion": 35,
+    "dependencies": [101],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 106,
+    "project_id": 1,
+    "title": "User Acceptance Testing (UAT)",
+    "description": "Execute end-to-end User Acceptance Testing across all integrated system components including SAP-Azure integration, data pipelines, and user-facing applications. Includes test planning, test environment provisioning, business user engagement, defect triage, and sign-off. Cannot begin until API Integration (Task 104) and Data Pipeline Migration (Task 105) are complete.",
+    "owner": "Tom Bradley",
+    "priority": "medium",
+    "status": "open",
+    "due_date": "2026-11-15",
+    "completion": 0,
+    "dependencies": [104, 105],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 107,
+    "project_id": 1,
+    "title": "Go-Live Readiness Review and Cutover",
+    "description": "Conduct the formal go-live readiness review gate, execute the production cutover plan, and manage the hypercare period post-cutover. Includes cutover rehearsal, rollback plan validation, stakeholder communications, and transition to BAU operations. Contingent on successful completion of UAT (Task 106).",
+    "owner": "James Okonkwo",
+    "priority": "critical",
+    "status": "open",
+    "due_date": "2026-12-15",
+    "completion": 0,
+    "dependencies": [106],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  }
+]
