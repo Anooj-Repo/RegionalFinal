@@ -983,6 +983,50 @@ function renderProjectsTab() {
   `;
 }
 
+// RAID Risk Discovery Handler
+async function triggerRaidRiskDiscovery() {
+  state.isAnalyzingRisk = true;
+  renderApp();
+
+  const res = await apiPost('/raid/discover-risks', {
+    project_code: state.selectedProjectCode
+  });
+
+  state.isAnalyzingRisk = false;
+
+  if (res && res.discovered_risk) {
+    state.aiDiscoveredRisk = res.discovered_risk;
+    renderApp();
+  } else {
+    alert("AI Risk Analysis completed. No new un-tracked risks discovered for " + state.selectedProjectCode);
+    renderApp();
+  }
+}
+
+async function confirmCreateDiscoveredRisk() {
+  if (!state.aiDiscoveredRisk) return;
+  const d = state.aiDiscoveredRisk;
+
+  const res = await apiPost('/raid', {
+    project_id: d.project_id,
+    category: d.category,
+    title: d.title,
+    description: d.description,
+    likelihood: d.likelihood,
+    impact: d.impact,
+    risk_score: d.risk_score,
+    owner_name: d.owner_name,
+    root_cause: d.root_cause
+  });
+
+  if (res && res.status === 'success') {
+    alert(`Success! New Risk Item "${d.title}" (Score ${d.risk_score}) created in RAID Register (app.db).`);
+    state.aiDiscoveredRisk = null;
+    await refreshWorkspaceData();
+    renderApp();
+  }
+}
+
 // 3. RAID Register / Risk Center Tab View
 function renderRaidTab() {
   return `
@@ -991,8 +1035,9 @@ function renderRaidTab() {
         <h1 class="page-title">Risk Center (RAID Register)</h1>
         <p class="page-subtitle">Active risks, assumptions, issues, and dependencies for ${state.selectedProjectCode}</p>
       </div>
-      <button class="btn-primary" onclick="triggerMultiAgentWorkflow()">
-        <span class="material-symbols-outlined">smart_toy</span> Run LangGraph RAID Analysis
+      <button class="btn-primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; font-weight:700; display:flex; align-items:center; gap:8px; border:none; padding:10px 16px; border-radius:8px; cursor:pointer;" onclick="triggerRaidRiskDiscovery()" ${state.isAnalyzingRisk ? 'disabled' : ''}>
+        <span class="material-symbols-outlined" style="color:#facc15">bolt</span>
+        ${state.isAnalyzingRisk ? 'AI Scanning Chat Logs...' : 'Run LangGraph RAID Analysis'}
       </button>
     </div>
 
@@ -1023,8 +1068,66 @@ function renderRaidTab() {
         </table>
       </div>
     </div>
+
+    ${state.aiDiscoveredRisk ? renderDiscoveredRiskModal() : ''}
   `;
 }
+
+// Render Discovered Risk Modal Overlay
+function renderDiscoveredRiskModal() {
+  const d = state.aiDiscoveredRisk;
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-window" style="max-width: 650px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+          <h3 style="font-size:18px; font-weight:700; color:var(--on-surface); display:flex; align-items:center; gap:8px;">
+            <span class="material-symbols-outlined" style="color:#facc15">bolt</span>
+            AI RAID Risk Discovery & Recommendation
+          </h3>
+          <button class="btn-secondary" onclick="state.aiDiscoveredRisk=null; renderApp();" style="padding:4px 8px">✕</button>
+        </div>
+
+        <div style="background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+            <span class="chip chip-danger" style="font-size:11px; font-weight:700">NEW DISCOVERED ${d.category.toUpperCase()}</span>
+            <span class="chip chip-info" style="font-size:11px">Source: ${d.source_feed || 'Slack/Teams Chat'}</span>
+          </div>
+          <h4 style="font-size:16px; font-weight:700; color:var(--on-surface); margin-bottom:6px">${d.title}</h4>
+          <p style="font-size:13px; color:var(--on-surface-variant); line-height:1.5">${d.description}</p>
+        </div>
+
+        <div style="grid-template-columns: 1fr 1fr 1fr; display:grid; gap:12px; margin-bottom:16px">
+          <div style="background:var(--surface-container-low); padding:10px; border-radius:6px">
+            <span style="font-size:11px; color:var(--on-surface-variant)">Likelihood / Impact</span>
+            <div style="font-weight:700; font-size:14px; margin-top:2px">${d.likelihood} / ${d.impact}</div>
+          </div>
+          <div style="background:var(--surface-container-low); padding:10px; border-radius:6px">
+            <span style="font-size:11px; color:var(--on-surface-variant)">Calculated Risk Score</span>
+            <div style="font-weight:800; font-size:16px; color:#dc2626; margin-top:2px">${d.risk_score} (HIGH)</div>
+          </div>
+          <div style="background:var(--surface-container-low); padding:10px; border-radius:6px">
+            <span style="font-size:11px; color:var(--on-surface-variant)">Assigned Owner</span>
+            <div style="font-weight:700; font-size:14px; margin-top:2px">${d.owner_name}</div>
+          </div>
+        </div>
+
+        <div style="background:var(--surface-container-low); padding:12px; border-radius:6px; margin-bottom:16px">
+          <span style="font-size:11px; font-weight:700; color:var(--on-surface-variant)">Identified Root Cause:</span>
+          <p style="font-size:13px; color:var(--on-surface); margin-top:4px">${d.root_cause}</p>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:12px">
+          <button class="btn-secondary" onclick="state.aiDiscoveredRisk=null; renderApp();">Dismiss</button>
+          <button class="btn-success" style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:#fff; font-weight:700; padding:10px 16px; border:none; border-radius:6px; cursor:pointer;" onclick="confirmCreateDiscoveredRisk()">
+            <span class="material-symbols-outlined" style="font-size:16px">add_circle</span>
+            ➕ Confirm & Create New Risk in Register
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 
 // 4. Communication Center Tab View
 // 4. Communication Center Tab View
