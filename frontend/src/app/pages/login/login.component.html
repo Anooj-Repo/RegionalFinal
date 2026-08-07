@@ -1,29 +1,69 @@
-<div class="modal-overlay" style="background:#0a0e17;">
-  <div class="modal-card" style="max-width:420px; border:1px solid var(--card-border);">
-    <div style="text-align:center; margin-bottom:24px;">
-      <div class="nav-logo" style="margin:0 auto 12px auto; width:48px; height:48px; font-size:22px;">PM</div>
-      <h2 style="color:#fff; font-size:20px;">Enterprise PM AI Login</h2>
-      <p style="color:var(--text-muted); font-size:12px; margin-top:4px;">Sign in to access Role Workspaces & Risk Intelligence</p>
+<div class="login-split-container">
+  <!-- Left Hero Banner -->
+  <section class="login-left-banner">
+    <div>
+      <h1 style="font-size:36px; font-weight:800; tracking-tight: -0.02em">PM AI</h1>
+      <p style="font-size:20px; font-weight:600; color:#b2c5ff; margin-top:8px">Program Management<br>AI Assistant</p>
     </div>
 
-    <div *ngIf="errorMessage" class="badge badge-critical" style="display:block; text-align:center; margin-bottom:16px; padding:10px;">
-      {{ errorMessage }}
+    <div style="display:flex; justify-content:center; align-items:center; margin:32px 0">
+      <div style="width:280px; height:280px; background:url('https://lh3.googleusercontent.com/aida-public/AB6AXuAKSjthA8wIZ6_-QpIsv3LUnpQ_v3cSC3ZrTIkbzobDajUEiaVb9sAF7r4DfHbfh86vUgoT61rl1MSIfNNPDYOzunuFreDViVzpfuxRW3a376MsCu1WgcPLwkxyAOU3O1zXJI43acWJ8m2osibESbC-uzJUzRJ5Z92fiya2kaKA7sVgquh4eOqq6aZXtkFu0lupWyhpAL-g94Efm2tf1HlEtLYg3irxDTWaNB_q5KDM1S8hnhkd2ZXT') center/contain no-repeat"></div>
     </div>
 
-    <form (ngSubmit)="onLogin()">
-      <label style="font-size:12px; font-weight:bold; color:var(--text-muted);">Username:</label>
-      <input type="text" [(ngModel)]="username" name="username" required style="width:100%; background:var(--bg-dark); border:1px solid var(--card-border); color:#fff; padding:10px; margin-bottom:16px; border-radius:6px; outline:none;">
-
-      <label style="font-size:12px; font-weight:bold; color:var(--text-muted);">Password:</label>
-      <input type="password" [(ngModel)]="password" name="password" required style="width:100%; background:var(--bg-dark); border:1px solid var(--card-border); color:#fff; padding:10px; margin-bottom:20px; border-radius:6px; outline:none;">
-
-      <button type="submit" class="btn" style="width:100%; padding:12px;" [disabled]="isLoading">
-        {{ isLoading ? 'Authenticating...' : 'Sign In with JWT' }}
-      </button>
-    </form>
-
-    <div style="margin-top:20px; text-align:center; font-size:11px; color:var(--text-muted);">
-      Sample Credentials: <strong>rohit / user123</strong> (Program Manager) | <strong>admin / admin123</strong> (Admin)
+    <div>
+      <h2 style="font-size:20px; font-weight:600; margin-bottom:4px">AI-Powered Risk Analysis</h2>
+      <p style="font-size:14px; color:#b2c5ff">and Stakeholder Communication</p>
     </div>
-  </div>
+  </section>
+
+  <!-- Right Login Form Card -->
+  <section class="login-right-form">
+    <div class="login-form-box">
+      <div style="margin-bottom:32px">
+        <h2 style="font-size:24px; font-weight:700; color:var(--on-surface); margin-bottom:6px">Welcome Back!</h2>
+        <p style="color:var(--on-surface-variant); font-size:14px">Sign in to continue to your account</p>
+      </div>
+
+      <form (submit)="onLogin($event)">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <div class="input-with-icon">
+            <span class="material-symbols-outlined">mail</span>
+            <input type="email" id="email" placeholder="Enter your email" value="rohit@company.com" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
+            <label for="password" style="margin-bottom:0">Password</label>
+            <a href="#" style="font-size:12px; color:var(--primary-container); text-decoration:none; font-weight:600">Forgot Password?</a>
+          </div>
+          <div class="input-with-icon">
+            <span class="material-symbols-outlined">lock</span>
+            <input type="password" id="password" placeholder="Enter your password" value="••••••••" required />
+          </div>
+        </div>
+
+        <div style="margin-top:24px">
+          <button type="submit" class="btn-primary" style="width:100%; justify-content:center; padding:12px">
+            Sign In
+          </button>
+        </div>
+
+        <div style="display:flex; align-items:center; margin:20px 0">
+          <div style="flex:1; border-top:1px solid var(--outline-variant)"></div>
+          <span style="margin:0 12px; font-size:12px; color:var(--outline)">or</span>
+          <div style="flex:1; border-top:1px solid var(--outline-variant)"></div>
+        </div>
+
+        <button type="button" class="btn-secondary" style="width:100%; justify-content:center; padding:12px">
+          <span class="material-symbols-outlined">shield_person</span> Sign in with SSO
+        </button>
+      </form>
+    </div>
+
+    <div style="margin-top:40px; text-align:center">
+      <p style="font-size:12px; color:var(--outline)">© 2025 PM AI Assistant. All rights reserved.</p>
+    </div>
+  </section>
 </div>
