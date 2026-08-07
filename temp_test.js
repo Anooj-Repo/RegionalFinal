@@ -8,12 +8,6 @@ const API_BASE_URL = 'http://127.0.0.1:5000/api';
 // Application State Store
 const state = {
   currentRole: 'Program Manager',
-  currentUser: {
-    username: 'rohit',
-    full_name: 'Rohit Verma',
-    role: 'Program Manager',
-    email: 'rohit.verma@pmai.com'
-  },
   selectedProjectCode: 'PRJ-001',
   projects: [],
   tasks: [],
@@ -23,46 +17,16 @@ const state = {
   telemetry: {},
   authToken: null,
   activeTab: 'login',
-  selectedDateRange: { start: '2025-05-12', end: '2025-05-18' },
   selectedEmailForApproval: null,
   isRecordingVoice: false,
   nodeTraces: [],
-  isTraceExpanded: false,
-  isCustomizeModalOpen: false,
-  dashboardWidgetOrder: ['kpis', 'heatmap', 'breakdown', 'flowchart'],
-  widgetVisibility: {
-    kpis: true,
-    heatmap: true,
-    breakdown: true,
-    flowchart: true
-  }
+  isTraceExpanded: false
 };
 
 // Initialize Application
 async function initApp() {
   console.log('[PM AI App] Initializing Stitch PM Portal Engine...');
-
-  const savedToken = localStorage.getItem('pmai_auth_token');
-  const savedUser = localStorage.getItem('pmai_current_user');
-  const savedTab = localStorage.getItem('pmai_active_tab');
-  const savedProject = localStorage.getItem('pmai_selected_project');
-
-  if (savedToken && savedUser) {
-    try {
-      state.authToken = savedToken;
-      state.currentUser = JSON.parse(savedUser);
-      state.currentRole = state.currentUser.role || 'Program Manager';
-      state.activeTab = (savedTab && savedTab !== 'login') ? savedTab : 'dashboard';
-      if (savedProject) state.selectedProjectCode = savedProject;
-      console.log(`[Auth Session Restored] Restored session for ${state.currentUser.full_name} (${state.activeTab})`);
-    } catch (e) {
-      console.warn('[Auth Session Error] Restoring session failed:', e);
-      state.activeTab = 'login';
-    }
-  } else {
-    state.activeTab = 'login';
-  }
-
+  await loginAsDefaultUser();
   await loadProjects();
   await refreshWorkspaceData();
   renderApp();
@@ -79,120 +43,11 @@ async function loginAsDefaultUser() {
     if (res.ok) {
       const data = await res.json();
       state.authToken = data.access_token;
-      if (data.user) {
-        state.currentUser = data.user;
-        state.currentRole = data.user.role || 'Program Manager';
-      }
-      persistSession();
-      console.log(`[Auth] Authenticated as ${state.currentUser.full_name} (${state.currentRole})`);
+      console.log(`[Auth] Authenticated as ${data.user.full_name} (${data.user.role})`);
     }
   } catch (err) {
     console.error('[Auth Error] Backend API offline or unreachable:', err);
   }
-}
-
-// Session Persistence Helper
-function persistSession() {
-  if (state.authToken) localStorage.setItem('pmai_auth_token', state.authToken);
-  if (state.currentUser) localStorage.setItem('pmai_current_user', JSON.stringify(state.currentUser));
-  if (state.activeTab) localStorage.setItem('pmai_active_tab', state.activeTab);
-  if (state.selectedProjectCode) localStorage.setItem('pmai_selected_project', state.selectedProjectCode);
-}
-
-// User Profile Avatar Helper
-function getUserAvatar(user) {
-  if (!user) return 'https://lh3.googleusercontent.com/aida-public/AB6AXuCbcPHmQncMqeCyloxxFVdcQt82FdGRiPqJn4bdegkraWZJLbyoFF3FBb0UDFAHhop6wy41Pe-HfG8kF8D2j-nzH0ujTdtnWG2HSzd8sKaRyOdSdrbFPRT4UMYeELXSrNaljIIOIwk4lMEdu-8ty-JKlxAckqbyQ7zmu-bt-1v9EFRqEiHP2sq9bWYW4kAFAcn8Gm3s3TMyRJNpznTOQc_MauIOb3Epf8NinZ4bbvjZ12R9syMjguMG';
-  
-  const avatars = {
-    'rohit': 'https://lh3.googleusercontent.com/aida-public/AB6AXuCbcPHmQncMqeCyloxxFVdcQt82FdGRiPqJn4bdegkraWZJLbyoFF3FBb0UDFAHhop6wy41Pe-HfG8kF8D2j-nzH0ujTdtnWG2HSzd8sKaRyOdSdrbFPRT4UMYeELXSrNaljIIOIwk4lMEdu-8ty-JKlxAckqbyQ7zmu-bt-1v9EFRqEiHP2sq9bWYW4kAFAcn8Gm3s3TMyRJNpznTOQc_MauIOb3Epf8NinZ4bbvjZ12R9syMjguMG',
-    'amit': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-    'sneha': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80',
-    'admin': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-    'karan': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
-    'priya': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80'
-  };
-
-  return avatars[user.username] || avatars['rohit'];
-}
-
-// Login Form Submit Handler
-async function handleLoginSubmit(event) {
-  if (event) event.preventDefault();
-  const usernameInput = document.getElementById('loginEmail')?.value || 'rohit';
-  const passwordInput = document.getElementById('loginPassword')?.value || 'user123';
-
-  let username = usernameInput.trim();
-  if (username.includes('@')) {
-    username = username.split('@')[0].split('.')[0];
-  }
-
-  console.log(`[Auth] Executing login for username: ${username}`);
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username, password: passwordInput })
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      state.authToken = data.access_token;
-      if (data.user) {
-        state.currentUser = data.user;
-        state.currentRole = data.user.role || 'Program Manager';
-      }
-      console.log(`[Auth Success] Logged in as ${state.currentUser.full_name} (${state.currentRole})`);
-      state.activeTab = 'dashboard';
-      persistSession();
-      await refreshWorkspaceData();
-      renderApp();
-      return;
-    }
-  } catch (err) {
-    console.warn('[Auth Warning] Backend API offline, using local user profile mapping:', err);
-  }
-
-  const userMap = {
-    'rohit': { username: 'rohit', full_name: 'Rohit Verma', role: 'Program Manager', email: 'rohit.verma@pmai.com' },
-    'amit': { username: 'amit', full_name: 'Amit Joshi', role: 'Project Manager', email: 'amit.joshi@pmai.com' },
-    'sneha': { username: 'sneha', full_name: 'Sneha Iyer', role: 'Team Lead', email: 'sneha.iyer@pmai.com' },
-    'admin': { username: 'admin', full_name: 'System Administrator', role: 'Admin', email: 'admin@pmai.com' },
-    'karan': { username: 'karan', full_name: 'Karan Patel', role: 'Executive', email: 'karan.patel@pmai.com' },
-    'priya': { username: 'priya', full_name: 'Priya Sharma', role: 'Viewer', email: 'priya.sharma@pmai.com' }
-  };
-
-  const user = userMap[username.toLowerCase()] || {
-    username: username,
-    full_name: username.charAt(0).toUpperCase() + username.slice(1) + ' User',
-    role: 'Program Manager',
-    email: `${username}@pmai.com`
-  };
-
-  state.currentUser = user;
-  state.currentRole = user.role;
-  state.activeTab = 'dashboard';
-  persistSession();
-  await refreshWorkspaceData();
-  renderApp();
-}
-
-// Navigation & Tab Switcher
-function switchTab(tabName) {
-  state.activeTab = tabName;
-  localStorage.setItem('pmai_active_tab', tabName);
-  renderApp();
-}
-
-// Logout Handler
-function logoutUser() {
-  localStorage.removeItem('pmai_auth_token');
-  localStorage.removeItem('pmai_current_user');
-  localStorage.setItem('pmai_active_tab', 'login');
-  state.authToken = null;
-  state.currentUser = null;
-  state.activeTab = 'login';
-  renderApp();
 }
 
 // API Helpers
@@ -285,56 +140,6 @@ function setRole(roleName) {
 async function setProject(projectCode) {
   state.selectedProjectCode = projectCode;
   await refreshWorkspaceData();
-  renderApp();
-}
-
-function handleDateRangeChange() {
-  const start = document.getElementById('dateRangeStart')?.value;
-  const end = document.getElementById('dateRangeEnd')?.value;
-  if (start && end) {
-    state.selectedDateRange = { start, end };
-    console.log(`[Date Range Filter] Updated date range: ${start} to ${end}`);
-    renderApp();
-  }
-}
-
-// Dashboard Grid Layout Customizer Handlers
-function openCustomizeModal() {
-  state.isCustomizeModalOpen = true;
-  renderApp();
-}
-
-function closeCustomizeModal() {
-  state.isCustomizeModalOpen = false;
-  renderApp();
-}
-
-function moveWidgetUp(index) {
-  if (index > 0) {
-    const temp = state.dashboardWidgetOrder[index];
-    state.dashboardWidgetOrder[index] = state.dashboardWidgetOrder[index - 1];
-    state.dashboardWidgetOrder[index - 1] = temp;
-    renderApp();
-  }
-}
-
-function moveWidgetDown(index) {
-  if (index < state.dashboardWidgetOrder.length - 1) {
-    const temp = state.dashboardWidgetOrder[index];
-    state.dashboardWidgetOrder[index] = state.dashboardWidgetOrder[index + 1];
-    state.dashboardWidgetOrder[index + 1] = temp;
-    renderApp();
-  }
-}
-
-function toggleWidgetVisibility(widgetKey) {
-  state.widgetVisibility[widgetKey] = !state.widgetVisibility[widgetKey];
-  renderApp();
-}
-
-function resetDashboardLayout() {
-  state.dashboardWidgetOrder = ['kpis', 'heatmap', 'breakdown', 'flowchart'];
-  state.widgetVisibility = { kpis: true, heatmap: true, breakdown: true, flowchart: true };
   renderApp();
 }
 
@@ -455,35 +260,35 @@ function renderApp() {
         </div>
 
         <div class="sidebar-menu">
-          <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
+          <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="state.activeTab='dashboard'; renderApp();">
             <span class="material-symbols-outlined">dashboard</span>
             <span>Dashboard</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
+          <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="state.activeTab='projects'; renderApp();">
             <span class="material-symbols-outlined">assignment</span>
             <span>Projects</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'raid' ? 'active' : ''}" onclick="switchTab('raid')">
+          <button class="nav-link ${state.activeTab === 'raid' ? 'active' : ''}" onclick="state.activeTab='raid'; renderApp();">
             <span class="material-symbols-outlined">warning</span>
             <span>Risk Center</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="switchTab('comms')">
+          <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="state.activeTab='comms'; renderApp();">
             <span class="material-symbols-outlined">chat</span>
             <span>Communication ${pendingEmailCount > 0 ? `(${pendingEmailCount})` : ''}</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
+          <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="state.activeTab='reports'; renderApp();">
             <span class="material-symbols-outlined">assessment</span>
             <span>Reports</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
+          <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="state.activeTab='chat'; renderApp();">
             <span class="material-symbols-outlined">smart_toy</span>
             <span>AI Assistant</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'admin' ? 'active' : ''}" onclick="switchTab('admin')">
+          <button class="nav-link ${state.activeTab === 'admin' ? 'active' : ''}" onclick="state.activeTab='admin'; renderApp();">
             <span class="material-symbols-outlined">settings</span>
             <span>Settings & Admin</span>
           </button>
-          <button class="nav-link" onclick="logoutUser()" style="margin-top:auto">
+          <button class="nav-link" onclick="state.activeTab='login'; renderApp();" style="margin-top:auto">
             <span class="material-symbols-outlined">logout</span>
             <span>Sign Out</span>
           </button>
@@ -501,30 +306,21 @@ function renderApp() {
 
           <div class="header-controls">
             <!-- Notifications & Help Icons -->
-            <button class="icon-btn" title="Notifications ${pendingEmailCount > 0 ? '(' + pendingEmailCount + ' Pending Approvals)' : ''}" onclick="state.activeTab='comms'; renderApp();">
+            <button class="icon-btn" title="Notifications">
               <span class="material-symbols-outlined">notifications</span>
-              ${pendingEmailCount > 0 ? '<span class="notification-dot"></span>' : ''}
+              <span class="notification-dot"></span>
             </button>
 
-            <div class="help-tooltip-container">
-              <button class="icon-btn" title="Help Info">
-                <span class="material-symbols-outlined">help_outline</span>
-              </button>
-              <div class="help-tooltip-box">
-                <div style="font-weight:700; color:var(--tertiary-fixed-dim); margin-bottom:4px; display:flex; align-items:center; gap:6px">
-                  <span class="material-symbols-outlined" style="font-size:16px">info</span>
-                  About PM AI
-                </div>
-                Program Management AI Assistant for Risk Analysis and Stakeholder Communication
-              </div>
-            </div>
+            <button class="icon-btn" title="Help">
+              <span class="material-symbols-outlined">help_outline</span>
+            </button>
 
             <!-- User Profile Avatar -->
             <div class="user-profile">
-              <img class="avatar-img" src="${getUserAvatar(state.currentUser)}" alt="${state.currentUser ? state.currentUser.full_name : 'User Profile'}" />
+              <img class="avatar-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbcPHmQncMqeCyloxxFVdcQt82FdGRiPqJn4bdegkraWZJLbyoFF3FBb0UDFAHhop6wy41Pe-HfG8kF8D2j-nzH0ujTdtnWG2HSzd8sKaRyOdSdrbFPRT4UMYeELXSrNaljIIOIwk4lMEdu-8ty-JKlxAckqbyQ7zmu-bt-1v9EFRqEiHP2sq9bWYW4kAFAcn8Gm3s3TMyRJNpznTOQc_MauIOb3Epf8NinZ4bbvjZ12R9syMjguMG" alt="Arjun Mehta" />
               <div>
-                <div class="user-name">${state.currentUser ? state.currentUser.full_name : 'Rohit Verma'}</div>
-                <div class="user-role">${state.currentUser ? state.currentUser.role : state.currentRole}</div>
+                <div class="user-name">Arjun Mehta</div>
+                <div class="user-role">${state.currentRole}</div>
               </div>
             </div>
           </div>
@@ -541,8 +337,6 @@ function renderApp() {
 
       <!-- Human Email Approval Modal -->
       ${state.selectedEmailForApproval ? renderHumanApprovalModal() : ''}
-      <!-- Dashboard Grid Layout Customize Modal -->
-      ${state.isCustomizeModalOpen ? renderCustomizeModal() : ''}
     </div>
   `;
 }
@@ -571,55 +365,75 @@ function renderCurrentTabContent(currentProject) {
 function renderDashboardTab(currentProject) {
   const pendingCount = state.emails.filter(e => e.status === 'PENDING').length;
   
-  const widgetHTML = {
-    kpis: `
-      <!-- 5 KPI Cards Row -->
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-title">Overall Program Health</div>
-          <div class="kpi-value">${currentProject.progress_pct}%</div>
-          <div class="kpi-subtext">
-            <span class="chip chip-warning">Medium Risk</span>
-            <span style="color:var(--secondary); font-weight:600">Phase: ${currentProject.lifecycle_phase}</span>
-          </div>
-        </div>
+  return `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Overview of your program health and key insights</p>
+      </div>
+      <div style="display:flex; gap:12px">
+        <select class="btn-secondary" style="background:#fff">
+          <option>All Programs</option>
+        </select>
+        <button class="btn-secondary">
+          <span class="material-symbols-outlined">calendar_today</span>
+          May 12 - May 18, 2025
+        </button>
+        <button class="btn-secondary">
+          <span class="material-symbols-outlined">tune</span>
+          Customize
+        </button>
+      </div>
+    </div>
 
-        <div class="kpi-card">
-          <div class="kpi-title">Active Projects</div>
-          <div class="kpi-value">${state.projects.length}</div>
-          <div class="kpi-subtext" style="color:#059669">
-            <span class="material-symbols-outlined" style="font-size:16px">arrow_upward</span>
-            <strong>3 from last week</strong>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-title">Open RAID Risks</div>
-          <div class="kpi-value" style="color:var(--error)">${state.raidItems.length}</div>
-          <div class="kpi-subtext" style="color:var(--error)">
-            <span class="material-symbols-outlined" style="font-size:16px">warning</span>
-            <strong>${state.raidItems.filter(r => r.risk_score >= 70).length} High Score (&gt;70)</strong>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-title">Pending Approvals</div>
-          <div class="kpi-value" style="color:var(--primary-container)">${pendingCount}</div>
-          <div class="kpi-subtext" style="color:var(--primary-container)">
-            <span class="chip chip-info">Human Approval Required</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-title">Budget Variance</div>
-          <div class="kpi-value" style="color:var(--error)">-8.5%</div>
-          <div class="kpi-subtext" style="color:var(--error)">
-            <strong>($1.2M over budget)</strong>
-          </div>
+    <!-- 5 KPI Cards Row -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Overall Program Health</div>
+        <div class="kpi-value">${currentProject.progress_pct}%</div>
+        <div class="kpi-subtext">
+          <span class="chip chip-warning">Medium Risk</span>
+          <span style="color:var(--secondary); font-weight:600">Phase: ${currentProject.lifecycle_phase}</span>
         </div>
       </div>
-    `,
-    heatmap: `
+
+      <div class="kpi-card">
+        <div class="kpi-title">Active Projects</div>
+        <div class="kpi-value">${state.projects.length}</div>
+        <div class="kpi-subtext" style="color:#059669">
+          <span class="material-symbols-outlined" style="font-size:16px">arrow_upward</span>
+          <strong>3 from last week</strong>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Open RAID Risks</div>
+        <div class="kpi-value" style="color:var(--error)">${state.raidItems.length}</div>
+        <div class="kpi-subtext" style="color:var(--error)">
+          <span class="material-symbols-outlined" style="font-size:16px">warning</span>
+          <strong>${state.raidItems.filter(r => r.risk_score >= 70).length} High Score (&gt;70)</strong>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Pending Approvals</div>
+        <div class="kpi-value" style="color:var(--primary-container)">${pendingCount}</div>
+        <div class="kpi-subtext" style="color:var(--primary-container)">
+          <span class="chip chip-info">Human Approval Required</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">Budget Variance</div>
+        <div class="kpi-value" style="color:var(--error)">-8.5%</div>
+        <div class="kpi-subtext" style="color:var(--error)">
+          <strong>($1.2M over budget)</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 Column Layout: 5x5 Heatmap + Project Phase Table -->
+    <div class="grid-2col">
       <div class="card-box">
         <div class="card-box-header">
           <div class="card-box-title">5x5 Risk Heatmap Matrix (${currentProject.code})</div>
@@ -659,8 +473,7 @@ function renderDashboardTab(currentProject) {
           <div class="heatmap-cell cell-critical">L5/I5</div>
         </div>
       </div>
-    `,
-    breakdown: `
+
       <div class="card-box">
         <div class="card-box-header">
           <div class="card-box-title">Project Phase Breakdown</div>
@@ -672,7 +485,7 @@ function renderDashboardTab(currentProject) {
             </thead>
             <tbody>
               ${state.projects.map(p => `
-                <tr style="cursor:pointer; ${p.code === currentProject.code ? 'background-color: var(--surface-container-high);' : ''}" onclick="setProject('${p.code}')">
+                <tr style="cursor:pointer" onclick="setProject('${p.code}')">
                   <td><strong>${p.code}</strong> - ${p.name}</td>
                   <td>${p.lifecycle_phase}</td>
                   <td>
@@ -687,75 +500,25 @@ function renderDashboardTab(currentProject) {
           </table>
         </div>
       </div>
-    `,
-    flowchart: `
-      <div class="card-box">
-        <div class="card-box-header">
-          <div class="card-box-title">Critical Path Dependency Map Flowchart (${currentProject.code})</div>
-        </div>
-        <div class="flow-chain">
-          <div class="flow-step completed">Requirements Gathering<br><small style="color:#059669">Completed</small></div>
-          <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
-          <div class="flow-step completed">Design Review<br><small style="color:#059669">Completed</small></div>
-          <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
-          <div class="flow-step blocked">API Integration<br><small style="color:#dc2626">Blocked (Score 88)</small></div>
-          <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
-          <div class="flow-step in-progress">System Testing<br><small style="color:var(--primary-container)">In Progress</small></div>
-          <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
-          <div class="flow-step">Deployment<br><small style="color:var(--outline)">Not Started</small></div>
-        </div>
-      </div>
-    `
-  };
-
-  const visibleWidgets = state.dashboardWidgetOrder.filter(w => state.widgetVisibility[w]);
-  let contentBuffer = '';
-
-  for (let i = 0; i < visibleWidgets.length; i++) {
-    const curr = visibleWidgets[i];
-    const next = visibleWidgets[i + 1];
-
-    if ((curr === 'heatmap' && next === 'breakdown') || (curr === 'breakdown' && next === 'heatmap')) {
-      contentBuffer += `
-        <div class="grid-2col">
-          ${widgetHTML[curr]}
-          ${widgetHTML[next]}
-        </div>
-      `;
-      i++;
-    } else {
-      contentBuffer += widgetHTML[curr];
-    }
-  }
-
-  return `
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Overview of your program health and key insights</p>
-      </div>
-      <div style="display:flex; gap:12px">
-        <select class="btn-secondary" style="background:#fff; cursor:pointer" onchange="setProject(this.value)">
-          ${state.projects.map(p => `
-            <option value="${p.code}" ${p.code === currentProject.code ? 'selected' : ''}>
-              ${p.code} - ${p.name}
-            </option>
-          `).join('')}
-        </select>
-        <div class="btn-secondary" style="background:#fff; display:flex; align-items:center; gap:8px; padding:6px 12px">
-          <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary-container)">calendar_today</span>
-          <input type="date" id="dateRangeStart" value="${state.selectedDateRange.start}" onchange="handleDateRangeChange()" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="Start Date" />
-          <span style="color:var(--outline); font-size:12px; font-weight:600">-</span>
-          <input type="date" id="dateRangeEnd" value="${state.selectedDateRange.end}" onchange="handleDateRangeChange()" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="End Date" />
-        </div>
-        <button class="btn-secondary" onclick="openCustomizeModal()">
-          <span class="material-symbols-outlined">tune</span>
-          Customize
-        </button>
-      </div>
     </div>
 
-    ${contentBuffer}
+    <!-- Visual Critical Path Flowchart Card -->
+    <div class="card-box">
+      <div class="card-box-header">
+        <div class="card-box-title">Critical Path Dependency Map Flowchart (${currentProject.code})</div>
+      </div>
+      <div class="flow-chain">
+        <div class="flow-step completed">Requirements Gathering<br><small style="color:#059669">Completed</small></div>
+        <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+        <div class="flow-step completed">Design Review<br><small style="color:#059669">Completed</small></div>
+        <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+        <div class="flow-step blocked">API Integration<br><small style="color:#dc2626">Blocked (Score 88)</small></div>
+        <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+        <div class="flow-step in-progress">System Testing<br><small style="color:var(--primary-container)">In Progress</small></div>
+        <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+        <div class="flow-step">Deployment<br><small style="color:var(--outline)">Not Started</small></div>
+      </div>
+    </div>
   `;
 }
 
@@ -1011,15 +774,13 @@ function renderChatTab() {
       </div>
     </div>
   `;
-}
-
 // 7. System & Technical Admin Tab View
 function renderAdminTab() {
   return `
     <div class="page-header">
       <div>
         <h1 class="page-title">Admin Console & Master Data Management</h1>
-        <p class="page-subtitle">Dual RAG Databases (Static Vector Store & Unstructured GraphRAG), Master User Accounts & Audit Stream</p>
+        <p class="page-subtitle">RAG Knowledge Documents, Chunks Inspector, SQLite User Master Data & Audit Stream</p>
       </div>
     </div>
 
@@ -1030,30 +791,26 @@ function renderAdminTab() {
         <div class="kpi-subtext" style="color:#059669">Status: ${state.telemetry.mcp_status || 'ONLINE'}</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-title">Static RAG Vector Chunks</div>
+        <div class="kpi-title">Total RAG Chunks</div>
         <div class="kpi-value" style="color:#059669">21 Chunks</div>
         <div class="kpi-subtext">5 Uploaded Documents</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-title">Unstructured GraphRAG</div>
-        <div class="kpi-value" style="color:var(--primary-container)">5 Graph Triples</div>
-        <div class="kpi-subtext">Slack/Teams Chat Feeds in mcp.db</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-title">Master Accounts</div>
         <div class="kpi-value">6 Users</div>
         <div class="kpi-subtext">SQLite User Table</div>
       </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Email Dispatcher</div>
+        <div class="kpi-value" style="color:var(--primary-container)">Resend API</div>
+        <div class="kpi-subtext">linusimon@gmail.com</div>
+      </div>
     </div>
 
-    <!-- RAG DATABASE 1: STATIC DOCUMENT VECTOR STORE -->
+    <!-- RAG Documents Table -->
     <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:6px">1. Static Knowledge Document Vector RAG Database (backend/app/uploads/)</div>
-      <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
-        Stores static policies, SOWs, and SOP manuals chunked into 128-d vector embeddings via TCSGenAIClient.
-      </p>
-
-      <div class="table-responsive" style="margin-bottom:20px;">
+      <div class="card-box-title" style="margin-bottom:16px">Uploaded Knowledge Documents (backend/app/uploads/)</div>
+      <div class="table-responsive">
         <table class="stitch-table">
           <thead>
             <tr><th>Document Title</th><th>Filename</th><th>Doc Type</th><th>Size</th><th>Upload Timestamp</th></tr>
@@ -1067,7 +824,11 @@ function renderAdminTab() {
           </tbody>
         </table>
       </div>
+    </div>
 
+    <!-- Vector RAG Chunks Inspector Table -->
+    <div class="card-box" style="margin-top:20px;">
+      <div class="card-box-title" style="margin-bottom:16px">Indexed Vector RAG Chunks Breakdown (128-d Vector Embeddings)</div>
       <div class="table-responsive">
         <table class="stitch-table">
           <thead>
@@ -1077,71 +838,6 @@ function renderAdminTab() {
             <tr><td><code>security_policy.txt_chunk_0</code></td><td>security_policy.txt</td><td><small style="color:var(--on-surface-variant)">All system communications must enforce PII redaction and TLS 1.3 encryption...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
             <tr><td><code>orion_sow.txt_chunk_0</code></td><td>orion_sow.txt</td><td><small style="color:var(--on-surface-variant)">Project Orion Upgrade phase mobilization deliverables and vendor SLA dependencies...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
             <tr><td><code>risk_sop.txt_chunk_0</code></td><td>risk_sop.txt</td><td><small style="color:var(--on-surface-variant)">RAID items exceeding score 70 require executive briefing within 24 hours...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>pegasus_architecture.txt_chunk_0</code></td><td>pegasus_architecture.txt</td><td><small style="color:var(--on-surface-variant)">Core Banking Platform specs, database connection pools, and microservice SLA metrics...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>mobile_compliance.txt_chunk_0</code></td><td>mobile_compliance.txt</td><td><small style="color:var(--on-surface-variant)">Biometric mobile authentication standards, regulatory guidelines, and compliance checks...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- RAG DATABASE 2: UNSTRUCTURED KNOWLEDGE GRAPH RAG STORE (GRAPHRAG) -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:6px">2. Unstructured Knowledge Graph RAG Database (mcp/mcp.db -> GraphRAG)</div>
-      <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
-        Ingests real-time unstructured chat/email feeds (Slack, Teams, Email logs) to extract Entity-Relationship Triples <code>(Subject) --[Predicate]--> (Object)</code>.
-      </p>
-
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>Triple ID</th><th>Subject Entity</th><th>Relationship Predicate</th><th>Object Entity</th><th>Communication Source</th><th>Category</th><th>Confidence</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>triple_101</code></td>
-              <td><strong>Amit Joshi</strong></td>
-              <td><code>--[SENT_COMMUNICATION]--></code></td>
-              <td><strong>Rohit Verma</strong></td>
-              <td>Teams Chat Feed #104</td>
-              <td><span class="chip chip-info">Handoff</span></td>
-              <td><span class="chip chip-success">0.98</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_102</code></td>
-              <td><strong>Third-Party Vendor API</strong></td>
-              <td><code>--[IMPACTS_MILESTONE]--></code></td>
-              <td><strong>Design Review</strong></td>
-              <td>Slack #proj-orion-dev</td>
-              <td><span class="chip chip-danger">Threat Risk</span></td>
-              <td><span class="chip chip-success">0.96</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_103</code></td>
-              <td><strong>Project Orion Upgrade</strong></td>
-              <td><code>--[HAS_RISK_INDICATOR]--></code></td>
-              <td><strong>Integration Latency</strong></td>
-              <td>Incident Report Thread #42</td>
-              <td><span class="chip chip-warning">RAID Factor</span></td>
-              <td><span class="chip chip-success">0.95</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_104</code></td>
-              <td><strong>Core Banking API</strong></td>
-              <td><code>--[REQUIRES_SLA_COMPLIANCE]--></code></td>
-              <td><strong>Security Policy v2.1</strong></td>
-              <td>Email Log #208</td>
-              <td><span class="chip chip-info">Governance</span></td>
-              <td><span class="chip chip-success">0.97</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_105</code></td>
-              <td><strong>Biometric Auth Service</strong></td>
-              <td><code>--[DEPENDS_ON]--></code></td>
-              <td><strong>OAuth 2.0 Identity Server</strong></td>
-              <td>Slack #security-audit</td>
-              <td><span class="chip chip-info">Dependency</span></td>
-              <td><span class="chip chip-success">0.99</span></td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -1149,7 +845,7 @@ function renderAdminTab() {
 
     <!-- Master User Accounts Table -->
     <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Master User Accounts Table (backend/app.db -> User)</div>
+      <div class="card-box-title" style="margin-bottom:16px">SQLite Master User Accounts Table (backend/app.db)</div>
       <div class="table-responsive">
         <table class="stitch-table">
           <thead>
@@ -1165,76 +861,6 @@ function renderAdminTab() {
         </table>
       </div>
     </div>
-
-    <!-- Master Projects Portfolio Table -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Master Projects Table (backend/app.db -> Project)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>ID</th><th>Code</th><th>Project Name</th><th>Lifecycle Phase</th><th>Health Status</th><th>Budget</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#1</td><td><code>PRJ-001</code></td><td><strong>Project Orion Upgrade</strong></td><td><span class="chip chip-info">Mobilization</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$2.5M</td></tr>
-            <tr><td>#2</td><td><code>PRJ-002</code></td><td><strong>Core Banking Modernization</strong></td><td><span class="chip chip-info">Planning</span></td><td><span class="chip chip-success">Healthy</span></td><td>$4.2M</td></tr>
-            <tr><td>#3</td><td><code>PRJ-003</code></td><td><strong>Digital Identity Platform</strong></td><td><span class="chip chip-info">Design</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$1.8M</td></tr>
-            <tr><td>#4</td><td><code>PRJ-004</code></td><td><strong>Cloud Infrastructure Migration</strong></td><td><span class="chip chip-info">Execution</span></td><td><span class="chip chip-danger">Critical</span></td><td>$3.5M</td></tr>
-            <tr><td>#5</td><td><code>PRJ-005</code></td><td><strong>Supply Chain Analytics</strong></td><td><span class="chip chip-info">Closure</span></td><td><span class="chip chip-success">Healthy</span></td><td>$1.2M</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Master RAID Items Table -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Master RAID Register Table (backend/app.db -> RAIDItem)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>ID</th><th>Category</th><th>Title</th><th>Risk Score</th><th>Likelihood</th><th>Impact</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#101</td><td><span class="chip chip-danger">Risk</span></td><td><strong>Third-Party Vendor API Integration Latency</strong></td><td><span class="chip chip-danger">88/100</span></td><td>4/5</td><td>5/5</td><td><span class="chip chip-warning">OPEN</span></td></tr>
-            <tr><td>#102</td><td><span class="chip chip-danger">Risk</span></td><td><strong>Database Schema Migration Timeout</strong></td><td><span class="chip chip-warning">76/100</span></td><td>3/5</td><td>4/5</td><td><span class="chip chip-info">IN_REVIEW</span></td></tr>
-            <tr><td>#103</td><td><span class="chip chip-info">Assumption</span></td><td><strong>Cloud Service Provider Availability SLA 99.99%</strong></td><td><span class="chip chip-info">30/100</span></td><td>1/5</td><td>2/5</td><td><span class="chip chip-success">VALIDATED</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Master WBS Tasks Table -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite WBS Task Breakdown Table (backend/app.db -> Task)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>ID</th><th>WBS Code</th><th>Task Name</th><th>Assignee</th><th>Priority</th><th>Progress</th><th>Story Points</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#1</td><td><code>WBS-1.1</code></td><td><strong>Vendor API Specification Review & Mock Server Creation</strong></td><td>Amit Joshi</td><td><span class="chip chip-warning">High</span></td><td>45%</td><td>13 SP</td></tr>
-            <tr><td>#2</td><td><code>WBS-1.2</code></td><td><strong>Security Policy SLA & PII Redaction Audit</strong></td><td>Vikram Malhotra</td><td><span class="chip chip-warning">High</span></td><td>90%</td><td>8 SP</td></tr>
-            <tr><td>#3</td><td><code>WBS-1.3</code></td><td><strong>Database Schema Migration & Indexing</strong></td><td>Priya Sharma</td><td><span class="chip chip-info">Medium</span></td><td>20%</td><td>5 SP</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Master Stakeholder Email Queue Table -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Stakeholder Email Queue Table (backend/app.db -> EmailDraft)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>ID</th><th>Recipient Role</th><th>Target Email</th><th>Subject Line</th><th>Status</th><th>Resend Delivery ID</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#10</td><td><strong>Program Manager</strong></td><td><code>linusimon@gmail.com</code></td><td>Executive Briefing: Project Orion Risk Mitigation Plan</td><td><span class="chip chip-warning">PENDING</span></td><td><small style="color:var(--on-surface-variant)">Pending Human Approval</small></td></tr>
-            <tr><td>#11</td><td><strong>Executive Leadership</strong></td><td><code>linusimon@gmail.com</code></td><td>Weekly Portfolio Status Report & Budget Variance</td><td><span class="chip chip-success">APPROVED</span></td><td><code>6b94665e-c26a-423a-8600-834ce457eccf</code></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
 
     <div class="card-box" style="margin-top:20px">
       <div class="card-box-title" style="margin-bottom:16px">System Security Audit Log Stream</div>
@@ -1254,7 +880,6 @@ function renderAdminTab() {
                 <td>${l.details}</td>
               </tr>
             `).join('')}
-          </tbody>
         </table>
       </div>
     </div>
@@ -1291,23 +916,23 @@ function renderLoginTab() {
             <p style="color:var(--on-surface-variant); font-size:14px">Sign in to continue to your account</p>
           </div>
 
-          <form onsubmit="handleLoginSubmit(event)">
+          <form onsubmit="event.preventDefault(); state.activeTab='dashboard'; renderApp();">
             <div class="form-group">
-              <label for="loginEmail">Email Address or Username</label>
+              <label for="email">Email Address</label>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">mail</span>
-                <input type="text" id="loginEmail" placeholder="Enter your email or username (e.g. rohit, amit, sneha, admin)" value="${state.currentUser ? state.currentUser.username : 'rohit'}" required />
+                <input type="email" id="email" placeholder="Enter your email" value="rohit@company.com" required />
               </div>
             </div>
 
             <div class="form-group">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
-                <label for="loginPassword" style="margin-bottom:0">Password</label>
+                <label for="password" style="margin-bottom:0">Password</label>
                 <a href="#" style="font-size:12px; color:var(--primary-container); text-decoration:none; font-weight:600">Forgot Password?</a>
               </div>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">lock</span>
-                <input type="password" id="loginPassword" placeholder="Enter your password" value="user123" required />
+                <input type="password" id="password" placeholder="Enter your password" value="••••••••" required />
               </div>
             </div>
 
@@ -1323,7 +948,7 @@ function renderLoginTab() {
               <div style="flex:1; border-top:1px solid var(--outline-variant)"></div>
             </div>
 
-            <button type="button" class="btn-secondary" onclick="handleLoginSubmit(event)" style="width:100%; justify-content:center; padding:12px">
+            <button type="button" class="btn-secondary" onclick="state.activeTab='dashboard'; renderApp();" style="width:100%; justify-content:center; padding:12px">
               <span class="material-symbols-outlined">shield_person</span> Sign in with SSO
             </button>
           </form>
@@ -1337,179 +962,19 @@ function renderLoginTab() {
   `;
 }
 
-// Render Universal Collapsible Agent Execution Log & Telemetry Panel (Tailored for each Page)
+// Render Universal Collapsible Agent Execution Log & Telemetry Panel
 function renderCollapsibleTracePanel() {
-  const pCode = state.selectedProjectCode || 'PRJ-001';
-  const activeTab = state.activeTab || 'dashboard';
-
-  let pageTitle = 'Dashboard';
-  let agentsCalledHtml = '';
-  let llmModelText = 'gemini-1.5-pro';
-  let tokenCount = 850;
-  let costUsd = '0.00170';
-  let guardrailsHtml = '';
-  let piiTagsHtml = '';
-  let mcpToolsHtml = '';
-  let ragContextHtml = '';
-  let triplesHtml = '';
-
-  let scopeText = `Active Project: ${pCode}`;
-
-  if (activeTab === 'admin') {
-    pageTitle = 'Admin Console & Settings';
-    scopeText = 'Scope: System-Wide (5 Projects & 8 SQLite Master DB Tables)';
-    llmModelText = 'Not Invoked for Pure SQL DB Lookups (Available On-Demand for System Diagnostics)';
-    tokenCount = 0;
-    costUsd = '0.00000';
-    agentsCalledHtml = `
-      • <strong>System Admin Observability Agent</strong> (RBAC Security Auditor)<br>
-      • <strong>1. FastMCP Server Tool Health Inspector</strong> (Port 5001)<br>
-      • <strong>2. SQLite ORM Master Data Inspector</strong> (8 Master Tables)
-    `;
-
-    guardrailsHtml = `
-      • <strong>RBAC Role Authorization:</strong> PASSED (Admin / Program Manager Verified)<br>
-      • <strong>SQL Injection Sanitization:</strong> PASSED (Sanitized)<br>
-      • <strong>System Telemetry Integrity:</strong> PASSED
-    `;
-    piiTagsHtml = `<span class="chip chip-success">NO_PII_FOUND</span>`;
-    mcpToolsHtml = `
-      • <code>FastMCP Server Ping on Port 5001</code> (mcp_server.py)<br>
-      • <code>SQLite app.db ORM Table Inspection</code>
-    `;
-    ragContextHtml = `
-      • <strong>SQLite Master ORM Tables:</strong> 8 Tables (User, Project, RAIDItem, Task, MitigationAction, EmailDraft, KnowledgeDoc, AuditLog)<br>
-      • <strong>Static Vector Embeddings:</strong> 21 Chunks Indexed across 5 Uploaded Documents
-    `;
-    triplesHtml = `
-      - <code>(Admin User) --[EXECUTED_AUDIT]--> (SQLite app.db)</code><br>
-      - <code>(FastMCP Server) --[LISTENS_ON_PORT]--> (5001)</code>
-    `;
-  } else if (activeTab === 'raid' || activeTab === 'analysis') {
-
-    pageTitle = 'RAID Risk Analysis';
-    tokenCount = 1420;
-    costUsd = '0.00284';
-    agentsCalledHtml = `
-      • <strong>LangGraph Supervisor Agent</strong> (Orchestrator)<br>
-      • <strong>2. Risk Intelligence RAID Engine Agent</strong> (5x5 Heatmap & Scoring)<br>
-      • <strong>Reflection Agent</strong> (Groundedness Check: 0.96)
-    `;
-    guardrailsHtml = `
-      • <strong>PII Redaction Filter:</strong> PASSED (EMAIL_REDACTED)<br>
-      • <strong>Toxicity & Moderation:</strong> PASSED (Clean)<br>
-      • <strong>Domain Relevance Score:</strong> 0.97 / 1.00
-    `;
-    piiTagsHtml = `<span class="chip chip-danger">[PII: EMAIL_REDACTED]</span>`;
-    mcpToolsHtml = `
-      • <code>mcp_fetch_risk_register</code> (External Threat Feeds)<br>
-      • <code>mcp_update_mitigation_action</code> (Action Checklist)
-    `;
-    ragContextHtml = `
-      • <strong>Static Document RAG:</strong> Matches from <code>risk_sop.txt</code> (RAID Escalation Rules)<br>
-      • <strong>Risk Target (${pCode}):</strong> Third-Party Vendor API Latency (Score 88 High)
-    `;
-    triplesHtml = `
-      - <code>(${pCode}) --[HAS_PRIMARY_RISK]--> (Vendor API Latency)</code><br>
-      - <code>(Third-Party Vendor API) --[IMPACTS_MILESTONE]--> (Design Review)</code>
-    `;
-  } else if (activeTab === 'comms') {
-    pageTitle = 'Communication Center';
-    tokenCount = 1180;
-    costUsd = '0.00236';
-    agentsCalledHtml = `
-      • <strong>LangGraph Supervisor Agent</strong> (Orchestrator)<br>
-      • <strong>3. Stakeholder Communication Agent</strong> (Audience Tailoring & Drafts)<br>
-      • <strong>Reflection Agent</strong> (Groundedness Check: 0.96)
-    `;
-    guardrailsHtml = `
-      • <strong>PII Redaction Filter:</strong> PASSED (EMAIL_REDACTED, SSN_REDACTED)<br>
-      • <strong>Human Approval Requirement:</strong> MANDATORY VERIFICATION
-    `;
-    piiTagsHtml = `
-      <span class="chip chip-danger">[PII: EMAIL_REDACTED]</span>
-      <span class="chip chip-danger">[PII: SSN_REDACTED]</span>
-    `;
-    mcpToolsHtml = `
-      • <code>mcp_create_email_draft</code> (Draft Generation)<br>
-      • <code>Background Resend Email Dispatcher</code> (linusimon@gmail.com)
-    `;
-    ragContextHtml = `
-      • <strong>Static Document RAG:</strong> Matches from <code>security_policy.txt</code> (SLA Guidelines)<br>
-      • <strong>Communication Queue:</strong> Pending Human Email Approval Queue
-    `;
-    triplesHtml = `
-      - <code>(Amit Joshi) --[SENT_COMMUNICATION]--> (Rohit Verma)</code><br>
-      - <code>(Email Dispatcher) --[ROUTES_TO_EMAIL]--> (linusimon@gmail.com)</code>
-    `;
-  } else if (activeTab === 'chat') {
-    pageTitle = 'Chat & Vision Assistant';
-    tokenCount = 1650;
-    costUsd = '0.00330';
-    agentsCalledHtml = `
-      • <strong>Chat Supervisor Agent</strong> (Interactive Conversational Reasoning)<br>
-      • <strong>STT / TTS Voice Speech Service Agent</strong><br>
-      • <strong>OCR Vision Document Parser Agent</strong>
-    `;
-    guardrailsHtml = `
-      • <strong>Prompt Injection Check:</strong> PASSED (0 Attacks)<br>
-      • <strong>Jailbreak Prevention:</strong> PASSED<br>
-      • <strong>Domain Relevance Score:</strong> 0.96 / 1.00
-    `;
-    piiTagsHtml = `<span class="chip chip-danger">[PII: EMAIL_REDACTED]</span>`;
-    mcpToolsHtml = `
-      • <code>mcp_query_project_plans</code> (Parsed XML/JSON WBS)<br>
-      • <code>mcp_read_communication_logs</code> (Slack/Teams Feeds)
-    `;
-    ragContextHtml = `
-      • <strong>Dual RAG Context:</strong> Static Document Chunks + Real-time Chat GraphRAG<br>
-      • <strong>Vision OCR Parser:</strong> Document Analysis for ${pCode}
-    `;
-    triplesHtml = `
-      - <code>(${pCode}) --[CHAT_QUERY_SUBJECT]--> (System Architecture & Compliance)</code><br>
-      - <code>(Chat Supervisor) --[PROCESSED_QUERY]--> (Un-hardcoded LLM Reasoning)</code>
-    `;
-  } else {
-    // Dashboard Default
-    pageTitle = 'Dashboard';
-    tokenCount = 850;
-    costUsd = '0.00170';
-    agentsCalledHtml = `
-      • <strong>LangGraph Supervisor Agent</strong> (Orchestrator)<br>
-      • <strong>1. Data Intelligence Agent</strong> (Guardrails & Dual RAG)<br>
-      • <strong>2. Portfolio Risk Intelligence Agent</strong>
-    `;
-    guardrailsHtml = `
-      • <strong>Prompt Injection Check:</strong> PASSED (0 Attacks)<br>
-      • <strong>Domain Relevance Score:</strong> 0.98 / 1.00
-    `;
-    piiTagsHtml = `<span class="chip chip-success">NO_PII_FOUND</span>`;
-    mcpToolsHtml = `
-      • <code>mcp_query_project_plans</code> (WBS Portfolio Summary)<br>
-      • <code>mcp_fetch_risk_register</code> (Risk Scores)
-    `;
-    ragContextHtml = `
-      • <strong>Portfolio Summary:</strong> Metrics across 5 Active Projects<br>
-      • <strong>Phase Distribution:</strong> Active Project ${pCode} (Mobilization)
-    `;
-    triplesHtml = `
-      - <code>(${pCode}) --[LIFECYCLE_PHASE]--> (Mobilization)</code><br>
-      - <code>(Portfolio Manager) --[OVERALL_HEALTH]--> (72% At Risk)</code>
-    `;
-  }
-
   return `
     <div class="collapsible-trace-box">
       <div class="trace-bar-header" onclick="state.isTraceExpanded = !state.isTraceExpanded; renderApp();">
         <div class="trace-bar-title">
           <span class="material-symbols-outlined" style="color:var(--tertiary-fixed-dim)">settings_suggest</span>
-          <span>LangGraph Telemetry Trace (Page: ${pageTitle} | ${scopeText})</span>
+          <span>LangGraph Agent Execution Log & Telemetry Trace (Active Project: ${state.selectedProjectCode})</span>
         </div>
         <div class="trace-bar-badges">
-
-          <span class="chip chip-success">Confidence: 98%</span>
-          <span class="chip chip-success">Latency: 12 ms</span>
-          <span class="chip chip-info">Tokens: ${tokenCount} ($${costUsd})</span>
+          <span class="chip chip-success">Confidence: 95%</span>
+          <span class="chip chip-success">Latency: 18 ms</span>
+          <span class="chip chip-info">Tokens: 1,590 ($0.00318)</span>
           <span style="color:#ffffff; font-weight:bold">${state.isTraceExpanded ? '▲ Collapse' : '▼ Expand'}</span>
         </div>
       </div>
@@ -1518,38 +983,45 @@ function renderCollapsibleTracePanel() {
         <div class="trace-body-grid">
           <div class="trace-card">
             <div class="trace-card-title">
-              <span>Agents & LangGraphs Relevant to ${pageTitle}</span>
-              <span class="chip chip-success">Active</span>
+              <span>Agents & LangGraphs Called</span>
+              <span class="chip chip-success">6 Active</span>
             </div>
             <div class="trace-card-content">
-              ${agentsCalledHtml}
+              • <strong>LangGraph Supervisor Agent</strong> (Orchestrator)<br>
+              • <strong>1. Data Intelligence Graph</strong> (Guardrails & Dual RAG)<br>
+              • <strong>2. Risk Intelligence Graph</strong> (RAID Engine & Reasoning)<br>
+              • <strong>3. Communication Graph</strong> (Audience Tailoring & Approval)<br>
+              • <strong>Reflection Agent</strong> (Groundedness Check: 0.96)<br>
+              • <strong>Memory Agent</strong> (Conversational Context)
             </div>
           </div>
 
           <div class="trace-card">
             <div class="trace-card-title">
-              <span>LLM Call & Hyperparameters</span>
+              <span>LLM & Endpoint Config</span>
               <span class="chip chip-success">TCS GenAI API</span>
             </div>
             <div class="trace-card-content">
-              • <strong>Model:</strong> ${llmModelText}<br>
+              • <strong>Model:</strong> gemini-1.5-pro<br>
               • <strong>Endpoint:</strong> https://genailab.tcs.in/api/v1<br>
-              • <strong>Hyperparameters:</strong> Temp=0.2, Top-P=0.95<br>
-              • <strong>Token Usage:</strong> ${tokenCount} Tokens<br>
-              • <strong>Est Cost:</strong> $${costUsd} USD / Request
+              • <strong>Hyperparameters:</strong> Temp=0.2, Top-P=0.95, Max Tokens=2048<br>
+              • <strong>Token Usage:</strong> 1,250 Prompt / 340 Completion (1,590 Total)<br>
+              • <strong>Est Cost:</strong> $0.00318 USD / Request
             </div>
           </div>
 
-
           <div class="trace-card">
             <div class="trace-card-title">
-              <span>Guardrails Executed for ${pageTitle}</span>
+              <span>Guardrails & PII Redaction</span>
               <span class="chip chip-success">PASSED</span>
             </div>
             <div class="trace-card-content">
-              ${guardrailsHtml}<br>
+              • <strong>Prompt Injection Check:</strong> PASSED (0 Attacks)<br>
+              • <strong>SQL Injection Check:</strong> PASSED (Sanitized)<br>
+              • <strong>Domain Relevance Score:</strong> 0.96 / 1.00<br>
               • <strong>PII Masking Result:</strong><br>
-              ${piiTagsHtml}
+                - <span class="chip chip-danger">[PII: EMAIL_REDACTED]</span><br>
+                - <span class="chip chip-danger">[PII: SSN_REDACTED]</span>
             </div>
           </div>
 
@@ -1559,19 +1031,24 @@ function renderCollapsibleTracePanel() {
               <span class="chip chip-success">FastMCP Online</span>
             </div>
             <div class="trace-card-content">
-              ${mcpToolsHtml}
+              • <code>mcp_query_project_plans</code> (Parsed XML/JSON WBS)<br>
+              • <code>mcp_read_communication_logs</code> (Teams/Slack feeds)<br>
+              • <code>mcp_fetch_risk_register</code> (External Threat Feeds)<br>
+              • <code>mcp_update_mitigation_action</code> (Action Checklist)
             </div>
           </div>
 
           <div class="trace-card">
             <div class="trace-card-title">
-              <span>RAG & Data Context Specific to ${pageTitle}</span>
-              <span class="chip chip-info">Page Context</span>
+              <span>Dual RAG & Knowledge Graph Context</span>
+              <span class="chip chip-info">Static + GraphRAG</span>
             </div>
             <div class="trace-card-content">
-              ${ragContextHtml}<br>
-              • <strong>Knowledge Graph Context (mcp.db):</strong><br>
-              ${triplesHtml}
+              • <strong>Static Document RAG:</strong> 21 Policy & SOW Chunks Indexed<br>
+              • <strong>Knowledge Graph Triples:</strong><br>
+                - <code>(Amit Joshi) --[SENT_MESSAGE_TO]--&gt; (Rohit Verma)</code><br>
+                - <code>(Vendor API) --[IMPACTS_MILESTONE]--&gt; (Design Review)</code><br>
+                - <code>(Project Orion) --[HAS_RISK]--&gt; (Schedule Delay)</code>
             </div>
           </div>
         </div>
@@ -1579,8 +1056,6 @@ function renderCollapsibleTracePanel() {
     </div>
   `;
 }
-
-
 
 // Render Human Approval Modal Overlay
 function renderHumanApprovalModal() {
@@ -1611,58 +1086,6 @@ function renderHumanApprovalModal() {
           <button class="btn-success" onclick="approveEmail()">
             <span class="material-symbols-outlined">send</span> Approve & Dispatch via Resend
           </button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-// Render Dashboard Grid Customizer Modal Overlay
-function renderCustomizeModal() {
-  const widgetTitles = {
-    kpis: '5 KPI Metrics Overview Cards Row',
-    heatmap: '5x5 Risk Heatmap Matrix',
-    breakdown: 'Project Phase Breakdown Table',
-    flowchart: 'Critical Path Dependency Flowchart'
-  };
-
-  return `
-    <div class="modal-backdrop">
-      <div class="modal-window">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-          <h3 style="font-size:18px; font-weight:700; color:var(--on-surface)">Customize Dashboard Layout</h3>
-          <button class="btn-secondary" onclick="closeCustomizeModal()" style="padding:4px 8px">✕</button>
-        </div>
-
-        <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px">
-          Rearrange widget cards or toggle visibility to personalize your Program Manager workspace layout.
-        </p>
-
-        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px">
-          ${state.dashboardWidgetOrder.map((key, idx) => {
-            const isVisible = state.widgetVisibility[key];
-            return `
-              <div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface-container-low); padding:10px 14px; border-radius:8px; border:1px solid var(--outline-variant)">
-                <div style="display:flex; align-items:center; gap:10px">
-                  <span class="material-symbols-outlined" style="color:var(--outline)">drag_indicator</span>
-                  <span style="font-size:13px; font-weight:700; color:var(--on-surface)">${widgetTitles[key]}</span>
-                </div>
-
-                <div style="display:flex; align-items:center; gap:6px">
-                  <button class="btn-secondary" onclick="moveWidgetUp(${idx})" ${idx === 0 ? 'disabled' : ''} style="padding:4px 8px; font-size:11px" title="Move Up">▲</button>
-                  <button class="btn-secondary" onclick="moveWidgetDown(${idx})" ${idx === state.dashboardWidgetOrder.length - 1 ? 'disabled' : ''} style="padding:4px 8px; font-size:11px" title="Move Down">▼</button>
-                  <button class="${isVisible ? 'btn-primary' : 'btn-secondary'}" onclick="toggleWidgetVisibility('${key}')" style="padding:4px 10px; font-size:11px">
-                    ${isVisible ? 'Visible' : 'Hidden'}
-                  </button>
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center">
-          <button class="btn-secondary" onclick="resetDashboardLayout()">Reset Default Layout</button>
-          <button class="btn-primary" onclick="closeCustomizeModal()">Done & Save</button>
         </div>
       </div>
     </div>
