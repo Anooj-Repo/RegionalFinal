@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+*.db
+*.sqlite
+*.sqlite3
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Uploads & Temp files
+backend/app/uploads/*
+!backend/app/uploads/.gitkeep
+backend/app/rag/storage/*
+!backend/app/rag/storage/.gitkeep
+
+# Environment & Secrets
+.env
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
