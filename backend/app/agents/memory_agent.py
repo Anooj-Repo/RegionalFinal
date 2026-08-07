@@ -17,6 +17,7 @@ class MemoryAgent:
         memory_entry = {
             'project_code': project_code,
             'query': query,
+            'assistant_reply': final_result.get('assistant_reply', ''),
             'risk_score': final_result.get('risk_intelligence', {}).get('primary_raid_item', {}).get('risk_score', 85),
             'draft_id': final_result.get('communication', {}).get('created_draft_id')
         }
