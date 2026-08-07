@@ -1,0 +1,9 @@
+Program Management Al Assistant for Risk Analysis and Stakeholder Communication
+PROBLEM STATEMENT
+Program managers oversee complex projects with multiple teams, deadlines, and dependencies. Identifying risks early and communicating effectively with stakeholders are critical yet challenging due to fragmented data sources such as project plans, status reports, and communication logs. Manual risk analysis is time-consuming and subjective, leading to inconsistent prioritization and delayed mitigation actions. Existing tools lack generative Al-powered multi-agent systems that can analyze diverse project data, generate risk insights, and automate stakeholder communication tailored to different audiences. This results in project delays, budget overruns, and stakeholder dissatisfaction.
+Data Considerations:
+Project plans in XML or JSON; status reports; communication logs from email or chat APls; risk registers; data volume varies by program size; preprocessing includes text extraction, normalization, and sentiment analysis; compliance with data privacy policies; synthetic project data can be generated for training and testing.
+Consider using synthetic or anonymized data where appropriate. Ensure data quality and relevance to the problem context.
+SOLUTION EXPECTATIONS
+A multi-agent Al system that synthesizes project data to detect risks, generate risk mitigation plans, and draft stakeholder communications customized by audience. Deliverables include an interactive risk dashboard, integration with PM and communication tools, automated report generation, and role-based authentication. Success metrics include risk identification accuracy, reduction in communication drafting time by 60%, and improved stakeholder satisfaction scores. Demonstrations will illustrate risk detection, mitigation planning, and communication workflows.
+Feel free to explore creative solutions that align with the problem context and objectives.
