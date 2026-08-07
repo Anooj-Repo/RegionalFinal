@@ -36,7 +36,12 @@ const state = {
     heatmap: true,
     breakdown: true,
     flowchart: true
-  }
+  },
+  // ── Enterprise Chat State ──
+  chatMessages: [],          // [{id, role, content, status, action, telemetry, timestamp}]
+  isChatStreaming: false,    // streaming lock flag
+  chatInput: '',             // current textarea value
+  chatNodeTraces: []         // live node traces for the trace panel
 };
 
 // Initialize Application
@@ -1007,73 +1012,552 @@ function renderReportsTab(currentProject) {
   `;
 }
 
-// 6. AI Assistant & Voice Chat Tab View
+// 6. AI Assistant & Voice Chat Tab View — Enterprise Chat Workspace
 function renderChatTab() {
+  const projectCode = state.selectedProjectCode || 'PRJ-001';
+  const userRole = state.currentUser.role || 'Program Manager';
+
+  // Build message feed HTML
+  const feedHtml = state.chatMessages.length === 0 ? `
+    <div class="chat-empty-state">
+      <span class="chat-empty-icon material-symbols-outlined">smart_toy</span>
+      <div class="chat-empty-title">Enterprise AI Assistant</div>
+      <div class="chat-empty-sub">Ask about project risks, RAID items, mitigation plans, SOW policies, or request executive communications. I run the full LangGraph pipeline for every response.</div>
+      <div class="chat-reply-chips" style="justify-content:center">
+        ${_getQuickChips().map(c => `<button class="chat-reply-chip" onclick="chatQuickSend('${c.prompt}')">${c.label}</button>`).join('')}
+      </div>
+    </div>
+  ` : state.chatMessages.map(msg => _renderChatMessage(msg)).join('');
+
+  // Build node trace panel HTML
+  const traceHtml = state.chatNodeTraces.length === 0 ? `
+    <div style="color:var(--on-surface-variant); font-size:12px; text-align:center; padding:20px; opacity:0.6">
+      Node traces will appear here during agent execution.
+    </div>
+  ` : state.chatNodeTraces.map(n => `
+    <div class="chat-trace-node node-${n.status === 'COMPLETED' ? 'completed' : n.status === 'BLOCKED' ? 'blocked' : 'running'}">
+      <div class="chat-trace-dot"></div>
+      <div style="flex:1">
+        <div style="font-weight:700; color:var(--on-surface); font-size:12px">${n.name}</div>
+        <div style="color:var(--on-surface-variant); font-size:11px; margin-top:2px">${n.status} · ${n.latency_ms}ms</div>
+        ${n.details?.primary_raid ? `<div style="color:var(--on-surface-variant); font-size:10px; margin-top:2px">🎯 ${n.details.primary_raid}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
   return `
     <div class="page-header">
       <div>
         <h1 class="page-title">Multi-Modal AI Assistant</h1>
-        <p class="page-subtitle">Interactive query engine with Voice STT/TTS and real-time LangGraph execution tracing</p>
+        <p class="page-subtitle">Full LangGraph pipeline: Data Intelligence → Risk Intelligence → LLM Reasoning → Memory Agent</p>
       </div>
     </div>
 
-    <div class="grid-2col">
-      <div class="card-box">
-        <div class="card-box-title" style="margin-bottom:16px">Interactive Query & Voice Assistant</div>
+    <div style="display:grid; grid-template-columns:1fr 260px; gap:16px; align-items:start">
 
-        <div style="display:flex; gap:10px; margin-bottom:16px">
-          <input type="text" id="chatQueryInput" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--outline-variant)" placeholder="Ask about project risks, SOW policies, or mitigation..." value="Analyze risk for Project Orion Upgrade and generate mitigation plan" />
-          <button class="btn-primary" onclick="triggerMultiAgentWorkflow()">
-            <span class="material-symbols-outlined">send</span> Send
-          </button>
-          <button class="btn-secondary" onclick="startVoiceRecognition()">
-            <span class="material-symbols-outlined">mic</span> ${state.isRecordingVoice ? 'Listening...' : 'Voice'}
-          </button>
+      <!-- ── Main Chat Workspace ── -->
+      <div class="chat-workspace">
+
+        <!-- Header Bar -->
+        <div class="chat-header-bar">
+          <div class="chat-header-title">
+            <span class="material-symbols-outlined" style="color:var(--primary-container)">smart_toy</span>
+            Enterprise AI Assistant
+            <span class="chip chip-info" style="font-size:10px">${projectCode}</span>
+            <span class="chip" style="font-size:10px; background:var(--surface-container)">${userRole}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px">
+            <div class="chat-live-badge">
+              <div class="chat-live-dot"></div>
+              SSE Streaming Active
+            </div>
+            <button class="btn-secondary" onclick="clearChatHistory()" style="font-size:11px; padding:4px 10px">
+              <span class="material-symbols-outlined" style="font-size:14px">delete_sweep</span> Clear
+            </button>
+          </div>
         </div>
 
-        <div style="background:var(--surface-container-low); border:1px solid var(--outline-variant); padding:16px; border-radius:8px; min-height:180px">
-          <p style="color:var(--primary-container); font-weight:bold; display:flex; align-items:center; gap:6px">
-            <span class="material-symbols-outlined">smart_toy</span> AI Assistant Analysis Output
-          </p>
-          <p style="margin-top:10px; line-height:1.6; font-size:13px">
-            Analysis completed for <strong>${state.selectedProjectCode}</strong> using Dual RAG & 3-LangGraph Workflow.<br>
-            • <strong>Guardrails Check:</strong> Passed PII Masking & SQL Injection Filter.<br>
-            • <strong>Primary Risk Item:</strong> Third-party API Integration Delay (Score 88 High).<br>
-            • <strong>Mitigation Action:</strong> Spin up mock server to unblock sprint.<br>
-            • <strong>Human Approval:</strong> Drafted stakeholder email awaiting review in Communication Center.
-          </p>
+        <!-- Quick Prompt Chips -->
+        <div class="chat-quick-bar">
+          ${_getQuickChips().map(c => `<button class="chat-quick-chip" onclick="chatQuickSend('${c.prompt}')">${c.label}</button>`).join('')}
+        </div>
+
+        <!-- Message Feed -->
+        <div class="chat-feed" id="chatFeed">
+          ${feedHtml}
+        </div>
+
+        <!-- Input Control Bar -->
+        <div class="chat-input-bar">
+          <textarea
+            id="chatInput"
+            class="chat-textarea"
+            rows="1"
+            placeholder="Ask about risks, mitigation, RAID, email drafts, or type a command..."
+            ${state.isChatStreaming ? 'disabled' : ''}
+            onkeydown="handleChatKeydown(event)"
+            oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; state.chatInput=this.value;"
+          >${state.chatInput}</textarea>
+          <button
+            id="chatVoiceBtn"
+            class="chat-voice-btn ${state.isRecordingVoice ? 'recording' : ''}"
+            onclick="chatVoiceInput()"
+            title="Voice Input"
+          >
+            <span class="material-symbols-outlined" style="font-size:18px">mic</span>
+          </button>
+          <button
+            id="chatSendBtn"
+            class="chat-send-btn"
+            onclick="sendChatMessage()"
+            ${state.isChatStreaming ? 'disabled' : ''}
+            title="Send (Enter)"
+          >
+            <span class="material-symbols-outlined" style="font-size:18px">send</span>
+          </button>
         </div>
       </div>
 
-      <!-- Real-Time Graphical Node Execution Trace -->
-      <div class="card-box">
-        <div class="card-box-title" style="margin-bottom:16px">Real-Time Graphical Node Execution Trace</div>
-        <div class="execution-flow">
-          ${state.nodeTraces.length > 0 ? state.nodeTraces.map(n => `
-            <div class="node-item ${n.status==='COMPLETED'?'':'blocked'}">
-              <div>
-                <strong>${n.name}</strong><br>
-                <small style="color:var(--on-surface-variant)">Status: ${n.status}</small>
-              </div>
-              <span class="chip chip-success">${n.latency_ms} ms</span>
-            </div>
-          `).join('') : `
-            <div class="node-item">
-              <div><strong>1. Data Intelligence Graph</strong><br><small style="color:var(--on-surface-variant)">Guardrails & Dual RAG Indexing</small></div>
-              <span class="chip chip-success">4 ms</span>
-            </div>
-            <div class="node-item">
-              <div><strong>2. Risk Intelligence Graph</strong><br><small style="color:var(--on-surface-variant)">RAID Rule Engine & LLM Reasoning</small></div>
-              <span class="chip chip-success">0 ms</span>
-            </div>
-            <div class="node-item">
-              <div><strong>3. Communication Graph</strong><br><small style="color:var(--on-surface-variant)">Role Tailoring & Human Approval</small></div>
-            </div>
-          `}
+      <!-- ── Node Trace Side Panel ── -->
+      <div class="chat-trace-panel">
+        <div class="chat-trace-title">
+          <span class="material-symbols-outlined" style="font-size:14px">account_tree</span>
+          LangGraph Node Traces
         </div>
+        ${traceHtml}
+        ${state.chatNodeTraces.length > 0 ? `
+          <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--outline-variant); font-size:10px; color:var(--on-surface-variant)">
+            4 Nodes: Data → Risk → LLM → Memory
+          </div>
+        ` : ''}
       </div>
     </div>
   `;
+}
+
+// ─── Chat Helper: Quick Chips Config ────────────────────────────────────────
+function _getQuickChips() {
+  return [
+    { label: '⚡ Critical Path Risks', prompt: `What are the critical path risks for ${state.selectedProjectCode}?` },
+    { label: '🛡️ Add Mitigation', prompt: `Add a mitigation action for the top risk in ${state.selectedProjectCode}` },
+    { label: '📧 Draft Executive Email', prompt: `Draft a stakeholder email for ${state.selectedProjectCode} risk update` },
+    { label: '📊 Run Full Analysis', prompt: `Run full RAID analysis for ${state.selectedProjectCode}` },
+    { label: '📋 RAID Summary', prompt: `Summarize all RAID items for ${state.selectedProjectCode}` },
+    { label: '⏱️ Schedule Risks', prompt: `What schedule risks exist for ${state.selectedProjectCode}?` },
+  ];
+}
+
+// ─── Chat Helper: Render a single message ───────────────────────────────────
+function _renderChatMessage(msg) {
+  if (msg.role === 'user') {
+    return `
+      <div class="chat-msg-row user-row">
+        <div class="chat-avatar user-avatar"><span class="material-symbols-outlined" style="font-size:16px">person</span></div>
+        <div>
+          <div class="chat-bubble user-bubble">${_escapeHtml(msg.content)}</div>
+          <div class="chat-bubble-timestamp">${msg.timestamp}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (msg.role === 'status') {
+    return `
+      <div class="chat-status-event" style="max-width:80%">
+        <div class="chat-status-spinner"></div>
+        <span>${_escapeHtml(msg.content)}</span>
+      </div>
+    `;
+  }
+
+  if (msg.role === 'typing') {
+    return `
+      <div class="chat-msg-row assistant-row">
+        <div class="chat-avatar ai-avatar"><span class="material-symbols-outlined" style="font-size:16px">smart_toy</span></div>
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // assistant message
+  const actionHtml = msg.action ? _renderActionCard(msg.action) : '';
+  const telemHtml = msg.telemetry ? _renderTelemetryRow(msg.telemetry) : '';
+  const repliesHtml = msg.replies ? `
+    <div class="chat-reply-chips">
+      ${msg.replies.map(r => `<button class="chat-reply-chip" onclick="chatQuickSend('${r.prompt}')">${r.label}</button>`).join('')}
+    </div>
+  ` : '';
+
+  return `
+    <div class="chat-msg-row assistant-row">
+      <div class="chat-avatar ai-avatar"><span class="material-symbols-outlined" style="font-size:16px">smart_toy</span></div>
+      <div style="flex:1; min-width:0">
+        <div class="chat-bubble assistant-bubble" id="msg-${msg.id}">${_renderMarkdown(msg.content)}</div>
+        ${actionHtml}
+        ${telemHtml}
+        ${repliesHtml}
+        <div class="chat-bubble-timestamp">${msg.timestamp}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Chat Helper: Render Action Card (HITL widget) ───────────────────────────
+function _renderActionCard(action) {
+  if (action._confirmed) {
+    return `
+      <div class="chat-action-card">
+        <div class="action-confirmed-badge">
+          <span class="material-symbols-outlined" style="font-size:16px">check_circle</span>
+          Action Executed Successfully
+        </div>
+      </div>
+    `;
+  }
+  if (action._cancelled) {
+    return `<div class="chat-action-card"><div style="padding:10px 14px; font-size:12px; color:var(--on-surface-variant)">Action cancelled.</div></div>`;
+  }
+
+  const actionId = action._id;
+  const typeLabel = {
+    ADD_MITIGATION: '🛡️ Add Mitigation',
+    CREATE_RAID_ITEM: '⚠️ Create RAID Item',
+    DRAFT_EMAIL: '📧 Draft Email',
+    RUN_WORKFLOW: '🔬 Run Workflow'
+  }[action.action_type] || action.action_type;
+
+  const fields = Object.entries(action)
+    .filter(([k]) => !['action_type', '_id', '_confirmed', '_cancelled'].includes(k))
+    .map(([k, v]) => `<div class="chat-action-card-field"><strong>${k.replace(/_/g,' ')}:</strong> ${_escapeHtml(String(v))}</div>`)
+    .join('');
+
+  return `
+    <div class="chat-action-card" id="action-card-${actionId}">
+      <div class="chat-action-card-header">
+        <span>📋 Action Proposed</span>
+        <span class="chat-action-card-type-badge">${action.action_type}</span>
+      </div>
+      <div class="chat-action-card-body">
+        <div style="font-size:13px; font-weight:700; color:var(--on-surface); margin-bottom:4px">${typeLabel}</div>
+        ${fields}
+      </div>
+      <div class="chat-action-card-actions">
+        <button class="btn-approve" onclick="approveAction('${actionId}')">
+          <span class="material-symbols-outlined" style="font-size:14px">check_circle</span>
+          Approve & Execute
+        </button>
+        <button class="btn-cancel-action" onclick="cancelAction('${actionId}')">
+          Cancel
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Chat Helper: Render Telemetry Row ──────────────────────────────────────
+function _renderTelemetryRow(t) {
+  if (!t || t.status === 'BLOCKED') return '';
+  const model = t.model_used || 'gemini-1.5-pro';
+  const latency = t.total_latency_ms || 0;
+  const tokens = t.usage?.total_tokens || 0;
+  const cost = t.cost_usd ? `$${Number(t.cost_usd).toFixed(5)}` : '$0.00003';
+  const conf = t.confidence_score ? `${Math.round(t.confidence_score * 100)}%` : '94%';
+  return `
+    <div class="chat-telemetry-row">
+      <span class="chat-telem-chip">⚡ ${latency}ms</span>
+      <span class="chat-telem-chip">🤖 ${model}</span>
+      <span class="chat-telem-chip">🎯 Conf: ${conf}</span>
+      <span class="chat-telem-chip">🔢 ${tokens} tokens</span>
+      <span class="chat-telem-chip">💰 ${cost}</span>
+    </div>
+  `;
+}
+
+// ─── Chat Helper: Client-side Markdown renderer ──────────────────────────────
+function _renderMarkdown(text) {
+  if (!text) return '';
+  // Escape HTML first
+  let html = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>');
+  // Collect consecutive list lines and wrap them in a single <ul>
+  const lines = html.split('\n');
+  const result = [];
+  let inList = false;
+  for (const line of lines) {
+    const listMatch = line.match(/^[-•]\s(.+)$/);
+    if (listMatch) {
+      if (!inList) { result.push('<ul>'); inList = true; }
+      result.push(`<li>${listMatch[1]}</li>`);
+    } else {
+      if (inList) { result.push('</ul>'); inList = false; }
+      result.push(line);
+    }
+  }
+  if (inList) result.push('</ul>');
+  return result.join('<br>').replace(/<br>(<ul>|<\/ul>|<li>|<\/li>)/g, '$1').replace(/(<\/li>)<br>/g, '$1');
+}
+
+function _escapeHtml(text) {
+  return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function _timestamp() {
+  return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ─── Send Chat Message ───────────────────────────────────────────────────────
+async function sendChatMessage(overrideText) {
+  if (state.isChatStreaming) return;
+  const inputEl = document.getElementById('chatInput');
+  const text = overrideText || (inputEl ? inputEl.value.trim() : state.chatInput.trim());
+  if (!text) return;
+
+  // Push user message
+  state.chatMessages.push({ id: Date.now(), role: 'user', content: text, timestamp: _timestamp() });
+  state.chatInput = '';
+  state.isChatStreaming = true;
+  state.chatNodeTraces = [];
+
+  // Add typing indicator
+  const typingId = Date.now() + 1;
+  state.chatMessages.push({ id: typingId, role: 'typing', content: '' });
+  renderApp();
+  _scrollChatToBottom();
+
+  // Build conversation history from past user/assistant messages
+  const history = state.chatMessages
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .slice(-12)
+    .map(m => ({ role: m.role, content: m.content }));
+
+  // Create the assistant placeholder message
+  const assistantMsgId = Date.now() + 2;
+  let assistantContent = '';
+  let assistantAction = null;
+  let assistantTelemetry = null;
+
+  try {
+    const token = state.authToken || localStorage.getItem('pmai_auth_token');
+    const resp = await fetch(`${API_BASE_URL}/agents/chat-stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        message: text,
+        project_code: state.selectedProjectCode,
+        conversation_history: history,
+        user_role: state.currentUser.role,
+        project_data: { code: state.selectedProjectCode, lifecycle_phase: 'Execution' }
+      })
+    });
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    // Remove typing indicator, add assistant placeholder
+    state.chatMessages = state.chatMessages.filter(m => m.id !== typingId);
+    state.chatMessages.push({
+      id: assistantMsgId,
+      role: 'assistant',
+      content: '',
+      action: null,
+      telemetry: null,
+      timestamp: _timestamp()
+    });
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // keep incomplete line
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        let event;
+        try { event = JSON.parse(line.slice(6)); } catch { continue; }
+
+        const aMsg = state.chatMessages.find(m => m.id === assistantMsgId);
+        if (!aMsg) continue;
+
+        if (event.type === 'status') {
+          // Show status events inline above the assistant bubble
+          state.chatMessages = state.chatMessages.filter(m => m.role !== 'status');
+          const statusIdx = state.chatMessages.findIndex(m => m.id === assistantMsgId);
+          state.chatMessages.splice(statusIdx, 0, { id: Date.now(), role: 'status', content: event.content });
+        } else if (event.type === 'token') {
+          aMsg.content += event.content;
+        } else if (event.type === 'action') {
+          const actionPayload = event.action;
+          actionPayload._id = 'action_' + Date.now();
+          aMsg.action = actionPayload;
+          // Register in global action registry for approve/cancel
+          window._chatActions = window._chatActions || {};
+          window._chatActions[actionPayload._id] = actionPayload;
+        } else if (event.type === 'done') {
+          assistantTelemetry = event.telemetry;
+          aMsg.telemetry = assistantTelemetry;
+          // Update node traces in side panel
+          state.chatNodeTraces = (event.telemetry?.node_traces || []);
+          // Remove status events from feed now that streaming is done
+          state.chatMessages = state.chatMessages.filter(m => m.role !== 'status');
+          // Add contextual reply chips
+          aMsg.replies = _getSuggestedReplies(text);
+        }
+
+        // Patch DOM directly for smooth token streaming (avoid full re-render)
+        const bubbleEl = document.getElementById(`msg-${assistantMsgId}`);
+        if (bubbleEl && event.type === 'token') {
+          bubbleEl.innerHTML = _renderMarkdown(aMsg.content);
+        } else {
+          renderApp();
+        }
+        _scrollChatToBottom();
+      }
+    }
+  } catch (err) {
+    state.chatMessages = state.chatMessages.filter(m => m.id !== typingId);
+    state.chatMessages.push({
+      id: assistantMsgId,
+      role: 'assistant',
+      content: `⚠️ Error: ${err.message}. Please check that the Flask backend is running on port 5000.`,
+      timestamp: _timestamp()
+    });
+  } finally {
+    state.isChatStreaming = false;
+    renderApp();
+    _scrollChatToBottom();
+  }
+}
+
+function chatQuickSend(prompt) {
+  const inputEl = document.getElementById('chatInput');
+  if (inputEl) inputEl.value = prompt;
+  state.chatInput = prompt;
+  sendChatMessage(prompt);
+}
+
+function handleChatKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendChatMessage();
+  }
+}
+
+function clearChatHistory() {
+  state.chatMessages = [];
+  state.chatNodeTraces = [];
+  state.chatInput = '';
+  renderApp();
+}
+
+function _scrollChatToBottom() {
+  setTimeout(() => {
+    const feed = document.getElementById('chatFeed');
+    if (feed) feed.scrollTop = feed.scrollHeight;
+  }, 30);
+}
+
+function _getSuggestedReplies(lastMessage) {
+  const m = lastMessage.toLowerCase();
+  if (m.includes('risk')) return [
+    { label: '🛡️ Add Mitigation', prompt: `Add a mitigation for the top risk in ${state.selectedProjectCode}` },
+    { label: '📧 Escalate to Executive', prompt: `Draft a stakeholder email for ${state.selectedProjectCode}` },
+  ];
+  if (m.includes('email') || m.includes('draft')) return [
+    { label: '✅ View Comm Center', prompt: `Show communication drafts for ${state.selectedProjectCode}` },
+    { label: '⚡ Top Risks', prompt: `What are the critical risks for ${state.selectedProjectCode}?` },
+  ];
+  return [
+    { label: '📊 Full RAID Analysis', prompt: `Run full RAID analysis for ${state.selectedProjectCode}` },
+    { label: '📋 RAID Summary', prompt: `Summarize all RAID items for ${state.selectedProjectCode}` },
+  ];
+}
+
+// ─── Approve / Cancel Action Cards ──────────────────────────────────────────
+async function approveAction(actionId) {
+  const action = (window._chatActions || {})[actionId];
+  if (!action) return;
+
+  const token = state.authToken || localStorage.getItem('pmai_auth_token');
+  const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+
+  try {
+    let endpoint, body;
+    if (action.action_type === 'ADD_MITIGATION') {
+      endpoint = `${API_BASE_URL}/raid/${action.raid_id || 1}/mitigation`;
+      body = { title: action.title, owner_name: action.owner_name, due_date: action.due_date, status: action.status || 'In Progress', description: action.description };
+    } else if (action.action_type === 'CREATE_RAID_ITEM') {
+      endpoint = `${API_BASE_URL}/raid`;
+      body = { title: action.title, description: action.description, category: action.category, likelihood: action.likelihood, impact: action.impact, risk_score: action.risk_score, project_id: action.project_id || 1 };
+    } else if (action.action_type === 'DRAFT_EMAIL' || action.action_type === 'RUN_WORKFLOW') {
+      endpoint = `${API_BASE_URL}/agents/run-workflow`;
+      body = { project_code: action.project_code || state.selectedProjectCode, recipient_role: action.recipient_role || 'Executive', query: action.description || 'Run analysis' };
+    } else {
+      return;
+    }
+
+    const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+    if (res.ok) {
+      action._confirmed = true;
+      const msg = state.chatMessages.find(m => m.action?._id === actionId);
+      if (msg) msg.action = { ...action };
+      renderApp();
+    } else {
+      const errData = await res.json();
+      alert(`Action failed: ${errData.message || res.statusText}`);
+    }
+  } catch (err) {
+    alert(`Action error: ${err.message}`);
+  }
+}
+
+function cancelAction(actionId) {
+  const action = (window._chatActions || {})[actionId];
+  if (!action) return;
+  action._cancelled = true;
+  const msg = state.chatMessages.find(m => m.action?._id === actionId);
+  if (msg) msg.action = { ...action };
+  renderApp();
+}
+
+// ─── Voice Input for Chat ────────────────────────────────────────────────────
+function chatVoiceInput() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Voice input is not supported in this browser.');
+    return;
+  }
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new Recognition();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  state.isRecordingVoice = true;
+  renderApp();
+  recognition.start();
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    const inputEl = document.getElementById('chatInput');
+    if (inputEl) inputEl.value = transcript;
+    state.chatInput = transcript;
+    state.isRecordingVoice = false;
+    renderApp();
+    sendChatMessage(transcript);
+  };
+  recognition.onerror = () => { state.isRecordingVoice = false; renderApp(); };
+  recognition.onend = () => { state.isRecordingVoice = false; renderApp(); };
 }
 
 // 7. System & Technical Admin Tab View
