@@ -106,6 +106,7 @@ function getUserAvatar(user) {
   
   const avatars = {
     'rohit': 'https://lh3.googleusercontent.com/aida-public/AB6AXuCbcPHmQncMqeCyloxxFVdcQt82FdGRiPqJn4bdegkraWZJLbyoFF3FBb0UDFAHhop6wy41Pe-HfG8kF8D2j-nzH0ujTdtnWG2HSzd8sKaRyOdSdrbFPRT4UMYeELXSrNaljIIOIwk4lMEdu-8ty-JKlxAckqbyQ7zmu-bt-1v9EFRqEiHP2sq9bWYW4kAFAcn8Gm3s3TMyRJNpznTOQc_MauIOb3Epf8NinZ4bbvjZ12R9syMjguMG',
+    'superadmin': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
     'amit': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
     'sneha': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80',
     'admin': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
@@ -429,6 +430,16 @@ function renderApp() {
     return;
   }
 
+  const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
+  const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
+  const isViewerRole = userRole === 'Viewer';
+
+  if (isViewerRole && state.activeTab !== 'raid' && state.activeTab !== 'comms') {
+    state.activeTab = 'raid';
+  } else if (!isAdminRole && state.activeTab === 'admin') {
+    state.activeTab = 'dashboard';
+  }
+
   const currentProject = state.projects.find(p => p.code === state.selectedProjectCode) || {
     name: 'Project Orion Upgrade', code: 'PRJ-001', lifecycle_phase: 'Mobilization', health_status: 'At Risk', progress_pct: 72
   };
@@ -450,14 +461,16 @@ function renderApp() {
         </div>
 
         <div class="sidebar-menu">
-          <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
-            <span class="material-symbols-outlined">dashboard</span>
-            <span>Dashboard</span>
-          </button>
-          <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
-            <span class="material-symbols-outlined">assignment</span>
-            <span>Projects</span>
-          </button>
+          ${!isViewerRole ? `
+            <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
+              <span class="material-symbols-outlined">dashboard</span>
+              <span>Dashboard</span>
+            </button>
+            <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
+              <span class="material-symbols-outlined">assignment</span>
+              <span>Projects</span>
+            </button>
+          ` : ''}
           <button class="nav-link ${state.activeTab === 'raid' ? 'active' : ''}" onclick="switchTab('raid')">
             <span class="material-symbols-outlined">warning</span>
             <span>Risk Center</span>
@@ -466,18 +479,22 @@ function renderApp() {
             <span class="material-symbols-outlined">chat</span>
             <span>Communication ${pendingEmailCount > 0 ? `(${pendingEmailCount})` : ''}</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
-            <span class="material-symbols-outlined">assessment</span>
-            <span>Reports</span>
-          </button>
-          <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
-            <span class="material-symbols-outlined">smart_toy</span>
-            <span>AI Assistant</span>
-          </button>
-          <button class="nav-link ${state.activeTab === 'admin' ? 'active' : ''}" onclick="switchTab('admin')">
-            <span class="material-symbols-outlined">settings</span>
-            <span>Settings & Admin</span>
-          </button>
+          ${!isViewerRole ? `
+            <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
+              <span class="material-symbols-outlined">assessment</span>
+              <span>Reports</span>
+            </button>
+            <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
+              <span class="material-symbols-outlined">smart_toy</span>
+              <span>AI Assistant</span>
+            </button>
+          ` : ''}
+          ${isAdminRole ? `
+            <button class="nav-link ${state.activeTab === 'admin' ? 'active' : ''}" onclick="switchTab('admin')">
+              <span class="material-symbols-outlined">settings</span>
+              <span>Settings & Admin</span>
+            </button>
+          ` : ''}
           <button class="nav-link" onclick="logoutUser()" style="margin-top:auto">
             <span class="material-symbols-outlined">logout</span>
             <span>Sign Out</span>
@@ -489,9 +506,11 @@ function renderApp() {
       <div class="main-wrapper">
         <!-- Top Sticky Header -->
         <header class="top-app-bar">
-          <div class="header-search">
-            <span class="material-symbols-outlined">search</span>
-            <input type="text" placeholder="Search projects, risks, reports..." />
+          <div style="display:flex; align-items:center; gap:8px">
+            <span class="material-symbols-outlined" style="color:var(--primary-container); font-size:22px">waving_hand</span>
+            <span style="font-size:15px; font-weight:700; color:var(--on-surface)">
+              Welcome back, ${state.currentUser ? state.currentUser.full_name : 'Rohit Verma'}!
+            </span>
           </div>
 
           <div class="header-controls">
@@ -1318,16 +1337,6 @@ function renderLoginTab() {
                 Sign In
               </button>
             </div>
-
-            <div style="display:flex; align-items:center; margin:20px 0">
-              <div style="flex:1; border-top:1px solid var(--outline-variant)"></div>
-              <span style="margin:0 12px; font-size:12px; color:var(--outline)">or</span>
-              <div style="flex:1; border-top:1px solid var(--outline-variant)"></div>
-            </div>
-
-            <button type="button" class="btn-secondary" onclick="handleLoginSubmit(event)" style="width:100%; justify-content:center; padding:12px">
-              <span class="material-symbols-outlined">shield_person</span> Sign in with SSO
-            </button>
           </form>
         </div>
 
