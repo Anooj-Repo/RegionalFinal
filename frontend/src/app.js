@@ -1993,25 +1993,6 @@ function renderAdminTab() {
       </div>
     </div>
 
-    <!-- Master Projects Portfolio Table -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Master Projects Table (backend/app.db -> Project)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>ID</th><th>Code</th><th>Project Name</th><th>Lifecycle Phase</th><th>Health Status</th><th>Budget</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#1</td><td><code>PRJ-001</code></td><td><strong>Project Orion Upgrade</strong></td><td><span class="chip chip-info">Mobilization</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$2.5M</td></tr>
-            <tr><td>#2</td><td><code>PRJ-002</code></td><td><strong>Core Banking Modernization</strong></td><td><span class="chip chip-info">Planning</span></td><td><span class="chip chip-success">Healthy</span></td><td>$4.2M</td></tr>
-            <tr><td>#3</td><td><code>PRJ-003</code></td><td><strong>Digital Identity Platform</strong></td><td><span class="chip chip-info">Design</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$1.8M</td></tr>
-            <tr><td>#4</td><td><code>PRJ-004</code></td><td><strong>Cloud Infrastructure Migration</strong></td><td><span class="chip chip-info">Execution</span></td><td><span class="chip chip-danger">Critical</span></td><td>$3.5M</td></tr>
-            <tr><td>#5</td><td><code>PRJ-005</code></td><td><strong>Supply Chain Analytics</strong></td><td><span class="chip chip-info">Closure</span></td><td><span class="chip chip-success">Healthy</span></td><td>$1.2M</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
     <!-- RAG DATABASE 3: VECTORIMPORT GRAPH 1 & INTELLIGENCE ENGINE RAG STORE -->
     <div class="card-box" style="margin-top:20px;">
       <div class="card-box-title" style="margin-bottom:6px">3. VectorImport Graph 1 & Intelligence Engine RAG Vector Store (VectorImport/backend/data/vector_store/)</div>
@@ -2037,6 +2018,25 @@ function renderAdminTab() {
               <tr><td><code>chunk_0</code></td><td>VectorImport Store [PROJECT_PROG_ALPHA_2026] (Document)</td><td><small style="color:var(--on-surface-variant)">Task Ent [task_102]: Cloud Infrastructure Setup (Azure) - CloudSphere Inc. API gateway delayed...</small></td><td><span class="chip chip-warning">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
               <tr><td><code>chunk_1</code></td><td>VectorImport Store [PROJECT_PROG_GAMMA_2026] (Document)</td><td><small style="color:var(--on-surface-variant)">Security Audit Email [email_3001]: GDPR Audit Deadline at Risk - Unsigned Pen Test Contract...</small></td><td><span class="chip chip-warning">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
             `}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Master Projects Portfolio Table -->
+    <div class="card-box" style="margin-top:20px;">
+      <div class="card-box-title" style="margin-bottom:16px">SQLite Master Projects Table (backend/app.db -> Project)</div>
+      <div class="table-responsive">
+        <table class="stitch-table">
+          <thead>
+            <tr><th>ID</th><th>Code</th><th>Project Name</th><th>Lifecycle Phase</th><th>Health Status</th><th>Budget</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>#1</td><td><code>PRJ-001</code></td><td><strong>Project Orion Upgrade</strong></td><td><span class="chip chip-info">Mobilization</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$2.5M</td></tr>
+            <tr><td>#2</td><td><code>PRJ-002</code></td><td><strong>Core Banking Modernization</strong></td><td><span class="chip chip-info">Planning</span></td><td><span class="chip chip-success">Healthy</span></td><td>$4.2M</td></tr>
+            <tr><td>#3</td><td><code>PRJ-003</code></td><td><strong>Digital Identity Platform</strong></td><td><span class="chip chip-info">Design</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$1.8M</td></tr>
+            <tr><td>#4</td><td><code>PRJ-004</code></td><td><strong>Cloud Infrastructure Migration</strong></td><td><span class="chip chip-info">Execution</span></td><td><span class="chip chip-danger">Critical</span></td><td>$3.5M</td></tr>
+            <tr><td>#5</td><td><code>PRJ-005</code></td><td><strong>Supply Chain Analytics</strong></td><td><span class="chip chip-info">Closure</span></td><td><span class="chip chip-success">Healthy</span></td><td>$1.2M</td></tr>
           </tbody>
         </table>
       </div>
