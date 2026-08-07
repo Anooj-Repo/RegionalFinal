@@ -5,6 +5,8 @@ echo Starting Flask REST API Backend Service on Port 5000...
 echo ============================================================
 echo.
 
+set PYTHONPATH=.
+
 if exist "venv\Scripts\activate.bat" (
     call venv\Scripts\activate.bat
 )

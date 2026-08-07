@@ -5,6 +5,8 @@ echo Starting FastMCP Server Service on Port 5001...
 echo ============================================================
 echo.
 
+set PYTHONPATH=.
+
 if exist "venv\Scripts\activate.bat" (
     call venv\Scripts\activate.bat
 )

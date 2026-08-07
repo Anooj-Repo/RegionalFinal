@@ -237,8 +237,9 @@ function speakText(text) {
 
 // Main UI Render Function
 function renderApp() {
-  const root = document.getElementById('app-root');
+  const root = document.querySelector('app-root') || document.getElementById('app-root');
   if (!root) return;
+
 
   const currentProject = state.projects.find(p => p.code === state.selectedProjectCode) || {
     name: 'Project Orion Upgrade', code: 'PRJ-001', lifecycle_phase: 'Mobilization', health_status: 'At Risk', progress_pct: 72

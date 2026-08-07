@@ -5,6 +5,8 @@ echo Starting Background Email Poller (5-10s loop) & Streaming Agent...
 echo ============================================================
 echo.
 
+set PYTHONPATH=.
+
 if exist "venv\Scripts\activate.bat" (
     call venv\Scripts\activate.bat
 )
