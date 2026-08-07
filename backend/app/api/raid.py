@@ -15,14 +15,21 @@ def get_raid_items():
     """Retrieves RAID items filtered by project_id or category (Risk, Assumption, Issue, Dependency)."""
     project_id = request.args.get('project_id')
     category = request.args.get('category')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
 
     query = RAIDItem.query
     if project_id and project_id.isdigit():
         query = query.filter_by(project_id=int(project_id))
     if category:
         query = query.filter_by(category=category.capitalize())
+    if start_date:
+        query = query.filter(RAIDItem.created_at >= start_date)
+    if end_date:
+        query = query.filter(RAIDItem.created_at <= end_date + ' 23:59:59')
 
     items = query.order_by(RAIDItem.risk_score.desc()).all()
+
 
     # RAID category summary
     summary = {
