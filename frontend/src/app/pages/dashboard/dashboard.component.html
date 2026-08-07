@@ -4,14 +4,18 @@
     <p class="page-subtitle">Overview of your program health and key insights</p>
   </div>
   <div style="display:flex; gap:12px">
-    <select class="btn-secondary" style="background:#fff">
-      <option>All Programs</option>
+    <select class="btn-secondary" style="background:#fff; cursor:pointer" (change)="setProject($event.target.value)">
+      <option *ngFor="let p of projects" [value]="p.code" [selected]="p.code === getCurrentProject().code">
+        {{ p.code }} - {{ p.name }}
+      </option>
     </select>
-    <button class="btn-secondary">
-      <span class="material-symbols-outlined">calendar_today</span>
-      May 12 - May 18, 2025
-    </button>
-    <button class="btn-secondary">
+    <div class="btn-secondary" style="background:#fff; display:flex; align-items:center; gap:8px; padding:6px 12px">
+      <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary-container)">calendar_today</span>
+      <input type="date" value="2025-05-12" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="Start Date" />
+      <span style="color:var(--outline); font-size:12px; font-weight:600">-</span>
+      <input type="date" value="2025-05-18" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="End Date" />
+    </div>
+    <button class="btn-secondary" (click)="openCustomizeModal()">
       <span class="material-symbols-outlined">tune</span>
       Customize
     </button>

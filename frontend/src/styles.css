@@ -773,3 +773,38 @@ body {
   border-color: var(--primary-container);
   box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.2);
 }
+
+/* Help Button Hover Tooltip Card */
+.help-tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.help-tooltip-box {
+  visibility: hidden;
+  opacity: 0;
+  width: 290px;
+  background-color: var(--on-tertiary-fixed);
+  color: #ffffff;
+  text-align: left;
+  border-radius: 10px;
+  padding: 12px 14px;
+  position: absolute;
+  z-index: 1000;
+  top: 130%;
+  right: 0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--on-tertiary-fixed-variant);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+  transform: translateY(-4px);
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.help-tooltip-container:hover .help-tooltip-box {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
