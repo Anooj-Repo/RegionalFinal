@@ -1,0 +1,12 @@
+{
+  "name": "enterprise-pm-ai-frontend",
+  "version": "1.0.0",
+  "description": "Angular 17 Standalone UI for Enterprise Program Management AI Assistant",
+  "scripts": {
+    "start": "npx serve -s src -p 4200",
+    "build": "echo Building production bundle..."
+  },
+  "dependencies": {
+    "serve": "^14.2.3"
+  }
+}
