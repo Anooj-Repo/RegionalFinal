@@ -1361,15 +1361,13 @@ function renderReportsTab(currentProject) {
         <div style="background:var(--surface-container-low); padding:16px; border-radius:8px">
           <h4 style="font-weight:700; margin-bottom:8px">Key Performance Indicators</h4>
           <ul style="padding-left:20px; line-height:1.8">
-            <li>Open RAID Items: <strong>${state.raidItems.length}</strong></li>
+            <li>Open Items: <strong>${state.raidItems.length}</strong></li>
             <li>High Severity Risks (&gt;70): <strong>${state.raidItems.filter(r => r.risk_score>=70).length}</strong></li>
-            <li>Active Project Team Leads: <strong>4</strong></li>
-            <li>Budget Variance: <strong>-8.5% ($1.2M)</strong></li>
           </ul>
         </div>
 
         <div style="background:var(--surface-container-low); padding:16px; border-radius:8px">
-          <h4 style="font-weight:700; margin-bottom:8px">LangGraph AI Mitigation Summary</h4>
+          <h4 style="font-weight:700; margin-bottom:8px">Risk & Mitigation Summary</h4>
           <p style="font-size:13px; color:var(--on-surface-variant)">
             The multi-agent system identified third-party API integration delays as the primary bottleneck. Mitigation strategy recommends deploying mock servers and initiating parallel sprint tasks.
           </p>
