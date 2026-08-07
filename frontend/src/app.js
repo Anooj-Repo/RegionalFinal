@@ -452,11 +452,8 @@ function renderApp() {
 
   const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
   const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
-  const isViewerRole = userRole === 'Viewer';
 
-  if (isViewerRole && state.activeTab !== 'raid' && state.activeTab !== 'comms') {
-    state.activeTab = 'raid';
-  } else if (!isAdminRole && state.activeTab === 'admin') {
+  if (!isAdminRole && (state.activeTab === 'admin' || state.activeTab === 'comms')) {
     state.activeTab = 'dashboard';
   }
 
@@ -481,34 +478,32 @@ function renderApp() {
         </div>
 
         <div class="sidebar-menu">
-          ${!isViewerRole ? `
-            <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
-              <span class="material-symbols-outlined">dashboard</span>
-              <span>Dashboard</span>
-            </button>
-            <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
-              <span class="material-symbols-outlined">assignment</span>
-              <span>Projects</span>
-            </button>
-          ` : ''}
+          <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
+            <span class="material-symbols-outlined">assignment</span>
+            <span>Projects</span>
+          </button>
           <button class="nav-link ${state.activeTab === 'raid' ? 'active' : ''}" onclick="switchTab('raid')">
             <span class="material-symbols-outlined">warning</span>
             <span>Risk Center</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="switchTab('comms')">
-            <span class="material-symbols-outlined">chat</span>
-            <span>Communication ${pendingEmailCount > 0 ? `(${pendingEmailCount})` : ''}</span>
-          </button>
-          ${!isViewerRole ? `
-            <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
-              <span class="material-symbols-outlined">assessment</span>
-              <span>Reports</span>
-            </button>
-            <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
-              <span class="material-symbols-outlined">smart_toy</span>
-              <span>AI Assistant</span>
+          ${isAdminRole ? `
+            <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined">chat</span>
+              <span>Communication ${pendingEmailCount > 0 ? `(${pendingEmailCount})` : ''}</span>
             </button>
           ` : ''}
+          <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
+            <span class="material-symbols-outlined">assessment</span>
+            <span>Reports</span>
+          </button>
+          <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
+            <span class="material-symbols-outlined">smart_toy</span>
+            <span>AI Assistant</span>
+          </button>
           ${isAdminRole ? `
             <button class="nav-link ${state.activeTab === 'admin' ? 'active' : ''}" onclick="switchTab('admin')">
               <span class="material-symbols-outlined">settings</span>
@@ -546,7 +541,7 @@ function renderApp() {
 
           <div class="header-controls">
             <!-- Notifications & Help Icons -->
-            <button class="icon-btn" title="Notifications ${pendingEmailCount > 0 ? '(' + pendingEmailCount + ' Pending Approvals)' : ''}" onclick="state.activeTab='comms'; renderApp();">
+            <button class="icon-btn" title="Notifications ${pendingEmailCount > 0 ? '(' + pendingEmailCount + ' Pending Approvals)' : ''}" onclick="${isAdminRole ? "state.activeTab='comms'; renderApp();" : "state.activeTab='dashboard'; renderApp();"}">
               <span class="material-symbols-outlined">notifications</span>
               ${pendingEmailCount > 0 ? '<span class="notification-dot"></span>' : ''}
             </button>
@@ -699,6 +694,9 @@ function generateHeatmapMatrixHTML(currentProject) {
 
 // 1. Dashboard Tab View
 function renderDashboardTab(currentProject) {
+  const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
+  const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
+
   // Filter RAID items by selected project AND selected date range
   const filteredRaidItems = state.raidItems.filter(r => {
     const isProj = r.project_id === currentProject.id || r.project_code === currentProject.code;
@@ -810,10 +808,12 @@ function renderDashboardTab(currentProject) {
           <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0">
             Vendor API spec bottleneck detected on WBS 1.3 (Score 88). LangGraph multi-agent reasoning recommends spinning up mock sandbox endpoints to preserve sprint velocity.
           </p>
-          <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="switchTab('comms')">
-            <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">chat</span>
-            <span>Communicate</span>
-          </button>
+          ${isAdminRole ? `
+            <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">chat</span>
+              <span>Communicate</span>
+            </button>
+          ` : ''}
         </div>
 
         <!-- Section 2: Mitigation -->
@@ -825,10 +825,12 @@ function renderDashboardTab(currentProject) {
           <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0">
             Deploy automated mock sandbox server & adjust critical path integration milestone by 10 business days to mitigate vendor turnaround delay.
           </p>
-          <button class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);" onclick="switchTab('comms')">
-            <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">play_arrow</span>
-            <span>Take Action</span>
-          </button>
+          ${isAdminRole ? `
+            <button class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">play_arrow</span>
+              <span>Take Action</span>
+            </button>
+          ` : ''}
         </div>
       </div>
     `,
