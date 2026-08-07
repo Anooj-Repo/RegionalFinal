@@ -23,6 +23,7 @@ const state = {
   telemetry: {},
   authToken: null,
   loginError: null,
+  lastEnteredUsername: '',
   activeTab: 'login',
   selectedDateRange: { start: '2025-05-12', end: '2025-05-18' },
   selectedEmailForApproval: null,
@@ -30,7 +31,7 @@ const state = {
   nodeTraces: [],
   isTraceExpanded: false,
   isCustomizeModalOpen: false,
-  dashboardWidgetOrder: ['kpis', 'heatmap', 'breakdown', 'flowchart'],
+  dashboardWidgetOrder: ['kpis', 'flowchart', 'heatmap', 'breakdown'],
   widgetVisibility: {
     kpis: true,
     heatmap: true,
@@ -124,6 +125,7 @@ async function handleLoginSubmit(event) {
 
   const usernameInput = document.getElementById('loginEmail')?.value || '';
   const passwordInput = document.getElementById('loginPassword')?.value || '';
+  state.lastEnteredUsername = usernameInput;
 
   let username = usernameInput.trim();
   if (username.includes('@')) {
@@ -346,7 +348,7 @@ function toggleWidgetVisibility(widgetKey) {
 }
 
 function resetDashboardLayout() {
-  state.dashboardWidgetOrder = ['kpis', 'heatmap', 'breakdown', 'flowchart'];
+  state.dashboardWidgetOrder = ['kpis', 'flowchart', 'heatmap', 'breakdown'];
   state.widgetVisibility = { kpis: true, heatmap: true, breakdown: true, flowchart: true };
   renderApp();
 }
@@ -523,11 +525,22 @@ function renderApp() {
       <div class="main-wrapper">
         <!-- Top Sticky Header -->
         <header class="top-app-bar">
-          <div style="display:flex; align-items:center; gap:8px">
-            <span class="material-symbols-outlined" style="color:var(--primary-container); font-size:22px">waving_hand</span>
-            <span style="font-size:15px; font-weight:700; color:var(--on-surface)">
-              Welcome back, ${state.currentUser ? state.currentUser.full_name : 'Rohit Verma'}!
-            </span>
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap">
+            <div style="display:flex; align-items:center; gap:8px">
+              <span class="material-symbols-outlined" style="color:var(--primary-container); font-size:22px">waving_hand</span>
+              <span style="font-size:15px; font-weight:700; color:var(--on-surface)">
+                Welcome back, ${state.currentUser ? state.currentUser.full_name : 'Rohit Verma'}!
+              </span>
+            </div>
+
+            <!-- Active Project Selector Dropdown -->
+            <select class="btn-secondary" style="background:#fff; cursor:pointer; height:38px;" onchange="setProject(this.value)">
+              ${state.projects.map(p => `
+                <option value="${p.code}" ${p.code === currentProject.code ? 'selected' : ''}>
+                  ${p.code} - ${p.name}
+                </option>
+              `).join('')}
+            </select>
           </div>
 
           <div class="header-controls">
@@ -772,8 +785,6 @@ function renderDashboardTab(currentProject) {
 
     if (curr === 'kpis') {
       contentBuffer += widgetHTML.kpis;
-    } else if (curr === 'flowchart') {
-      contentBuffer += widgetHTML.flowchart;
     } else if ((curr === 'heatmap' && next === 'breakdown') || (curr === 'breakdown' && next === 'heatmap')) {
       contentBuffer += `
         <div class="grid-2col">
@@ -794,13 +805,6 @@ function renderDashboardTab(currentProject) {
         <p class="page-subtitle">Overview of your program health and key insights</p>
       </div>
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <select class="btn-secondary" style="background:#fff; cursor:pointer; height:38px;" onchange="setProject(this.value)">
-          ${state.projects.map(p => `
-            <option value="${p.code}" ${p.code === currentProject.code ? 'selected' : ''}>
-              ${p.code} - ${p.name}
-            </option>
-          `).join('')}
-        </select>
         <div class="btn-secondary" style="background:#fff; display:flex; align-items:center; gap:8px; padding:6px 12px; height:38px;">
           <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary-container)">calendar_today</span>
           <input type="date" id="dateRangeStart" value="${state.selectedDateRange.start}" onchange="handleDateRangeChange()" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="Start Date" />
@@ -830,9 +834,6 @@ function renderProjectsTab() {
         <h1 class="page-title">Projects Portfolio</h1>
         <p class="page-subtitle">Detailed status, lifecycle phases, and metrics for all active projects</p>
       </div>
-      <button class="btn-primary">
-        <span class="material-symbols-outlined">add</span> New Project
-      </button>
     </div>
 
     <div class="card-box">
@@ -1366,7 +1367,7 @@ function renderLoginTab() {
               <label for="loginEmail">Email Address or Username</label>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">mail</span>
-                <input type="text" id="loginEmail" placeholder="Enter your email or username (e.g. rohit, amit, sneha, admin)" value="${state.currentUser ? state.currentUser.username : 'rohit'}" required />
+                <input type="text" id="loginEmail" placeholder="Enter your email or username (e.g. rohit, amit, sneha, admin)" value="${state.lastEnteredUsername || ''}" required />
               </div>
             </div>
 
@@ -1377,7 +1378,7 @@ function renderLoginTab() {
               </div>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">lock</span>
-                <input type="password" id="loginPassword" placeholder="Enter your password" value="user123" required />
+                <input type="password" id="loginPassword" placeholder="Enter your password" value="" required />
               </div>
             </div>
 
