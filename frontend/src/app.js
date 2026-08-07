@@ -2285,29 +2285,84 @@ async function refineToneWithAI(toneName) {
   const subjectInput = document.getElementById('editSubject');
   const bodyInput = document.getElementById('editBody');
   const refineBtn = document.getElementById('btnRefineTone');
+  const statusContainer = document.getElementById('aiTransformationStatus');
 
   if (!bodyInput || !bodyInput.value) return;
 
+  const emailObj = state.selectedEmailForApproval;
+  const recipientName = emailObj ? (emailObj.recipient_role || emailObj.recipient_name || 'Stakeholders') : 'Stakeholders';
+
+  // 1. Show AI Working Panel & Pulsing Input Glow Animation
+  if (subjectInput) subjectInput.classList.add('ai-transforming-glow');
+  if (bodyInput) bodyInput.classList.add('ai-transforming-glow');
+
+  if (statusContainer) {
+    statusContainer.style.display = 'block';
+    statusContainer.innerHTML = `
+      <div class="ai-working-panel">
+        <div class="ai-working-spinner"></div>
+        <div style="flex:1">
+          <div style="font-weight:700; color:#38bdf8; font-size:12px; display:flex; align-items:center; gap:6px;">
+            <span class="material-symbols-outlined" style="font-size:16px; animation:aiSparkle 1s infinite ease-in-out;">auto_awesome</span>
+            AI Multi-Agent LLM is refining tone to '${toneName}'...
+          </div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+            Sanitizing headers &amp; rewriting salutation to 'Dear ${recipientName}'
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   if (refineBtn) {
     refineBtn.disabled = true;
-    refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">sync</span> Transforming Tone...';
+    refineBtn.style.opacity = '0.75';
+    refineBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:16px; animation:aiSpinSlow 1s linear infinite;">sync</span> Refinement Engine Running...';
   }
 
   const res = await apiPost('/emails/refine-tone', {
     subject: subjectInput ? subjectInput.value : '',
     body: bodyInput.value,
-    tone: toneName || 'Executive'
+    tone: toneName || 'Executive',
+    recipient_name: recipientName
   });
+
+  // 2. Remove Glow Animation
+  if (subjectInput) subjectInput.classList.remove('ai-transforming-glow');
+  if (bodyInput) bodyInput.classList.remove('ai-transforming-glow');
 
   if (refineBtn) {
     refineBtn.disabled = false;
+    refineBtn.style.opacity = '1';
     refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; color:#facc15">bolt</span> ✨ Transform Tone with AI';
   }
 
   if (res && res.status === 'success') {
     if (subjectInput && res.refined_subject) subjectInput.value = res.refined_subject;
     if (bodyInput && res.refined_body) bodyInput.value = res.refined_body;
-    alert(`AI Tone Transformation Applied! Converted email content to '${res.tone_applied}' sentiment.`);
+
+    if (statusContainer) {
+      statusContainer.innerHTML = `
+        <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 8px; padding: 10px 14px; color: #16a34a; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; animation: fadeSlideIn 0.3s ease;">
+          <span style="display:flex; align-items:center; gap:6px;">
+            <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+            ✨ AI Tone Refinement Applied! Subject and body updated with '${res.tone_applied}' sentiment.
+          </span>
+          <span class="chip chip-success" style="font-size:10px;">PASSED</span>
+        </div>
+      `;
+      setTimeout(() => {
+        if (statusContainer) statusContainer.style.display = 'none';
+      }, 4500);
+    }
+  } else {
+    if (statusContainer) {
+      statusContainer.innerHTML = `
+        <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 10px 14px; color: #dc2626; font-size: 12px; font-weight: 700; animation: fadeSlideIn 0.3s ease;">
+          ⚠️ Tone transformation failed. Please check backend connection.
+        </div>
+      `;
+    }
   }
 }
 
@@ -2366,6 +2421,7 @@ function renderHumanApprovalModal() {
                 <span>✨ Transform Tone with AI</span>
               </button>
             </div>
+            <div id="aiTransformationStatus" style="display:none; margin-top:10px;"></div>
           </div>
         ` : ''}
 
