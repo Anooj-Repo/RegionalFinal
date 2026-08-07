@@ -744,7 +744,8 @@ function renderDashboardTab(currentProject) {
           Automated multi-agent risk assessment & strategic recommendations for ${currentProject.code}
         </p>
 
-        <div style="background:var(--surface-container-low); padding:16px; border-radius:10px; border:1px solid var(--outline-variant); display:flex; flex-direction:column; gap:12px">
+        <!-- Section 1: Multi-Agent Portfolio Intelligence -->
+        <div style="background:var(--surface-container-low); padding:16px; border-radius:10px; border:1px solid var(--outline-variant); display:flex; flex-direction:column; gap:12px; margin-bottom:12px">
           <div style="display:flex; align-items:center; justify-content:space-between">
             <span style="font-size:13px; font-weight:700; color:var(--on-surface)">Multi-Agent Portfolio Intelligence</span>
             <span class="chip chip-warning">High Priority Risk</span>
@@ -752,9 +753,24 @@ function renderDashboardTab(currentProject) {
           <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0">
             Vendor API spec bottleneck detected on WBS 1.3 (Score 88). LangGraph multi-agent reasoning recommends spinning up mock sandbox endpoints to preserve sprint velocity.
           </p>
-          <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="triggerMultiAgentWorkflow()">
-            <span class="material-symbols-outlined" style="font-size: 18px; color: #facc15">bolt</span>
-            <span>⚡ Analyze Portfolio Risks</span>
+          <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="switchTab('comms')">
+            <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">chat</span>
+            <span>Communicate</span>
+          </button>
+        </div>
+
+        <!-- Section 2: Mitigation -->
+        <div style="background:var(--surface-container-low); padding:16px; border-radius:10px; border:1px solid var(--outline-variant); display:flex; flex-direction:column; gap:12px">
+          <div style="display:flex; align-items:center; justify-content:space-between">
+            <span style="font-size:13px; font-weight:700; color:var(--on-surface)">Mitigation</span>
+            <span class="chip chip-success">Action Required</span>
+          </div>
+          <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0">
+            Deploy automated mock sandbox server & adjust critical path integration milestone by 10 business days to mitigate vendor turnaround delay.
+          </p>
+          <button class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);" onclick="switchTab('comms')">
+            <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">play_arrow</span>
+            <span>Take Action</span>
           </button>
         </div>
       </div>
