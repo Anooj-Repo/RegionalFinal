@@ -719,6 +719,7 @@ function renderDashboardTab(currentProject) {
       <div class="card-box">
         <div class="card-box-header">
           <div class="card-box-title">Project Phase Breakdown</div>
+          <span class="chip chip-info" style="font-size:11px">Portfolio View (${state.projects.length} Projects)</span>
         </div>
         <div class="table-responsive">
           <table class="stitch-table">
@@ -727,8 +728,11 @@ function renderDashboardTab(currentProject) {
             </thead>
             <tbody>
               ${state.projects.map(p => `
-                <tr style="cursor:pointer; ${p.code === currentProject.code ? 'background-color: var(--surface-container-high);' : ''}" onclick="setProject('${p.code}')">
-                  <td><strong>${p.code}</strong> - ${p.name}</td>
+                <tr style="cursor:pointer; ${p.code === currentProject.code ? 'background-color: rgba(2, 132, 199, 0.15); border-left: 4px solid var(--primary);' : ''}" onclick="setProject('${p.code}')">
+                  <td>
+                    <strong>${p.code}</strong> - ${p.name}
+                    ${p.code === currentProject.code ? '<span class="chip chip-info" style="margin-left:8px; font-size:10px; font-weight:700">SELECTED</span>' : ''}
+                  </td>
                   <td>${p.lifecycle_phase}</td>
                   <td>
                     <span class="chip ${p.health_status==='Healthy'?'chip-success':p.health_status==='At Risk'?'chip-warning':'chip-danger'}">
@@ -743,6 +747,7 @@ function renderDashboardTab(currentProject) {
         </div>
       </div>
     `,
+
     flowchart: `
       <div class="card-box">
         <div class="card-box-header">

@@ -121,6 +121,7 @@
   <div class="card-box">
     <div class="card-box-header">
       <div class="card-box-title">Project Phase Breakdown</div>
+      <span class="chip chip-info" style="font-size:11px">Portfolio View ({{ projects.length }} Projects)</span>
     </div>
     <div class="table-responsive">
       <table class="stitch-table">
@@ -128,8 +129,11 @@
           <tr><th>Project</th><th>Phase</th><th>Health</th><th>Progress</th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let p of projects" (click)="setProject(p.code)" style="cursor:pointer">
-            <td><strong>{{ p.code }}</strong> - {{ p.name }}</td>
+          <tr *ngFor="let p of projects" (click)="setProject(p.code)" [style.background-color]="p.code === getCurrentProject().code ? 'rgba(2, 132, 199, 0.15)' : 'transparent'" [style.border-left]="p.code === getCurrentProject().code ? '4px solid var(--primary)' : 'none'" style="cursor:pointer">
+            <td>
+              <strong>{{ p.code }}</strong> - {{ p.name }}
+              <span *ngIf="p.code === getCurrentProject().code" class="chip chip-info" style="margin-left:8px; font-size:10px; font-weight:700">SELECTED</span>
+            </td>
             <td>{{ p.lifecycle_phase }}</td>
             <td>
               <span class="chip" [ngClass]="{'chip-success': p.health_status==='Healthy', 'chip-warning': p.health_status==='At Risk', 'chip-danger': p.health_status==='Critical'}">
@@ -142,6 +146,7 @@
       </table>
     </div>
   </div>
+
 </div>
 
 <!-- Visual Critical Path Flowchart Card -->
