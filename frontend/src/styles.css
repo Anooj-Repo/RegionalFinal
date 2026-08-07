@@ -133,7 +133,7 @@ body {
 
 .brand-subtitle {
   font-size: 12px;
-  color: var(--tertiary-fixed-dim);
+  color: #e2e8f0;
 }
 
 .sidebar-menu {
@@ -151,7 +151,7 @@ body {
   gap: 12px;
   padding: 12px 16px;
   border-radius: 8px;
-  color: var(--on-primary-fixed-variant);
+  color: #ffffff;
   text-decoration: none;
   font-weight: 600;
   font-size: 13px;

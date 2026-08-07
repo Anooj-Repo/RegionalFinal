@@ -13,7 +13,7 @@ from backend.app.rag.rag_engine import global_rag_engine
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
 @admin_bp.route('/graph-triples', methods=['GET'])
-@role_required(['Admin', 'Program Manager'])
+@role_required(['Admin', 'Super Admin', 'Program Manager'])
 def get_graph_triples():
     """Retrieves real-time GraphRAG entity-relationship triples stored in mcp.db / RAG Engine."""
     triples = global_rag_engine.graph_triples
@@ -24,7 +24,7 @@ def get_graph_triples():
     }), 200
 
 @admin_bp.route('/db-tables', methods=['GET'])
-@role_required(['Admin', 'Program Manager'])
+@role_required(['Admin', 'Super Admin', 'Program Manager'])
 def get_all_db_tables():
     """Retrieves all master tables stored in SQLite app.db."""
     users = User.query.all()
@@ -51,7 +51,7 @@ def get_all_db_tables():
     }), 200
 
 @admin_bp.route('/knowledge-docs', methods=['GET'])
-@role_required(['Admin', 'Program Manager'])
+@role_required(['Admin', 'Super Admin', 'Program Manager'])
 def get_knowledge_docs():
     """Retrieves uploaded RAG documents and dynamic chunk breakdown details."""
     docs = KnowledgeDoc.query.order_by(KnowledgeDoc.created_at.desc()).all()
@@ -78,7 +78,7 @@ def get_knowledge_docs():
     }), 200
 
 @admin_bp.route('/users', methods=['GET'])
-@role_required(['Admin', 'Program Manager'])
+@role_required(['Admin', 'Super Admin', 'Program Manager'])
 def get_admin_users():
     """Retrieves SQLite DB Master User Accounts data."""
     users = User.query.order_by(User.id.asc()).all()
@@ -89,7 +89,7 @@ def get_admin_users():
     }), 200
 
 @admin_bp.route('/audit-logs', methods=['GET'])
-@role_required(['Admin', 'Program Manager', 'Project Manager', 'Team Lead', 'Executive'])
+@role_required(['Admin', 'Super Admin', 'Program Manager', 'Project Manager', 'Team Lead', 'Executive'])
 def get_audit_logs():
     """Retrieves system security audit log stream."""
     limit = request.args.get('limit', 30, type=int)
@@ -101,7 +101,7 @@ def get_audit_logs():
     }), 200
 
 @admin_bp.route('/system-metrics', methods=['GET'])
-@role_required(['Admin', 'Program Manager', 'Project Manager', 'Team Lead', 'Executive', 'Viewer'])
+@role_required(['Admin', 'Super Admin', 'Program Manager', 'Project Manager', 'Team Lead', 'Executive', 'Viewer'])
 def get_system_metrics():
     """Retrieves system telemetry and configuration metrics."""
     audit_count = AuditLog.query.count()
