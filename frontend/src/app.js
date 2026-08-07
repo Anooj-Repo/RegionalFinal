@@ -22,6 +22,7 @@ const state = {
   auditLogs: [],
   telemetry: {},
   authToken: null,
+  loginError: null,
   activeTab: 'login',
   selectedDateRange: { start: '2025-05-12', end: '2025-05-18' },
   selectedEmailForApproval: null,
@@ -118,15 +119,23 @@ function getUserAvatar(user) {
 // Login Form Submit Handler
 async function handleLoginSubmit(event) {
   if (event) event.preventDefault();
-  const usernameInput = document.getElementById('loginEmail')?.value || 'rohit';
-  const passwordInput = document.getElementById('loginPassword')?.value || 'user123';
+  state.loginError = null;
+
+  const usernameInput = document.getElementById('loginEmail')?.value || '';
+  const passwordInput = document.getElementById('loginPassword')?.value || '';
 
   let username = usernameInput.trim();
   if (username.includes('@')) {
     username = username.split('@')[0].split('.')[0];
   }
 
-  console.log(`[Auth] Executing login for username: ${username}`);
+  if (!username || !passwordInput) {
+    state.loginError = 'Please enter both username/email and password.';
+    renderApp();
+    return;
+  }
+
+  console.log(`[Auth] Executing backend authentication for username: ${username}`);
 
   try {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -135,46 +144,32 @@ async function handleLoginSubmit(event) {
       body: JSON.stringify({ username: username, password: passwordInput })
     });
 
-    if (res.ok) {
-      const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.access_token) {
       state.authToken = data.access_token;
       if (data.user) {
         state.currentUser = data.user;
         state.currentRole = data.user.role || 'Program Manager';
       }
-      console.log(`[Auth Success] Logged in as ${state.currentUser.full_name} (${state.currentRole})`);
+      state.loginError = null;
       state.activeTab = 'dashboard';
       persistSession();
       await refreshWorkspaceData();
       renderApp();
       return;
+    } else {
+      // Backend returned validation error (401 Unauthorized / 400 Bad Request / 403 Forbidden)
+      state.loginError = data.message || 'Invalid username or password.';
+      console.warn(`[Auth Validation Failed] ${state.loginError}`);
+      renderApp();
+      return;
     }
   } catch (err) {
-    console.warn('[Auth Warning] Backend API offline, using local user profile mapping:', err);
+    console.error('[Auth Error] Backend API offline or unreachable:', err);
+    state.loginError = 'Backend authentication API is offline or unreachable (http://127.0.0.1:5000). Please start the backend service.';
+    renderApp();
   }
-
-  const userMap = {
-    'rohit': { username: 'rohit', full_name: 'Rohit Verma', role: 'Program Manager', email: 'rohit.verma@pmai.com' },
-    'amit': { username: 'amit', full_name: 'Amit Joshi', role: 'Project Manager', email: 'amit.joshi@pmai.com' },
-    'sneha': { username: 'sneha', full_name: 'Sneha Iyer', role: 'Team Lead', email: 'sneha.iyer@pmai.com' },
-    'admin': { username: 'admin', full_name: 'System Administrator', role: 'Admin', email: 'admin@pmai.com' },
-    'karan': { username: 'karan', full_name: 'Karan Patel', role: 'Executive', email: 'karan.patel@pmai.com' },
-    'priya': { username: 'priya', full_name: 'Priya Sharma', role: 'Viewer', email: 'priya.sharma@pmai.com' }
-  };
-
-  const user = userMap[username.toLowerCase()] || {
-    username: username,
-    full_name: username.charAt(0).toUpperCase() + username.slice(1) + ' User',
-    role: 'Program Manager',
-    email: `${username}@pmai.com`
-  };
-
-  state.currentUser = user;
-  state.currentRole = user.role;
-  state.activeTab = 'dashboard';
-  persistSession();
-  await refreshWorkspaceData();
-  renderApp();
 }
 
 // Navigation & Tab Switcher
@@ -1286,10 +1281,17 @@ function renderLoginTab() {
       <!-- Right Login Form Card -->
       <section class="login-right-form">
         <div class="login-form-box">
-          <div style="margin-bottom:32px">
+          <div style="margin-bottom:24px">
             <h2 style="font-size:24px; font-weight:700; color:var(--on-surface); margin-bottom:6px">Welcome Back!</h2>
             <p style="color:var(--on-surface-variant); font-size:14px">Sign in to continue to your account</p>
           </div>
+
+          ${state.loginError ? `
+            <div style="background-color:#fee2e2; color:#991b1b; border:1px solid #f87171; padding:12px 16px; border-radius:8px; margin-bottom:20px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px">
+              <span class="material-symbols-outlined" style="font-size:20px; color:#dc2626">error</span>
+              <span>${state.loginError}</span>
+            </div>
+          ` : ''}
 
           <form onsubmit="handleLoginSubmit(event)">
             <div class="form-group">
