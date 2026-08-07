@@ -1,0 +1,69 @@
+[
+  {
+    "id": 4001,
+    "project_id": 2,
+    "reporting_period": "2026-W29",
+    "accomplishments": [
+      "SAP Fit-Gap Analysis (Task 201) completed and signed off by all module leads. Fit-Gap report and configuration workbook delivered to steering committee.",
+      "System Architecture and Landscape Design (Task 202) completed. Technical Architecture Document and Landscape Blueprint approved by Infrastructure, Security, and Finance IT.",
+      "Custom ABAP Development (Task 204) commenced: 6 of 18 identified custom programs are in active development. Marcus Chen\u2019s team has completed unit tests on the vendor invoice validation exit and the legacy report re-implementation for FI-GL.",
+      "Data profiling exercise for GL_ACCOUNTS master data initiated using SAP BODS. Initial dataset extraction (141,000 records) completed and loaded into the profiling environment.",
+      "Programme governance: Weekly steering cadence established; risk register reviewed and updated. Programme risk count: 5 open risks, all within acceptable parameters this period.",
+      "SAP partner (Accenture) onboarded for ABAP code review support. First code review session completed with no critical findings.",
+      "Integration landscape mapping completed for all 12 peripheral system interfaces. Interface catalogue v1.0 published."
+    ],
+    "blockers": [],
+    "risks": [
+      "Data quality of legacy source data is an emerging concern: initial profiling of GL_ACCOUNTS has begun and results are pending. If significant null fields are found in mandatory S/4HANA fields, migration design could be delayed. Risk is flagged but not yet quantified.",
+      "Custom ABAP development pace is slightly behind original estimate (6 of 18 complete vs. 8 targeted for W29). Marcus Chen has flagged that the cost allocation engine is more complex than initially scoped. Mitigation: SAP partner support has been engaged."
+    ],
+    "next_steps": [
+      "Complete BODS data profiling of GL_ACCOUNTS and distribute results to migration team (target: 28 July 2026).",
+      "Complete Vendor/Customer Master profiling to identify additional data quality risks.",
+      "Progress Custom ABAP Development to 50% completion by end of Week 32.",
+      "Finalise Data Migration Design document first draft (Task 203 target: 31 July 2026).",
+      "Begin Integration Middleware configuration for SAP Integration Suite (iFlow development for top 3 priority interfaces).",
+      "Conduct Change Management stakeholder readiness survey across Finance and Procurement functions."
+    ],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 4002,
+    "project_id": 2,
+    "reporting_period": "2026-W31",
+    "accomplishments": [
+      "Custom ABAP Development (Task 204) progressing at 40% completion. Three additional programs completed this week: month-end accrual automation, standard cost variance report, and profit centre derivation exit.",
+      "Data profiling of GL_ACCOUNTS completed. Full profiling report distributed to steering committee and data quality committee.",
+      "Emergency Data Quality Committee convened on 30 July 2026 with first session held and remediation approach (Option B: Intelligent Default Value Mapping) formally agreed.",
+      "Finance Director and Executive Sponsor formally briefed. Finance analysts (4 FTE from Emma Trent\u2019s team) committed to audit support from 10 August.",
+      "Programme constraints register updated to include year-end blackout period (1 Nov 2026 \u2014 31 Jan 2027) following Finance Continuity Risk Review.",
+      "Lessons-learned document from 2021 Legacy Payroll Migration distributed to all Data Quality Committee members.",
+      "BODS transformation rules for Option B default value mapping drafted by Marcus Chen and under peer review."
+    ],
+    "blockers": [
+      "CRITICAL: Task 203 (Data Migration Design) is formally BLOCKED. 43,847 records in the GL_ACCOUNTS source table have null values in mandatory S/4HANA fields (cost_centre, profit_centre, account_type). Migration design cannot be finalised until remediation is complete and approved by Finance Director. Estimated unblock date: 21 August 2026 (subject to Finance sign-off completing on schedule).",
+      "Task 205 (ETL Pipeline Development) cannot commence as it depends on Task 203. This is now on the critical path.",
+      "Finance UAT window (Task 207, planned Q4 2026) is at risk: if migration design slips beyond 28 August, ETL development will not complete in time to support a pre-year-end UAT cycle. A March 2027 go-live is being planned as the primary scenario."
+    ],
+    "risks": [
+      "DATA MIGRATION WORKSTREAM \u2014 RED: GL_ACCOUNTS data quality issue has moved this workstream to RED status. 3\u20136 week delay to migration design milestone confirmed. Overall programme critical path impact is 4\u20138 weeks depending on audit duration and Finance review cycle.",
+      "YEAR-END REPORTING CONTINUITY \u2014 HIGH: If go-live cannot be achieved before the November 2026 year-end freeze, Finance will operate on legacy ECC through year-end. This is manageable with contingency planning but operationally costly. Finance Director has requested CFO briefing.",
+      "GO-LIVE DATE SLIP \u2014 HIGH: Based on current trajectory, a pre-year-end go-live (originally planned for Q3 2026) is no longer achievable. March 2027 is the revised primary scenario. Programme Board to be informed.",
+      "HISTORICAL PRECEDENT: The 2021 Legacy Payroll Migration experienced analogous data quality issues (null mandatory fields in legacy payroll tables) which caused an 8-week delay. The committee has reviewed lessons from that programme and is applying them: parallel run requirement, Finance oversight of all default mapping, and conservative timeline assumptions.",
+      "RESOURCE ADEQUACY: If Finance manual review of 9,600 records takes longer than 2 weeks, the revised 28 August migration design target will slip further. Emma Trent\u2019s team capacity has been ring-fenced; no further contingency buffer available without additional resource."
+    ],
+    "next_steps": [
+      "Marcus Chen to complete BODS transformation rules for Option B and submit for QA testing by 14 August 2026.",
+      "Aisha Kamara to finalise Finance sign-off workbook (all 43,847 records with proposed default mappings) by 7 August 2026.",
+      "Emma Trent\u2019s Finance team to begin record-level validation of 9,600 manual-review records from 10 August 2026.",
+      "Priya Nair to publish revised programme critical path and worst-case scenario analysis by 8 August 2026.",
+      "Lin Wei and Priya Nair to co-author CFO briefing document by 5 August 2026.",
+      "David Park (Finance Reporting) to draft manual contingency plan for November\u2013December month-end close by 21 August 2026.",
+      "Data Quality Committee: next session Thursday 6 August 2026 to review Finance workbook progress.",
+      "Custom ABAP Development (Task 204) to continue: target 60% completion by end of Week 33."
+    ],
+    "created_at": null,
+    "updated_at": null
+  }
+]

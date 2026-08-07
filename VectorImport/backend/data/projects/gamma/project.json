@@ -1,0 +1,13 @@
+{
+  "id": 3,
+  "project_id": "PROG-GAMMA-2026",
+  "name": "Zero-Trust Cybersecurity Overhaul",
+  "description": "A comprehensive enterprise-wide programme to migrate the organisation's security posture from a traditional perimeter-based model to a Zero-Trust Architecture (ZTA). The programme encompasses identity and access management (IAM) modernisation, network micro-segmentation, implementation of a Security Information and Event Management (SIEM) platform, endpoint detection and response (EDR) tooling, and a mandatory third-party penetration test by SecureCheck Ltd. to validate controls prior to go-live. Compliance certification under GDPR Article 32 (technical and organisational security measures) is the formal programme exit gate, with a regulatory submission deadline of 18 September 2026. The programme is currently on hold pending resolution of a critical procurement blocker: the engagement contract with SecureCheck Ltd. has not been signed, preventing the penetration test workstream from commencing. Without a completed pen test report, GDPR certification cannot be applied for. Failure to certify before the deadline carries a regulatory fine exposure of up to £2.3 million under UK GDPR enforcement guidelines.",
+  "start_date": "2026-02-01",
+  "end_date": "2026-09-30",
+  "status": "on_hold",
+  "sponsor": "David Thornton",
+  "program_manager": "Helen Watts",
+  "created_at": null,
+  "updated_at": null
+}

@@ -1,0 +1,111 @@
+[
+  {
+    "id": 301,
+    "project_id": 3,
+    "title": "Zero-Trust Architecture Design",
+    "description": "Design the end-state Zero-Trust Architecture for the organisation, including trust boundary definitions, identity-centric access policies, device posture requirements, application access segmentation, and a reference architecture document. Covers network topology redesign, policy engine selection (Microsoft Entra ID + Conditional Access), and integration blueprints for cloud and on-premises workloads. Deliverable: signed-off ZTA Design Document v1.0.",
+    "owner": "Carlos Rivera",
+    "priority": "critical",
+    "status": "completed",
+    "due_date": "2026-03-31",
+    "completion": 100,
+    "dependencies": [],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 302,
+    "project_id": 3,
+    "title": "Identity and Access Management Implementation",
+    "description": "Deploy and configure the organisation's Identity and Access Management platform in accordance with the Zero-Trust Architecture Design. Scope includes migration of all Active Directory accounts to Entra ID, enforcement of Multi-Factor Authentication (MFA) for all privileged and standard users, implementation of Privileged Identity Management (PIM) for just-in-time admin access, and rollout of Conditional Access policies covering device compliance, location, and sign-in risk. All 2,400 staff accounts migrated and verified. Deliverable: IAM Implementation Completion Report.",
+    "owner": "Carlos Rivera",
+    "priority": "critical",
+    "status": "completed",
+    "due_date": "2026-05-31",
+    "completion": 100,
+    "dependencies": [301],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 303,
+    "project_id": 3,
+    "title": "Network Segmentation and Micro-perimeter Setup",
+    "description": "Implement network micro-segmentation across all on-premises data centre VLANs and cloud virtual networks (Azure VNets). Scope includes deployment of next-generation firewall policies, software-defined perimeter (SDP) overlays, east-west traffic inspection, and application-layer segmentation rules for all Tier-1 and Tier-2 workloads. Currently 80% complete: core data centre segmentation and cloud VNet peering policies are live; remaining work includes three legacy manufacturing VLANs and final acceptance testing. Deliverable: Segmentation Test Report signed off by CISO.",
+    "owner": "Carlos Rivera",
+    "priority": "high",
+    "status": "in_progress",
+    "due_date": "2026-07-31",
+    "completion": 80,
+    "dependencies": [301],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 304,
+    "project_id": 3,
+    "title": "SIEM and Threat Detection Platform Deployment",
+    "description": "Deploy and operationalise the Microsoft Sentinel SIEM platform as the organisation's centralised threat detection, investigation, and response (TDIR) hub. Scope includes log source onboarding (Azure Activity, Entra ID, M365 Defender, Palo Alto NGFWs, on-premises Windows/Linux servers), custom analytic rule development aligned to MITRE ATT&CK, SOAR playbook automation for Tier-1 alert triage, and SOC analyst training. Currently 65% complete: core log ingestion and baseline analytics are live; custom detection rules and SOAR playbooks are 40% complete. Deliverable: SIEM Go-Live Acceptance Report.",
+    "owner": "Fatima Al-Hassan",
+    "priority": "high",
+    "status": "in_progress",
+    "due_date": "2026-08-15",
+    "completion": 65,
+    "dependencies": [301],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 305,
+    "project_id": 3,
+    "title": "Third-Party Security Penetration Testing",
+    "description": "Commission and execute a full-scope external and internal penetration test of the Zero-Trust environment, conducted by an accredited third-party firm (SecureCheck Ltd., CREST-certified). Test scope includes external attack surface enumeration, authenticated internal network penetration, IAM policy bypass testing, cloud configuration review (Azure), and social engineering assessment. Minimum engagement duration: 3 weeks (test execution) plus 1 week for report writing. A signed engagement contract is a mandatory prerequisite before any test activities can begin. All prerequisite tasks (Architecture Design, IAM, Network Segmentation) must be complete before testing can commence. Deliverable: Penetration Test Final Report with finding severity ratings and recommended remediations.",
+    "owner": "Carlos Rivera",
+    "priority": "critical",
+    "status": "blocked",
+    "due_date": "2026-08-28",
+    "completion": 0,
+    "dependencies": [301, 302, 303],
+    "blockers": [
+      "SecureCheck Ltd. engagement contract has not been signed by Procurement (CPO: Marcus Reid). Contract submitted for approval on 2026-07-10. No sign-off received after 28 days. Pen test cannot commence without signed contract. GDPR compliance deadline of 2026-09-18 is at risk if contract is not executed by 2026-08-14."
+    ],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 306,
+    "project_id": 3,
+    "title": "GDPR Compliance Certification Application",
+    "description": "Prepare and submit the organisation's GDPR Article 32 compliance certification application to the Information Commissioner's Office (ICO), demonstrating implementation of appropriate technical and organisational measures. Submission package includes the Zero-Trust Architecture Design Document, IAM implementation evidence, network segmentation test results, SIEM operational readiness report, and the SecureCheck Ltd. penetration test final report with evidence of remediation of all Critical and High severity findings. The certification submission cannot be made until the pen test report is received and all critical and high findings are formally closed. Target submission date is 5 September 2026, allowing 13 days buffer before the ICO deadline of 18 September 2026.",
+    "owner": "Helen Watts",
+    "priority": "critical",
+    "status": "open",
+    "due_date": "2026-09-05",
+    "completion": 0,
+    "dependencies": [305],
+    "blockers": [
+      "Cannot submit GDPR certification application until third-party pen test report is received and all critical/high findings are remediated. Pen test is currently blocked by unsigned SecureCheck Ltd. engagement contract."
+    ],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 307,
+    "project_id": 3,
+    "title": "Security Operations Handover to SOC",
+    "description": "Formal handover of all Zero-Trust programme security controls to the Security Operations Centre (SOC) for steady-state operational management. Scope includes finalisation of SOC runbooks for all SIEM detection use-cases, handover of firewall and micro-segmentation policy ownership, transition of IAM administration to the IT Operations team, and completion of SOC analyst certification on the new tooling. Handover is contingent on SIEM deployment completion and a clean penetration test report confirming no unresolved Critical or High findings prior to operational acceptance. Deliverable: Signed SOC Handover Acceptance Certificate.",
+    "owner": "Fatima Al-Hassan",
+    "priority": "high",
+    "status": "open",
+    "due_date": "2026-09-25",
+    "completion": 0,
+    "dependencies": [304, 305],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  }
+]

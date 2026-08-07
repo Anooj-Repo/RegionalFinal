@@ -1,0 +1,98 @@
+[
+  {
+    "id": 3001,
+    "project_id": 2,
+    "channel": "#erp-migration",
+    "sender": "aisha.kamara",
+    "timestamp": "2026-07-28T10:45:00+00:00",
+    "message": "Morning all \u2014 BODS profiling job finished overnight on GL_ACCOUNTS. Numbers are not good. Running a deeper analysis now but headline: ~31% of records have at least one null in cost_centre, profit_centre, or account_type. That's around 44k records. Will have full breakdown by early afternoon.",
+    "thread_id": null,
+    "reactions": {"eyes": 4, "fire": 2},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 3002,
+    "project_id": 2,
+    "channel": "#erp-migration",
+    "sender": "marcus.chen",
+    "timestamp": "2026-07-28T10:52:00+00:00",
+    "message": "That's a significant number. Is this consistent across all company codes or concentrated in specific ones? I want to know if it's a systemic ECC configuration issue or data entry quality in specific entities.",
+    "thread_id": "3001",
+    "reactions": {"thinking_face": 3},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 3003,
+    "project_id": 2,
+    "channel": "#erp-migration",
+    "sender": "aisha.kamara",
+    "timestamp": "2026-07-28T14:20:00+00:00",
+    "message": "Full breakdown is in. 43,847 records confirmed: cost_centre null in 38k, profit_centre null in 41.9k, account_type null in 12.5k. Company codes GBUK and DEFRANKFURT are the worst offenders \u2014 looks like these were migrated from a pre-ECC legacy system around 2014 and the mandatory fields weren\u2019t populated at the time. This is historical data debt. Sending Priya a formal writeup now.",
+    "thread_id": "3001",
+    "reactions": {"skull": 2, "white_check_mark": 1},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 3004,
+    "project_id": 2,
+    "channel": "#erp-migration",
+    "sender": "priya.nair",
+    "timestamp": "2026-07-28T14:35:00+00:00",
+    "message": "Just got Aisha\u2019s email. This is a formal blocker on Task 203. I\u2019m escalating to Lin and Robert today. Everyone please note: migration design milestone (31 July) will NOT be met. I\u2019ll communicate a revised timeline once I\u2019ve spoken with Finance. Please don\u2019t speculate externally about go-live dates until we have a clear picture.",
+    "thread_id": null,
+    "reactions": {"thumbsup": 5},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 3005,
+    "project_id": 2,
+    "channel": "#data-quality",
+    "sender": "aisha.kamara",
+    "timestamp": "2026-07-29T09:30:00+00:00",
+    "message": "Setting up this channel for the GL_ACCOUNTS audit workstream. I\u2019m pulling together the audit plan today. Marcus, can you join me at 2pm to look at whether the ECC account group hierarchy gives us enough signal to infer the correct cost_centre defaults? That\u2019s the linchpin for Option B.",
+    "thread_id": null,
+    "reactions": {},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 3006,
+    "project_id": 2,
+    "channel": "#data-quality",
+    "sender": "marcus.chen",
+    "timestamp": "2026-07-29T09:45:00+00:00",
+    "message": "2pm works. I\u2019ve already done a quick spike \u2014 the KONP/KONV config tables in ECC do have account group mappings that correlate with cost centre hierarchies in about 78% of cases. That\u2019s promising. The remaining 22% (roughly 9.6k records) will need manual Finance review regardless of the approach we take.",
+    "thread_id": "3005",
+    "reactions": {"rocket": 2, "thumbsup": 3},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 3007,
+    "project_id": 2,
+    "channel": "#data-quality",
+    "sender": "lin.wei",
+    "timestamp": "2026-07-30T08:15:00+00:00",
+    "message": "Priya added me to this channel. I want to be clear to everyone working on the audit: I need to personally review the proposed default value mapping rules before any transformation logic is finalised. My team (Emma Trent\u2019s analysts) will be onboarded Thursday. Year-end is non-negotiable. We need this right, not fast.",
+    "thread_id": null,
+    "reactions": {"thumbsup": 6, "100": 2},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 3008,
+    "project_id": 2,
+    "channel": "#data-quality",
+    "sender": "aisha.kamara",
+    "timestamp": "2026-08-04T11:00:00+00:00",
+    "message": "Update for the committee: Marcus and I have completed the first pass of the BODS transformation rules for Option B. 34,247 records can be mapped with high confidence using account group hierarchy logic. 9,600 records flagged for Finance manual review (Emma\u2019s team has the workbook). Expecting Finance review to take ~2 weeks. If we start Thursday, we could have a signed-off mapping by 21 August. Targeting a revised migration design draft by 28 August.",
+    "thread_id": null,
+    "reactions": {"tada": 3, "thumbsup": 4},
+    "created_at": null,
+    "updated_at": null
+  }
+]
