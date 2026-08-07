@@ -33,7 +33,11 @@ const state = {
     heatmap: true,
     aiAnalyse: true,
     breakdown: true
-  }
+  },
+  chatMessages: [],
+  chatNodeTraces: [],
+  chatInput: '',
+  isChatStreaming: false
 };
 
 // Initialize Application
@@ -1163,10 +1167,12 @@ function renderReportsTab(currentProject) {
 // 6. AI Assistant & Voice Chat Tab View — Enterprise Chat Workspace
 function renderChatTab() {
   const projectCode = state.selectedProjectCode || 'PRJ-001';
-  const userRole = state.currentUser.role || 'Program Manager';
+  const userRole = state.currentUser ? (state.currentUser.role || 'Program Manager') : (state.currentRole || 'Program Manager');
+  const chatMessages = state.chatMessages || [];
+  const chatNodeTraces = state.chatNodeTraces || [];
 
   // Build message feed HTML
-  const feedHtml = state.chatMessages.length === 0 ? `
+  const feedHtml = chatMessages.length === 0 ? `
     <div class="chat-empty-state">
       <span class="chat-empty-icon material-symbols-outlined">smart_toy</span>
       <div class="chat-empty-title">Enterprise AI Assistant</div>
@@ -1175,14 +1181,14 @@ function renderChatTab() {
         ${_getQuickChips().map(c => `<button class="chat-reply-chip" onclick="chatQuickSend('${c.prompt}')">${c.label}</button>`).join('')}
       </div>
     </div>
-  ` : state.chatMessages.map(msg => _renderChatMessage(msg)).join('');
+  ` : chatMessages.map(msg => _renderChatMessage(msg)).join('');
 
   // Build node trace panel HTML
-  const traceHtml = state.chatNodeTraces.length === 0 ? `
+  const traceHtml = chatNodeTraces.length === 0 ? `
     <div style="color:var(--on-surface-variant); font-size:12px; text-align:center; padding:20px; opacity:0.6">
       Node traces will appear here during agent execution.
     </div>
-  ` : state.chatNodeTraces.map(n => `
+  ` : chatNodeTraces.map(n => `
     <div class="chat-trace-node node-${n.status === 'COMPLETED' ? 'completed' : n.status === 'BLOCKED' ? 'blocked' : 'running'}">
       <div class="chat-trace-dot"></div>
       <div style="flex:1">
@@ -1194,14 +1200,14 @@ function renderChatTab() {
   `).join('');
 
   return `
-    <div class="page-header">
+    <div class="page-header" style="margin-bottom:12px; padding:0 0 8px 0;">
       <div>
-        <h1 class="page-title">Multi-Modal AI Assistant</h1>
-        <p class="page-subtitle">Full LangGraph pipeline: Data Intelligence → Risk Intelligence → LLM Reasoning → Memory Agent</p>
+        <h1 class="page-title" style="font-size:20px;">Multi-Modal AI Assistant</h1>
+        <p class="page-subtitle" style="font-size:12px; margin:2px 0 0 0;">Full LangGraph pipeline: Data Intelligence → Risk Intelligence → LLM Reasoning → Memory Agent</p>
       </div>
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 260px; gap:16px; align-items:start">
+    <div style="display:grid; grid-template-columns:minmax(0, 1fr) 220px; gap:12px; align-items:stretch; max-width:100%; box-sizing:border-box;">
 
       <!-- ── Main Chat Workspace ── -->
       <div class="chat-workspace">
