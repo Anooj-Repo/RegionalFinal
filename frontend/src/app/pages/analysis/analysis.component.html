@@ -1,0 +1,24 @@
+<div class="card">
+  <div class="card-title">
+    <span>RAID Register Inspector & Risk Intelligence</span>
+    <button class="btn btn-secondary" (click)="runAnalysis()">Run LangGraph RAID Analysis</button>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Category</th><th>Title</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Status</th><th>Owner</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of raidItems">
+          <td><span class="badge" [ngClass]="{'badge-critical': r.category==='Risk', 'badge-risk': r.category==='Issue', 'badge-healthy': r.category==='Assumption'||r.category==='Dependency'}">{{ r.category }}</span></td>
+          <td><strong>{{ r.title }}</strong><br><small style="color:var(--text-muted)">{{ r.description }}</small></td>
+          <td>{{ r.likelihood }}</td>
+          <td>{{ r.impact }}</td>
+          <td><strong [style.color]="r.risk_score >= 70 ? 'var(--danger)' : 'var(--warning)'">{{ r.risk_score }}</strong></td>
+          <td>{{ r.status }}</td>
+          <td>{{ r.owner_name }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,14 @@
+<div class="card">
+  <div class="card-title">Critical Path Dependency Map Flowchart ({{ selectedProjectCode }})</div>
+  <div class="flowchart-container">
+    <div class="flow-node completed">Requirements Gathering<br><small style="color:var(--success)">Completed</small></div>
+    <div class="flow-arrow">➔</div>
+    <div class="flow-node completed">Design Review<br><small style="color:var(--success)">Completed</small></div>
+    <div class="flow-arrow">➔</div>
+    <div class="flow-node blocked">API Integration<br><small style="color:var(--danger)">Blocked (Score 88)</small></div>
+    <div class="flow-arrow">➔</div>
+    <div class="flow-node in-progress">System Testing<br><small style="color:var(--primary)">In Progress</small></div>
+    <div class="flow-arrow">➔</div>
+    <div class="flow-node">Deployment<br><small style="color:var(--text-muted)">Not Started</small></div>
+  </div>
+</div>

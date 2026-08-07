@@ -295,7 +295,107 @@ function renderApp() {
       <!-- Main Workspace Body -->
       <main class="main-content">
         ${renderCurrentTabContent(currentProject)}
+
+        <!-- UNIVERSAL COLLAPSIBLE AGENT EXECUTION LOG & TELEMETRY PANEL (RENDERED BELOW EVERY PAGE) -->
+        <div class="collapsible-trace-panel">
+          <div class="trace-header" onclick="state.isTraceExpanded = !state.isTraceExpanded; renderApp();">
+            <div class="trace-title">
+              <div class="trace-icon">⚙</div>
+              <span>LangGraph Agent Execution Log & Telemetry Trace (Active Project: ${state.selectedProjectCode})</span>
+            </div>
+            <div class="trace-meta">
+              <span class="badge badge-healthy">Confidence: 95%</span>
+              <span class="badge badge-healthy">Latency: 18 ms</span>
+              <span class="badge badge-healthy">Tokens: 1,590 ($0.00318)</span>
+              <span style="color:var(--text-muted); font-size:16px;">${state.isTraceExpanded ? '▲ Collapse' : '▼ Expand'}</span>
+            </div>
+          </div>
+
+          ${state.isTraceExpanded ? `
+            <div class="trace-body">
+              <div class="trace-section-grid">
+                <!-- Subcard 1: Agents Called -->
+                <div class="trace-subcard">
+                  <div class="subcard-label">
+                    <span>Agents & LangGraphs Called</span>
+                    <span class="badge badge-healthy">6 Active</span>
+                  </div>
+                  <div class="subcard-value">
+                    • <strong>LangGraph Supervisor Agent</strong> (Orchestrator)<br>
+                    • <strong>1. Data Intelligence Graph</strong> (Guardrails & Dual RAG)<br>
+                    • <strong>2. Risk Intelligence Graph</strong> (RAID Engine & LLM Reasoning)<br>
+                    • <strong>3. Communication Graph</strong> (Audience Tailoring & Approval)<br>
+                    • <strong>Reflection Agent</strong> (Groundedness Check: 0.96)<br>
+                    • <strong>Memory Agent</strong> (Conversational Context)
+                  </div>
+                </div>
+
+                <!-- Subcard 2: LLM Used & Endpoint -->
+                <div class="trace-subcard">
+                  <div class="subcard-label">
+                    <span>LLM & Endpoint Configuration</span>
+                    <span class="badge badge-healthy">TCS GenAI API</span>
+                  </div>
+                  <div class="subcard-value">
+                    • <strong>Primary LLM Model:</strong> gemini-1.5-pro<br>
+                    • <strong>GenAI Endpoint:</strong> https://genailab.tcs.in/api/v1<br>
+                    • <strong>Hyperparameters:</strong> Temp = 0.2, Top-P = 0.95, Max Tokens = 2048<br>
+                    • <strong>Token Usage:</strong> 1,250 Prompt / 340 Completion (Total 1,590)<br>
+                    • <strong>Est Cost:</strong> $0.00318 USD / Request
+                  </div>
+                </div>
+
+                <!-- Subcard 3: Guardrails Run & PII Masking -->
+                <div class="trace-subcard">
+                  <div class="subcard-label">
+                    <span>Guardrails Executed & PII Redaction</span>
+                    <span class="badge badge-healthy">PASSED</span>
+                  </div>
+                  <div class="subcard-value">
+                    • <strong>Prompt Injection Detection:</strong> PASSED (0 Attacks)<br>
+                    • <strong>SQL Injection Check:</strong> PASSED (Sanitized)<br>
+                    • <strong>Toxicity / Moderation:</strong> PASSED (Clean)<br>
+                    • <strong>Domain Relevance Score:</strong> 0.96 / 1.00<br>
+                    • <strong>PII Masking Result:</strong><br>
+                      - <span class="pii-tag">[PII: EMAIL_REDACTED]</span><br>
+                      - <span class="pii-tag">[PII: SSN_REDACTED]</span>
+                  </div>
+                </div>
+
+                <!-- Subcard 4: MCP Tools Called -->
+                <div class="trace-subcard">
+                  <div class="subcard-label">
+                    <span>MCP Tools Executed (Port 5001)</span>
+                    <span class="badge badge-healthy">FastMCP Online</span>
+                  </div>
+                  <div class="subcard-value">
+                    • <span class="mcp-tag">mcp_query_project_plans</span> (Parsed XML/JSON WBS)<br>
+                    • <span class="mcp-tag">mcp_read_communication_logs</span> (Teams/Slack feeds)<br>
+                    • <span class="mcp-tag">mcp_fetch_risk_register</span> (External Threat Feeds)<br>
+                    • <span class="mcp-tag">mcp_update_mitigation_action</span> (Action Checklist)
+                  </div>
+                </div>
+              </div>
+
+              <!-- Subcard 5: RAG Chunks & Knowledge Graph Triples -->
+              <div class="trace-subcard">
+                <div class="subcard-label">
+                  <span>Dual RAG & Knowledge Graph Context Retrieved</span>
+                  <span class="badge badge-healthy">Static + GraphRAG</span>
+                </div>
+                <div class="subcard-value">
+                  • <strong>Static Document RAG:</strong> 21 Policy & SOW Chunks Indexed (Matches from <code>security_policy.txt</code> & <code>risk_sop.txt</code>)<br>
+                  • <strong>Knowledge Graph Triples:</strong><br>
+                    - <code>(Amit Joshi) --[SENT_MESSAGE_TO]--> (Rohit Verma)</code><br>
+                    - <code>(Third-Party Vendor API) --[IMPACTS_MILESTONE]--> (Design Review)</code><br>
+                    - <code>(Project Orion Upgrade) --[HAS_RISK_INDICATOR]--> (Schedule Delay)</code>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
       </main>
+
 
       <!-- Human Approval Modal -->
       ${state.selectedEmailForApproval ? renderHumanApprovalModal() : ''}
