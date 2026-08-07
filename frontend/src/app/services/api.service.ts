@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Project, PortfolioSummary } from '../models/project.model';
 import { RAIDItem } from '../models/raid.model';
 import { EmailDraft } from '../models/email.model';
@@ -57,6 +57,19 @@ export class ApiService {
 
   approveEmail(id: number): Observable<any> {
     return this.http.post(`${this.baseUrl}/emails/${id}/approve`, {}, { headers: this.getHeaders() });
+  }
+
+  getAllDbTables(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/db-tables`, { headers: this.getHeaders() });
+  }
+
+  getKnowledgeDocs(): Observable<any> {
+
+    return this.http.get(`${this.baseUrl}/admin/knowledge-docs`, { headers: this.getHeaders() });
+  }
+
+  getUsers(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin/users`, { headers: this.getHeaders() });
   }
 
   getAuditLogs(): Observable<any> {

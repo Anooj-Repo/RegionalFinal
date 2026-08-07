@@ -774,15 +774,13 @@ function renderChatTab() {
       </div>
     </div>
   `;
-}
-
 // 7. System & Technical Admin Tab View
 function renderAdminTab() {
   return `
     <div class="page-header">
       <div>
         <h1 class="page-title">Admin Console & Master Data Management</h1>
-        <p class="page-subtitle">Dual RAG Databases (Static Vector Store & Unstructured GraphRAG), Master User Accounts & Audit Stream</p>
+        <p class="page-subtitle">RAG Knowledge Documents, Chunks Inspector, SQLite User Master Data & Audit Stream</p>
       </div>
     </div>
 
@@ -793,30 +791,26 @@ function renderAdminTab() {
         <div class="kpi-subtext" style="color:#059669">Status: ${state.telemetry.mcp_status || 'ONLINE'}</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-title">Static RAG Vector Chunks</div>
+        <div class="kpi-title">Total RAG Chunks</div>
         <div class="kpi-value" style="color:#059669">21 Chunks</div>
         <div class="kpi-subtext">5 Uploaded Documents</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-title">Unstructured GraphRAG</div>
-        <div class="kpi-value" style="color:var(--primary-container)">5 Graph Triples</div>
-        <div class="kpi-subtext">Slack/Teams Chat Feeds in mcp.db</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-title">Master Accounts</div>
         <div class="kpi-value">6 Users</div>
         <div class="kpi-subtext">SQLite User Table</div>
       </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Email Dispatcher</div>
+        <div class="kpi-value" style="color:var(--primary-container)">Resend API</div>
+        <div class="kpi-subtext">linusimon@gmail.com</div>
+      </div>
     </div>
 
-    <!-- RAG DATABASE 1: STATIC DOCUMENT VECTOR STORE -->
+    <!-- RAG Documents Table -->
     <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:6px">1. Static Knowledge Document Vector RAG Database (backend/app/uploads/)</div>
-      <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
-        Stores static policies, SOWs, and SOP manuals chunked into 128-d vector embeddings via TCSGenAIClient.
-      </p>
-
-      <div class="table-responsive" style="margin-bottom:20px;">
+      <div class="card-box-title" style="margin-bottom:16px">Uploaded Knowledge Documents (backend/app/uploads/)</div>
+      <div class="table-responsive">
         <table class="stitch-table">
           <thead>
             <tr><th>Document Title</th><th>Filename</th><th>Doc Type</th><th>Size</th><th>Upload Timestamp</th></tr>
@@ -830,7 +824,11 @@ function renderAdminTab() {
           </tbody>
         </table>
       </div>
+    </div>
 
+    <!-- Vector RAG Chunks Inspector Table -->
+    <div class="card-box" style="margin-top:20px;">
+      <div class="card-box-title" style="margin-bottom:16px">Indexed Vector RAG Chunks Breakdown (128-d Vector Embeddings)</div>
       <div class="table-responsive">
         <table class="stitch-table">
           <thead>
@@ -840,71 +838,6 @@ function renderAdminTab() {
             <tr><td><code>security_policy.txt_chunk_0</code></td><td>security_policy.txt</td><td><small style="color:var(--on-surface-variant)">All system communications must enforce PII redaction and TLS 1.3 encryption...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
             <tr><td><code>orion_sow.txt_chunk_0</code></td><td>orion_sow.txt</td><td><small style="color:var(--on-surface-variant)">Project Orion Upgrade phase mobilization deliverables and vendor SLA dependencies...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
             <tr><td><code>risk_sop.txt_chunk_0</code></td><td>risk_sop.txt</td><td><small style="color:var(--on-surface-variant)">RAID items exceeding score 70 require executive briefing within 24 hours...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>pegasus_architecture.txt_chunk_0</code></td><td>pegasus_architecture.txt</td><td><small style="color:var(--on-surface-variant)">Core Banking Platform specs, database connection pools, and microservice SLA metrics...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>mobile_compliance.txt_chunk_0</code></td><td>mobile_compliance.txt</td><td><small style="color:var(--on-surface-variant)">Biometric mobile authentication standards, regulatory guidelines, and compliance checks...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- RAG DATABASE 2: UNSTRUCTURED KNOWLEDGE GRAPH RAG STORE (GRAPHRAG) -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:6px">2. Unstructured Knowledge Graph RAG Database (mcp/mcp.db -> GraphRAG)</div>
-      <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
-        Ingests real-time unstructured chat/email feeds (Slack, Teams, Email logs) to extract Entity-Relationship Triples <code>(Subject) --[Predicate]--> (Object)</code>.
-      </p>
-
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>Triple ID</th><th>Subject Entity</th><th>Relationship Predicate</th><th>Object Entity</th><th>Communication Source</th><th>Category</th><th>Confidence</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>triple_101</code></td>
-              <td><strong>Amit Joshi</strong></td>
-              <td><code>--[SENT_COMMUNICATION]--></code></td>
-              <td><strong>Rohit Verma</strong></td>
-              <td>Teams Chat Feed #104</td>
-              <td><span class="chip chip-info">Handoff</span></td>
-              <td><span class="chip chip-success">0.98</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_102</code></td>
-              <td><strong>Third-Party Vendor API</strong></td>
-              <td><code>--[IMPACTS_MILESTONE]--></code></td>
-              <td><strong>Design Review</strong></td>
-              <td>Slack #proj-orion-dev</td>
-              <td><span class="chip chip-danger">Threat Risk</span></td>
-              <td><span class="chip chip-success">0.96</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_103</code></td>
-              <td><strong>Project Orion Upgrade</strong></td>
-              <td><code>--[HAS_RISK_INDICATOR]--></code></td>
-              <td><strong>Integration Latency</strong></td>
-              <td>Incident Report Thread #42</td>
-              <td><span class="chip chip-warning">RAID Factor</span></td>
-              <td><span class="chip chip-success">0.95</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_104</code></td>
-              <td><strong>Core Banking API</strong></td>
-              <td><code>--[REQUIRES_SLA_COMPLIANCE]--></code></td>
-              <td><strong>Security Policy v2.1</strong></td>
-              <td>Email Log #208</td>
-              <td><span class="chip chip-info">Governance</span></td>
-              <td><span class="chip chip-success">0.97</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_105</code></td>
-              <td><strong>Biometric Auth Service</strong></td>
-              <td><code>--[DEPENDS_ON]--></code></td>
-              <td><strong>OAuth 2.0 Identity Server</strong></td>
-              <td>Slack #security-audit</td>
-              <td><span class="chip chip-info">Dependency</span></td>
-              <td><span class="chip chip-success">0.99</span></td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -912,7 +845,7 @@ function renderAdminTab() {
 
     <!-- Master User Accounts Table -->
     <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Master User Accounts Table (backend/app.db -> User)</div>
+      <div class="card-box-title" style="margin-bottom:16px">SQLite Master User Accounts Table (backend/app.db)</div>
       <div class="table-responsive">
         <table class="stitch-table">
           <thead>
@@ -928,76 +861,6 @@ function renderAdminTab() {
         </table>
       </div>
     </div>
-
-    <!-- Master Projects Portfolio Table -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Master Projects Table (backend/app.db -> Project)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>ID</th><th>Code</th><th>Project Name</th><th>Lifecycle Phase</th><th>Health Status</th><th>Budget</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#1</td><td><code>PRJ-001</code></td><td><strong>Project Orion Upgrade</strong></td><td><span class="chip chip-info">Mobilization</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$2.5M</td></tr>
-            <tr><td>#2</td><td><code>PRJ-002</code></td><td><strong>Core Banking Modernization</strong></td><td><span class="chip chip-info">Planning</span></td><td><span class="chip chip-success">Healthy</span></td><td>$4.2M</td></tr>
-            <tr><td>#3</td><td><code>PRJ-003</code></td><td><strong>Digital Identity Platform</strong></td><td><span class="chip chip-info">Design</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$1.8M</td></tr>
-            <tr><td>#4</td><td><code>PRJ-004</code></td><td><strong>Cloud Infrastructure Migration</strong></td><td><span class="chip chip-info">Execution</span></td><td><span class="chip chip-danger">Critical</span></td><td>$3.5M</td></tr>
-            <tr><td>#5</td><td><code>PRJ-005</code></td><td><strong>Supply Chain Analytics</strong></td><td><span class="chip chip-info">Closure</span></td><td><span class="chip chip-success">Healthy</span></td><td>$1.2M</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Master RAID Items Table -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Master RAID Register Table (backend/app.db -> RAIDItem)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>ID</th><th>Category</th><th>Title</th><th>Risk Score</th><th>Likelihood</th><th>Impact</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#101</td><td><span class="chip chip-danger">Risk</span></td><td><strong>Third-Party Vendor API Integration Latency</strong></td><td><span class="chip chip-danger">88/100</span></td><td>4/5</td><td>5/5</td><td><span class="chip chip-warning">OPEN</span></td></tr>
-            <tr><td>#102</td><td><span class="chip chip-danger">Risk</span></td><td><strong>Database Schema Migration Timeout</strong></td><td><span class="chip chip-warning">76/100</span></td><td>3/5</td><td>4/5</td><td><span class="chip chip-info">IN_REVIEW</span></td></tr>
-            <tr><td>#103</td><td><span class="chip chip-info">Assumption</span></td><td><strong>Cloud Service Provider Availability SLA 99.99%</strong></td><td><span class="chip chip-info">30/100</span></td><td>1/5</td><td>2/5</td><td><span class="chip chip-success">VALIDATED</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Master WBS Tasks Table -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite WBS Task Breakdown Table (backend/app.db -> Task)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>ID</th><th>WBS Code</th><th>Task Name</th><th>Assignee</th><th>Priority</th><th>Progress</th><th>Story Points</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#1</td><td><code>WBS-1.1</code></td><td><strong>Vendor API Specification Review & Mock Server Creation</strong></td><td>Amit Joshi</td><td><span class="chip chip-warning">High</span></td><td>45%</td><td>13 SP</td></tr>
-            <tr><td>#2</td><td><code>WBS-1.2</code></td><td><strong>Security Policy SLA & PII Redaction Audit</strong></td><td>Vikram Malhotra</td><td><span class="chip chip-warning">High</span></td><td>90%</td><td>8 SP</td></tr>
-            <tr><td>#3</td><td><code>WBS-1.3</code></td><td><strong>Database Schema Migration & Indexing</strong></td><td>Priya Sharma</td><td><span class="chip chip-info">Medium</span></td><td>20%</td><td>5 SP</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Master Stakeholder Email Queue Table -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Stakeholder Email Queue Table (backend/app.db -> EmailDraft)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>ID</th><th>Recipient Role</th><th>Target Email</th><th>Subject Line</th><th>Status</th><th>Resend Delivery ID</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#10</td><td><strong>Program Manager</strong></td><td><code>linusimon@gmail.com</code></td><td>Executive Briefing: Project Orion Risk Mitigation Plan</td><td><span class="chip chip-warning">PENDING</span></td><td><small style="color:var(--on-surface-variant)">Pending Human Approval</small></td></tr>
-            <tr><td>#11</td><td><strong>Executive Leadership</strong></td><td><code>linusimon@gmail.com</code></td><td>Weekly Portfolio Status Report & Budget Variance</td><td><span class="chip chip-success">APPROVED</span></td><td><code>6b94665e-c26a-423a-8600-834ce457eccf</code></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
 
     <div class="card-box" style="margin-top:20px">
       <div class="card-box-title" style="margin-bottom:16px">System Security Audit Log Stream</div>
@@ -1017,7 +880,6 @@ function renderAdminTab() {
                 <td>${l.details}</td>
               </tr>
             `).join('')}
-          </tbody>
         </table>
       </div>
     </div>
