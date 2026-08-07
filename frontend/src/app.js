@@ -31,12 +31,13 @@ const state = {
   nodeTraces: [],
   isTraceExpanded: false,
   isCustomizeModalOpen: false,
-  dashboardWidgetOrder: ['kpis', 'flowchart', 'heatmap', 'breakdown'],
+  dashboardWidgetOrder: ['kpis', 'flowchart', 'heatmap', 'aiAnalyse', 'breakdown'],
   widgetVisibility: {
     kpis: true,
+    flowchart: true,
     heatmap: true,
-    breakdown: true,
-    flowchart: true
+    aiAnalyse: true,
+    breakdown: true
   }
 };
 
@@ -348,8 +349,8 @@ function toggleWidgetVisibility(widgetKey) {
 }
 
 function resetDashboardLayout() {
-  state.dashboardWidgetOrder = ['kpis', 'flowchart', 'heatmap', 'breakdown'];
-  state.widgetVisibility = { kpis: true, heatmap: true, breakdown: true, flowchart: true };
+  state.dashboardWidgetOrder = ['kpis', 'flowchart', 'heatmap', 'aiAnalyse', 'breakdown'];
+  state.widgetVisibility = { kpis: true, flowchart: true, heatmap: true, aiAnalyse: true, breakdown: true };
   renderApp();
 }
 
@@ -728,6 +729,61 @@ function renderDashboardTab(currentProject) {
         </div>
       </div>
     `,
+    aiAnalyse: `
+      <div class="card-box">
+        <div class="card-box-header">
+          <div class="card-box-title" style="display:flex; align-items:center; gap:8px">
+            <span class="material-symbols-outlined" style="color:var(--primary-container); font-size:20px">auto_awesome</span>
+            <span>AI Analyse</span>
+          </div>
+          <span class="chip chip-info" style="display:flex; align-items:center; gap:4px">
+            <span class="material-symbols-outlined" style="font-size:14px">bolt</span> Live AI Insights
+          </span>
+        </div>
+        <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:12px">
+          Automated multi-agent risk assessment & strategic recommendations for ${currentProject.code}
+        </p>
+
+        <div class="table-responsive">
+          <table class="stitch-table">
+            <thead>
+              <tr>
+                <th>Focus Area</th>
+                <th>AI Status</th>
+                <th>Risk Score</th>
+                <th>AI Recommendation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Vendor API Spec</strong></td>
+                <td><span class="chip chip-danger">Blocked</span></td>
+                <td><strong style="color:#dc2626">88 / 100</strong></td>
+                <td>Spin up mock sandbox endpoints for dev team.</td>
+              </tr>
+              <tr>
+                <td><strong>ETL Data Pipeline</strong></td>
+                <td><span class="chip chip-warning">At Risk</span></td>
+                <td><strong style="color:#d97706">75 / 100</strong></td>
+                <td>Execute dry-run script with orphan filter.</td>
+              </tr>
+              <tr>
+                <td><strong>Budget & Variance</strong></td>
+                <td><span class="chip chip-success">Optimal</span></td>
+                <td><strong style="color:#059669">35 / 100</strong></td>
+                <td>Reallocate $50k unused design funds.</td>
+              </tr>
+              <tr>
+                <td><strong>Milestone Delivery</strong></td>
+                <td><span class="chip chip-success">On Schedule</span></td>
+                <td><strong style="color:#059669">20 / 100</strong></td>
+                <td>Maintain sprint velocity across WBS 1.1-1.3.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `,
     breakdown: `
       <div class="card-box">
         <div class="card-box-header">
@@ -785,7 +841,12 @@ function renderDashboardTab(currentProject) {
 
     if (curr === 'kpis') {
       contentBuffer += widgetHTML.kpis;
-    } else if ((curr === 'heatmap' && next === 'breakdown') || (curr === 'breakdown' && next === 'heatmap')) {
+    } else if (
+      (curr === 'heatmap' && next === 'aiAnalyse') ||
+      (curr === 'aiAnalyse' && next === 'heatmap') ||
+      (curr === 'heatmap' && next === 'breakdown') ||
+      (curr === 'breakdown' && next === 'heatmap')
+    ) {
       contentBuffer += `
         <div class="grid-2col">
           ${widgetHTML[curr]}
@@ -1683,6 +1744,7 @@ function renderCustomizeModal() {
   const widgetTitles = {
     kpis: '5 KPI Metrics Overview Cards Row',
     heatmap: '5x5 Risk Heatmap Matrix',
+    aiAnalyse: 'AI Analyse Live Insights Table',
     breakdown: 'Project Phase Breakdown Table',
     flowchart: 'Critical Path Dependency Flowchart'
   };
