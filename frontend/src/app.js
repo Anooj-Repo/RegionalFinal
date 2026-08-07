@@ -7,13 +7,8 @@ const API_BASE_URL = 'http://127.0.0.1:5000/api';
 
 // Application State Store
 const state = {
-  currentRole: 'Program Manager',
-  currentUser: {
-    username: 'rohit',
-    full_name: 'Rohit Verma',
-    role: 'Program Manager',
-    email: 'rohit.verma@pmai.com'
-  },
+  currentRole: 'Viewer',
+  currentUser: null,
   selectedProjectCode: 'PRJ-001',
   projects: [],
   tasks: [],
@@ -43,28 +38,12 @@ const state = {
 
 // Initialize Application
 async function initApp() {
-  console.log('[PM AI App] Initializing Stitch PM Portal Engine...');
+  console.log('[PM AI App] Initializing PM Portal Engine (Landing on Login)...');
 
-  const savedToken = localStorage.getItem('pmai_auth_token');
-  const savedUser = localStorage.getItem('pmai_current_user');
-  const savedTab = localStorage.getItem('pmai_active_tab');
-  const savedProject = localStorage.getItem('pmai_selected_project');
-
-  if (savedToken && savedUser) {
-    try {
-      state.authToken = savedToken;
-      state.currentUser = JSON.parse(savedUser);
-      state.currentRole = state.currentUser.role || 'Program Manager';
-      state.activeTab = (savedTab && savedTab !== 'login') ? savedTab : 'dashboard';
-      if (savedProject) state.selectedProjectCode = savedProject;
-      console.log(`[Auth Session Restored] Restored session for ${state.currentUser.full_name} (${state.activeTab})`);
-    } catch (e) {
-      console.warn('[Auth Session Error] Restoring session failed:', e);
-      state.activeTab = 'login';
-    }
-  } else {
-    state.activeTab = 'login';
-  }
+  // Always land on Login page as Home Page
+  state.activeTab = 'login';
+  state.currentUser = null;
+  state.authToken = null;
 
   await loadProjects();
   await refreshWorkspaceData();
@@ -452,11 +431,12 @@ function renderApp() {
 
   const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
   const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
-  const isViewerRole = userRole === 'Viewer';
+  const canAccessCommsAndBreakdown = userRole === 'Program Manager' || isAdminRole;
 
-  if (isViewerRole && state.activeTab !== 'raid' && state.activeTab !== 'comms') {
-    state.activeTab = 'raid';
-  } else if (!isAdminRole && state.activeTab === 'admin') {
+  if (!isAdminRole && state.activeTab === 'admin') {
+    state.activeTab = 'dashboard';
+  }
+  if (!canAccessCommsAndBreakdown && state.activeTab === 'comms') {
     state.activeTab = 'dashboard';
   }
 
@@ -481,34 +461,32 @@ function renderApp() {
         </div>
 
         <div class="sidebar-menu">
-          ${!isViewerRole ? `
-            <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
-              <span class="material-symbols-outlined">dashboard</span>
-              <span>Dashboard</span>
-            </button>
-            <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
-              <span class="material-symbols-outlined">assignment</span>
-              <span>Projects</span>
-            </button>
-          ` : ''}
+          <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
+            <span class="material-symbols-outlined">assignment</span>
+            <span>Projects</span>
+          </button>
           <button class="nav-link ${state.activeTab === 'raid' ? 'active' : ''}" onclick="switchTab('raid')">
             <span class="material-symbols-outlined">warning</span>
             <span>Risk Center</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="switchTab('comms')">
-            <span class="material-symbols-outlined">chat</span>
-            <span>Communication ${pendingEmailCount > 0 ? `(${pendingEmailCount})` : ''}</span>
-          </button>
-          ${!isViewerRole ? `
-            <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
-              <span class="material-symbols-outlined">assessment</span>
-              <span>Reports</span>
-            </button>
-            <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
-              <span class="material-symbols-outlined">smart_toy</span>
-              <span>AI Assistant</span>
+          ${canAccessCommsAndBreakdown ? `
+            <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined">chat</span>
+              <span>Communication ${pendingEmailCount > 0 ? `(${pendingEmailCount})` : ''}</span>
             </button>
           ` : ''}
+          <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
+            <span class="material-symbols-outlined">assessment</span>
+            <span>Reports</span>
+          </button>
+          <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
+            <span class="material-symbols-outlined">smart_toy</span>
+            <span>AI Assistant</span>
+          </button>
           ${isAdminRole ? `
             <button class="nav-link ${state.activeTab === 'admin' ? 'active' : ''}" onclick="switchTab('admin')">
               <span class="material-symbols-outlined">settings</span>
@@ -546,7 +524,7 @@ function renderApp() {
 
           <div class="header-controls">
             <!-- Notifications & Help Icons -->
-            <button class="icon-btn" title="Notifications ${pendingEmailCount > 0 ? '(' + pendingEmailCount + ' Pending Approvals)' : ''}" onclick="state.activeTab='comms'; renderApp();">
+            <button class="icon-btn" title="Notifications ${pendingEmailCount > 0 ? '(' + pendingEmailCount + ' Pending Approvals)' : ''}" onclick="${canAccessCommsAndBreakdown ? "state.activeTab='comms'; renderApp();" : "state.activeTab='dashboard'; renderApp();"}">
               <span class="material-symbols-outlined">notifications</span>
               ${pendingEmailCount > 0 ? '<span class="notification-dot"></span>' : ''}
             </button>
@@ -699,6 +677,10 @@ function generateHeatmapMatrixHTML(currentProject) {
 
 // 1. Dashboard Tab View
 function renderDashboardTab(currentProject) {
+  const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
+  const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
+  const canAccessCommsAndBreakdown = userRole === 'Program Manager' || isAdminRole;
+
   // Filter RAID items by selected project AND selected date range
   const filteredRaidItems = state.raidItems.filter(r => {
     const isProj = r.project_id === currentProject.id || r.project_code === currentProject.code;
@@ -810,10 +792,12 @@ function renderDashboardTab(currentProject) {
           <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0">
             Vendor API spec bottleneck detected on WBS 1.3 (Score 88). LangGraph multi-agent reasoning recommends spinning up mock sandbox endpoints to preserve sprint velocity.
           </p>
-          <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="switchTab('comms')">
-            <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">chat</span>
-            <span>Communicate</span>
-          </button>
+          ${canAccessCommsAndBreakdown ? `
+            <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">chat</span>
+              <span>Communicate</span>
+            </button>
+          ` : ''}
         </div>
 
         <!-- Section 2: Mitigation -->
@@ -825,10 +809,12 @@ function renderDashboardTab(currentProject) {
           <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0">
             Deploy automated mock sandbox server & adjust critical path integration milestone by 10 business days to mitigate vendor turnaround delay.
           </p>
-          <button class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);" onclick="switchTab('comms')">
-            <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">play_arrow</span>
-            <span>Take Action</span>
-          </button>
+          ${canAccessCommsAndBreakdown ? `
+            <button class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">play_arrow</span>
+              <span>Take Action</span>
+            </button>
+          ` : ''}
         </div>
       </div>
     `,
@@ -891,6 +877,7 @@ function renderDashboardTab(currentProject) {
     const next = state.dashboardWidgetOrder[i + 1];
 
     if (!state.widgetVisibility[curr]) continue;
+    if (curr === 'breakdown' && !canAccessCommsAndBreakdown) continue;
 
     if (curr === 'kpis') {
       contentBuffer += widgetHTML.kpis;
@@ -900,13 +887,17 @@ function renderDashboardTab(currentProject) {
       (curr === 'heatmap' && next === 'breakdown') ||
       (curr === 'breakdown' && next === 'heatmap')
     ) {
-      contentBuffer += `
-        <div class="grid-2col">
-          ${widgetHTML[curr]}
-          ${widgetHTML[next]}
-        </div>
-      `;
-      i++;
+      if (next === 'breakdown' && !canAccessCommsAndBreakdown) {
+        contentBuffer += widgetHTML[curr];
+      } else {
+        contentBuffer += `
+          <div class="grid-2col">
+            ${widgetHTML[curr]}
+            ${widgetHTML[next]}
+          </div>
+        `;
+        i++;
+      }
     } else {
       contentBuffer += widgetHTML[curr];
     }
@@ -985,15 +976,21 @@ function renderProjectsTab() {
 
 // 3. RAID Register / Risk Center Tab View
 function renderRaidTab() {
+  const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
+  const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
+  const canAccessCommsAndBreakdown = userRole === 'Program Manager' || isAdminRole;
+
   return `
     <div class="page-header">
       <div>
         <h1 class="page-title">Risk Center (RAID Register)</h1>
         <p class="page-subtitle">Active risks, assumptions, issues, and dependencies for ${state.selectedProjectCode}</p>
       </div>
-      <button class="btn-primary" onclick="triggerMultiAgentWorkflow()">
-        <span class="material-symbols-outlined">smart_toy</span> Run LangGraph RAID Analysis
-      </button>
+      ${canAccessCommsAndBreakdown ? `
+        <button class="btn-primary" onclick="triggerMultiAgentWorkflow()">
+          <span class="material-symbols-outlined">smart_toy</span> Run LangGraph RAID Analysis
+        </button>
+      ` : ''}
     </div>
 
     <div class="card-box">
@@ -1046,14 +1043,6 @@ function renderCommsTab() {
         <p class="page-subtitle">Stakeholder email communications and Mandatory Human Approval workflow for ${state.selectedProjectCode}</p>
       </div>
       <div style="display:flex; align-items:center; gap:12px">
-        <select class="btn-secondary" style="background:#fff; cursor:pointer; height:38px;" onchange="setProject(this.value); renderApp();">
-          <option value="ALL" ${state.selectedProjectCode === 'ALL' ? 'selected' : ''}>ALL PROJECTS (${state.emails.length} Communications)</option>
-          ${state.projects.map(p => `
-            <option value="${p.code}" ${p.code === currentProject.code ? 'selected' : ''}>
-              ${p.code} - ${p.name}
-            </option>
-          `).join('')}
-        </select>
         <span class="chip chip-warning" style="font-size:13px">${pendingCount} Pending</span>
         <span class="chip chip-success" style="font-size:13px">${sentCount} Sent</span>
       </div>
