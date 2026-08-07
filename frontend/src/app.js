@@ -1990,6 +1990,7 @@ function renderAdminTab() {
             `}
           </tbody>
         </table>
+      </div>
     </div>
 
     <!-- Master Projects Portfolio Table -->
