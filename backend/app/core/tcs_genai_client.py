@@ -12,7 +12,8 @@ from typing import Dict, Any, List, Optional
 class TCSGenAIClient:
     def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
         self.api_key = api_key or os.getenv('TCS_GENAI_API_KEY', 'tcs_genai_mock_key_998877')
-        self.base_url = base_url or os.getenv('TCS_GENAI_BASE_URL', 'https://genailab.tcs.in/api/v1')
+        raw_url = base_url or os.getenv('TCS_GENAI_BASE_URL') or os.getenv('TCS_GENAI_ENDPOINT') or 'https://genailab.tcs.in/v1'
+        self.base_url = raw_url.rstrip('/').replace('/api/v1', '/v1')
         self.model_name = os.getenv('DEFAULT_LLM_MODEL', 'gemini-1.5-pro')
 
     def generate_completion(self, prompt: str, system_prompt: Optional[str] = None, temperature: float = 0.2) -> Dict[str, Any]:
@@ -36,7 +37,7 @@ class TCSGenAIClient:
         }
 
         try:
-            res = requests.post(f"{self.base_url}/chat/completions", headers=headers, json=payload, timeout=5, verify=False)
+            res = requests.post(f"{self.base_url}/chat/completions", headers=headers, json=payload, timeout=30, verify=False)
             if res.status_code == 200:
                 data = res.json()
                 content = data.get('choices', [{}])[0].get('message', {}).get('content', '')

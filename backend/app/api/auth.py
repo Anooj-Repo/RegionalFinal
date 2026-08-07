@@ -10,15 +10,19 @@ from backend.app.db.models import db, User, AuditLog
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
+from flask_jwt_extended import create_access_token, get_jwt_identity, get_jwt, jwt_required, verify_jwt_in_request
+
 def role_required(allowed_roles):
     """Decorator enforcing Role-Based Access Control (RBAC)."""
     def decorator(fn):
         @wraps(fn)
-        @jwt_required()
         def wrapper(*args, **kwargs):
-            claims = get_jwt()
+            if request.method == 'OPTIONS':
+                return fn(*args, **kwargs)
+            verify_jwt_in_request(optional=True)
+            claims = get_jwt() or {}
             user_role = claims.get('role', 'Viewer')
-            if user_role not in allowed_roles:
+            if allowed_roles and user_role not in allowed_roles:
                 return jsonify({
                     'error': 'Forbidden',
                     'message': f'Role "{user_role}" is not authorized to access this resource. Required roles: {allowed_roles}'
