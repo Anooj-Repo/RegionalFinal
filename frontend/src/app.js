@@ -286,6 +286,42 @@ async function refreshWorkspaceData() {
 
 
 
+// Toast Notification Helper
+function showToast(message, type = 'success') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast-notification toast-${type}`;
+
+  const iconMap = {
+    success: 'check_circle',
+    info: 'info',
+    warning: 'warning',
+    error: 'error'
+  };
+  const icon = iconMap[type] || 'notifications';
+
+  toast.innerHTML = `
+    <span class="material-symbols-outlined" style="font-size:20px;">${icon}</span>
+    <span style="flex:1; line-height:1.4;">${message}</span>
+    <button style="background:none; border:none; color:#fff; cursor:pointer; opacity:0.75; font-size:16px; padding:0; line-height:1;" onclick="this.parentElement.remove()">✕</button>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('toast-fadeOut');
+    setTimeout(() => {
+      if (toast.parentElement) toast.remove();
+    }, 300);
+  }, 4000);
+}
+
 // Event Handlers
 function setRole(roleName) {
   state.currentRole = roleName;
@@ -372,7 +408,7 @@ async function approveEmail() {
 
   const res = await apiPost(`/emails/${emailId}/approve`, {});
   if (res && res.status === 'success') {
-    alert(`Email #${emailId} Approved! Background email service will dispatch to linusimon@gmail.com within 5-10 seconds.`);
+    showToast(`Email #${emailId} Approved! Background email service will dispatch to linusimon@gmail.com within 5-10 seconds.`, 'success');
     closeApprovalModal();
     await refreshWorkspaceData();
     renderApp();
@@ -392,7 +428,7 @@ async function triggerMultiAgentWorkflow() {
     state.nodeTraces = res.workflow_result.graphical_node_traces || [];
     await refreshWorkspaceData();
     renderApp();
-    alert(`LangGraph Workflow Completed! Generated draft email #${res.workflow_result.communication.created_draft_id} for Human Approval.`);
+    showToast(`LangGraph Workflow Completed! Generated draft email #${res.workflow_result.communication.created_draft_id} for Human Approval.`, 'success');
   }
 }
 
@@ -400,7 +436,7 @@ async function triggerMultiAgentWorkflow() {
 function startVoiceRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert("Speech Recognition API is not supported in this browser. Please use Chrome or Edge.");
+    showToast("Speech Recognition API is not supported in this browser. Please use Chrome or Edge.", 'warning');
     return;
   }
 
@@ -459,7 +495,10 @@ function renderApp() {
     name: 'Project Orion Upgrade', code: 'PRJ-001', lifecycle_phase: 'Mobilization', health_status: 'At Risk', progress_pct: 72
   };
 
-  const pendingEmailCount = state.emails.filter(e => e.status === 'PENDING').length;
+  const pendingEmailCount = state.emails.filter(e => 
+    e.status === 'PENDING' && 
+    (e.project_id === currentProject.id || e.project_code === currentProject.code || (currentProject.code === 'PRJ-001' && (!e.project_code || e.project_id === 1 || e.project_code === 'PRJ-001')))
+  ).length;
 
   root.innerHTML = `
     <div class="app-container">
@@ -1013,7 +1052,7 @@ async function triggerRaidRiskDiscovery() {
     state.aiDiscoveredRisk = res.discovered_risk;
     renderApp();
   } else {
-    alert("AI Risk Analysis completed. No new un-tracked risks discovered for " + state.selectedProjectCode);
+    showToast("AI Risk Analysis completed. No new un-tracked risks discovered for " + state.selectedProjectCode, 'info');
     renderApp();
   }
 }
@@ -1036,7 +1075,7 @@ async function confirmCreateSingleDiscoveredRisk(idx) {
   });
 
   if (res && res.status === 'success') {
-    alert(`Success! New Risk Item "${d.title}" (Score ${d.risk_score}) created in RAID Register (app.db).`);
+    showToast(`Success! New Risk Item "${d.title}" (Score ${d.risk_score}) created in RAID Register (app.db).`, 'success');
     // Remove created risk from modal list
     list.splice(idx, 1);
     if (list.length === 0) {
@@ -1073,7 +1112,7 @@ async function confirmCreateAllDiscoveredRisks() {
     }
   }
 
-  alert(`Success! Created ${createdCount} new Risk Items in RAID Register (app.db).`);
+  showToast(`Success! Created ${createdCount} new Risk Items in RAID Register (app.db).`, 'success');
   state.aiDiscoveredRisks = null;
   state.aiDiscoveredRisk = null;
   await refreshWorkspaceData();
@@ -1093,13 +1132,13 @@ function renderRaidTab() {
   return `
     <div class="page-header">
       <div>
-        <h1 class="page-title">Risk Center (RAID Register)</h1>
+        <h1 class="page-title">Risk Center</h1>
         <p class="page-subtitle">Active risks, assumptions, issues, and dependencies for ${state.selectedProjectCode}</p>
       </div>
       ${canAccessCommsAndBreakdown ? `
         <button class="btn-primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; font-weight:700; display:flex; align-items:center; gap:8px; border:none; padding:10px 16px; border-radius:8px; cursor:pointer;" onclick="triggerRaidRiskDiscovery()" ${state.isAnalyzingRisk ? 'disabled' : ''}>
           <span class="material-symbols-outlined" style="color:#facc15">bolt</span>
-          ${state.isAnalyzingRisk ? 'AI Analyzing Project Vector Store...' : 'Run LangGraph RAID Analysis'}
+          ${state.isAnalyzingRisk ? 'AI Analyzing Project Vector Store...' : 'Risk Analysis'}
         </button>
       ` : ''}
     </div>
@@ -1292,7 +1331,7 @@ function exportReportToPDF() {
       html2pdf().set(opt).from(element).save();
     };
     script.onerror = () => {
-      alert('Could not load PDF generator library. Opening print view instead.');
+      showToast('Could not load PDF generator library. Opening print view instead.', 'warning');
       window.print();
     };
     document.head.appendChild(script);
@@ -1322,15 +1361,13 @@ function renderReportsTab(currentProject) {
         <div style="background:var(--surface-container-low); padding:16px; border-radius:8px">
           <h4 style="font-weight:700; margin-bottom:8px">Key Performance Indicators</h4>
           <ul style="padding-left:20px; line-height:1.8">
-            <li>Open RAID Items: <strong>${state.raidItems.length}</strong></li>
+            <li>Open Items: <strong>${state.raidItems.length}</strong></li>
             <li>High Severity Risks (&gt;70): <strong>${state.raidItems.filter(r => r.risk_score>=70).length}</strong></li>
-            <li>Active Project Team Leads: <strong>4</strong></li>
-            <li>Budget Variance: <strong>-8.5% ($1.2M)</strong></li>
           </ul>
         </div>
 
         <div style="background:var(--surface-container-low); padding:16px; border-radius:8px">
-          <h4 style="font-weight:700; margin-bottom:8px">LangGraph AI Mitigation Summary</h4>
+          <h4 style="font-weight:700; margin-bottom:8px">Risk & Mitigation Summary</h4>
           <p style="font-size:13px; color:var(--on-surface-variant)">
             The multi-agent system identified third-party API integration delays as the primary bottleneck. Mitigation strategy recommends deploying mock servers and initiating parallel sprint tasks.
           </p>
@@ -1848,10 +1885,10 @@ async function approveAction(actionId) {
       renderApp();
     } else {
       const errData = await res.json();
-      alert(`Action failed: ${errData.message || res.statusText}`);
+      showToast(`Action failed: ${errData.message || res.statusText}`, 'error');
     }
   } catch (err) {
-    alert(`Action error: ${err.message}`);
+    showToast(`Action error: ${err.message}`, 'error');
   }
 }
 
@@ -1867,7 +1904,7 @@ function cancelAction(actionId) {
 // ─── Voice Input for Chat ────────────────────────────────────────────────────
 function chatVoiceInput() {
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    alert('Voice input is not supported in this browser.');
+    showToast('Voice input is not supported in this browser.', 'warning');
     return;
   }
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1925,6 +1962,25 @@ function renderAdminTab() {
       </div>
     </div>
 
+    <!-- Master User Accounts Table -->
+    <div class="card-box" style="margin-top:20px;">
+      <div class="card-box-title" style="margin-bottom:16px">SQLite Master User Accounts Table (backend/app.db -> User)</div>
+      <div class="table-responsive">
+        <table class="stitch-table">
+          <thead>
+            <tr><th>User ID</th><th>Username</th><th>Full Name</th><th>Role</th><th>Email Address</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>#1</td><td><strong>rohit</strong></td><td>Rohit Verma</td><td><span class="chip chip-warning">Program Manager</span></td><td>rohit.verma@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
+            <tr><td>#2</td><td><strong>admin</strong></td><td>Admin User</td><td><span class="chip chip-danger">Admin</span></td><td>admin@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
+            <tr><td>#3</td><td><strong>amit</strong></td><td>Amit Joshi</td><td><span class="chip chip-info">Project Manager</span></td><td>amit.joshi@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
+            <tr><td>#4</td><td><strong>vikram</strong></td><td>Vikram Malhotra</td><td><span class="chip chip-info">Team Lead</span></td><td>vikram.m@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
+            <tr><td>#5</td><td><strong>priya</strong></td><td>Priya Sharma</td><td><span class="chip chip-info">Viewer</span></td><td>priya.s@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- RAG DATABASE 1: FAISS PROJECT VECTOR STORE & STATIC RAG -->
     <div class="card-box" style="margin-top:20px;">
       <div class="card-box-title" style="margin-bottom:6px">1. Project FAISS Vector Database & Document Store (backend/app/vector_store/)</div>
@@ -1968,108 +2024,6 @@ function renderAdminTab() {
             `}
           </tbody>
         </table>
-    </div>
-
-    <!-- RAG DATABASE 2: UNSTRUCTURED KNOWLEDGE GRAPH RAG STORE (GRAPHRAG) -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:6px">2. Unstructured Knowledge Graph RAG Database (mcp/mcp.db -> GraphRAG)</div>
-      <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
-        Ingests real-time unstructured chat/email feeds (Slack, Teams, Email logs) to extract Entity-Relationship Triples <code>(Subject) --[Predicate]--> (Object)</code>.
-      </p>
-
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>Triple ID</th><th>Subject Entity</th><th>Relationship Predicate</th><th>Object Entity</th><th>Communication Source</th><th>Category</th><th>Confidence</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>triple_101</code></td>
-              <td><strong>Amit Joshi</strong></td>
-              <td><code>--[SENT_COMMUNICATION]--></code></td>
-              <td><strong>Rohit Verma</strong></td>
-              <td>Teams Chat Feed #104</td>
-              <td><span class="chip chip-info">Handoff</span></td>
-              <td><span class="chip chip-success">0.98</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_102</code></td>
-              <td><strong>Third-Party Vendor API</strong></td>
-              <td><code>--[IMPACTS_MILESTONE]--></code></td>
-              <td><strong>Design Review</strong></td>
-              <td>Slack #proj-orion-dev</td>
-              <td><span class="chip chip-danger">Threat Risk</span></td>
-              <td><span class="chip chip-success">0.96</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_103</code></td>
-              <td><strong>Project Orion Upgrade</strong></td>
-              <td><code>--[HAS_RISK_INDICATOR]--></code></td>
-              <td><strong>Integration Latency</strong></td>
-              <td>Incident Report Thread #42</td>
-              <td><span class="chip chip-warning">RAID Factor</span></td>
-              <td><span class="chip chip-success">0.95</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_104</code></td>
-              <td><strong>Core Banking API</strong></td>
-              <td><code>--[REQUIRES_SLA_COMPLIANCE]--></code></td>
-              <td><strong>Security Policy v2.1</strong></td>
-              <td>Email Log #208</td>
-              <td><span class="chip chip-info">Governance</span></td>
-              <td><span class="chip chip-success">0.97</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_105</code></td>
-              <td><strong>Biometric Auth Service</strong></td>
-              <td><code>--[DEPENDS_ON]--></code></td>
-              <td><strong>OAuth 2.0 Identity Server</strong></td>
-              <td>Slack #security-audit</td>
-              <td><span class="chip chip-info">Dependency</span></td>
-              <td><span class="chip chip-success">0.99</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Master User Accounts Table -->
-
-
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Master User Accounts Table (backend/app.db -> User)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>User ID</th><th>Username</th><th>Full Name</th><th>Role</th><th>Email Address</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#1</td><td><strong>rohit</strong></td><td>Rohit Verma</td><td><span class="chip chip-warning">Program Manager</span></td><td>rohit.verma@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
-            <tr><td>#2</td><td><strong>admin</strong></td><td>Admin User</td><td><span class="chip chip-danger">Admin</span></td><td>admin@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
-            <tr><td>#3</td><td><strong>amit</strong></td><td>Amit Joshi</td><td><span class="chip chip-info">Project Manager</span></td><td>amit.joshi@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
-            <tr><td>#4</td><td><strong>vikram</strong></td><td>Vikram Malhotra</td><td><span class="chip chip-info">Team Lead</span></td><td>vikram.m@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
-            <tr><td>#5</td><td><strong>priya</strong></td><td>Priya Sharma</td><td><span class="chip chip-info">Viewer</span></td><td>priya.s@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Master Projects Portfolio Table -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Master Projects Table (backend/app.db -> Project)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>ID</th><th>Code</th><th>Project Name</th><th>Lifecycle Phase</th><th>Health Status</th><th>Budget</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#1</td><td><code>PRJ-001</code></td><td><strong>Project Orion Upgrade</strong></td><td><span class="chip chip-info">Mobilization</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$2.5M</td></tr>
-            <tr><td>#2</td><td><code>PRJ-002</code></td><td><strong>Core Banking Modernization</strong></td><td><span class="chip chip-info">Planning</span></td><td><span class="chip chip-success">Healthy</span></td><td>$4.2M</td></tr>
-            <tr><td>#3</td><td><code>PRJ-003</code></td><td><strong>Digital Identity Platform</strong></td><td><span class="chip chip-info">Design</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$1.8M</td></tr>
-            <tr><td>#4</td><td><code>PRJ-004</code></td><td><strong>Cloud Infrastructure Migration</strong></td><td><span class="chip chip-info">Execution</span></td><td><span class="chip chip-danger">Critical</span></td><td>$3.5M</td></tr>
-            <tr><td>#5</td><td><code>PRJ-005</code></td><td><strong>Supply Chain Analytics</strong></td><td><span class="chip chip-info">Closure</span></td><td><span class="chip chip-success">Healthy</span></td><td>$1.2M</td></tr>
-          </tbody>
-        </table>
       </div>
     </div>
 
@@ -2098,6 +2052,25 @@ function renderAdminTab() {
               <tr><td><code>chunk_0</code></td><td>VectorImport Store [PROJECT_PROG_ALPHA_2026] (Document)</td><td><small style="color:var(--on-surface-variant)">Task Ent [task_102]: Cloud Infrastructure Setup (Azure) - CloudSphere Inc. API gateway delayed...</small></td><td><span class="chip chip-warning">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
               <tr><td><code>chunk_1</code></td><td>VectorImport Store [PROJECT_PROG_GAMMA_2026] (Document)</td><td><small style="color:var(--on-surface-variant)">Security Audit Email [email_3001]: GDPR Audit Deadline at Risk - Unsigned Pen Test Contract...</small></td><td><span class="chip chip-warning">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
             `}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Master Projects Portfolio Table -->
+    <div class="card-box" style="margin-top:20px;">
+      <div class="card-box-title" style="margin-bottom:16px">SQLite Master Projects Table (backend/app.db -> Project)</div>
+      <div class="table-responsive">
+        <table class="stitch-table">
+          <thead>
+            <tr><th>ID</th><th>Code</th><th>Project Name</th><th>Lifecycle Phase</th><th>Health Status</th><th>Budget</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>#1</td><td><code>PRJ-001</code></td><td><strong>Project Orion Upgrade</strong></td><td><span class="chip chip-info">Mobilization</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$2.5M</td></tr>
+            <tr><td>#2</td><td><code>PRJ-002</code></td><td><strong>Core Banking Modernization</strong></td><td><span class="chip chip-info">Planning</span></td><td><span class="chip chip-success">Healthy</span></td><td>$4.2M</td></tr>
+            <tr><td>#3</td><td><code>PRJ-003</code></td><td><strong>Digital Identity Platform</strong></td><td><span class="chip chip-info">Design</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$1.8M</td></tr>
+            <tr><td>#4</td><td><code>PRJ-004</code></td><td><strong>Cloud Infrastructure Migration</strong></td><td><span class="chip chip-info">Execution</span></td><td><span class="chip chip-danger">Critical</span></td><td>$3.5M</td></tr>
+            <tr><td>#5</td><td><code>PRJ-005</code></td><td><strong>Supply Chain Analytics</strong></td><td><span class="chip chip-info">Closure</span></td><td><span class="chip chip-success">Healthy</span></td><td>$1.2M</td></tr>
           </tbody>
         </table>
       </div>
@@ -2503,29 +2476,84 @@ async function refineToneWithAI(toneName) {
   const subjectInput = document.getElementById('editSubject');
   const bodyInput = document.getElementById('editBody');
   const refineBtn = document.getElementById('btnRefineTone');
+  const statusContainer = document.getElementById('aiTransformationStatus');
 
   if (!bodyInput || !bodyInput.value) return;
 
+  const emailObj = state.selectedEmailForApproval;
+  const recipientName = emailObj ? (emailObj.recipient_role || emailObj.recipient_name || 'Stakeholders') : 'Stakeholders';
+
+  // 1. Show AI Working Panel & Pulsing Input Glow Animation
+  if (subjectInput) subjectInput.classList.add('ai-transforming-glow');
+  if (bodyInput) bodyInput.classList.add('ai-transforming-glow');
+
+  if (statusContainer) {
+    statusContainer.style.display = 'block';
+    statusContainer.innerHTML = `
+      <div class="ai-working-panel">
+        <div class="ai-working-spinner"></div>
+        <div style="flex:1">
+          <div style="font-weight:700; color:#38bdf8; font-size:12px; display:flex; align-items:center; gap:6px;">
+            <span class="material-symbols-outlined" style="font-size:16px; animation:aiSparkle 1s infinite ease-in-out;">auto_awesome</span>
+            AI Multi-Agent LLM is refining tone to '${toneName}'...
+          </div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+            Sanitizing headers &amp; rewriting salutation to 'Dear ${recipientName}'
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   if (refineBtn) {
     refineBtn.disabled = true;
-    refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">sync</span> Transforming Tone...';
+    refineBtn.style.opacity = '0.75';
+    refineBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:16px; animation:aiSpinSlow 1s linear infinite;">sync</span> Refinement Engine Running...';
   }
 
   const res = await apiPost('/emails/refine-tone', {
     subject: subjectInput ? subjectInput.value : '',
     body: bodyInput.value,
-    tone: toneName || 'Executive'
+    tone: toneName || 'Executive',
+    recipient_name: recipientName
   });
+
+  // 2. Remove Glow Animation
+  if (subjectInput) subjectInput.classList.remove('ai-transforming-glow');
+  if (bodyInput) bodyInput.classList.remove('ai-transforming-glow');
 
   if (refineBtn) {
     refineBtn.disabled = false;
+    refineBtn.style.opacity = '1';
     refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; color:#facc15">bolt</span> ✨ Transform Tone with AI';
   }
 
   if (res && res.status === 'success') {
     if (subjectInput && res.refined_subject) subjectInput.value = res.refined_subject;
     if (bodyInput && res.refined_body) bodyInput.value = res.refined_body;
-    alert(`AI Tone Transformation Applied! Converted email content to '${res.tone_applied}' sentiment.`);
+
+    if (statusContainer) {
+      statusContainer.innerHTML = `
+        <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 8px; padding: 10px 14px; color: #16a34a; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; animation: fadeSlideIn 0.3s ease;">
+          <span style="display:flex; align-items:center; gap:6px;">
+            <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+            ✨ AI Tone Refinement Applied! Subject and body updated with '${res.tone_applied}' sentiment.
+          </span>
+          <span class="chip chip-success" style="font-size:10px;">PASSED</span>
+        </div>
+      `;
+      setTimeout(() => {
+        if (statusContainer) statusContainer.style.display = 'none';
+      }, 4500);
+    }
+  } else {
+    if (statusContainer) {
+      statusContainer.innerHTML = `
+        <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 10px 14px; color: #dc2626; font-size: 12px; font-weight: 700; animation: fadeSlideIn 0.3s ease;">
+          ⚠️ Tone transformation failed. Please check backend connection.
+        </div>
+      `;
+    }
   }
 }
 
@@ -2584,6 +2612,7 @@ function renderHumanApprovalModal() {
                 <span>✨ Transform Tone with AI</span>
               </button>
             </div>
+            <div id="aiTransformationStatus" style="display:none; margin-top:10px;"></div>
           </div>
         ` : ''}
 
