@@ -1,81 +1,151 @@
-<div class="metrics-grid">
-  <div class="metric-card">
-    <div class="metric-header">Overall Health</div>
-    <div class="metric-value positive">{{ getCurrentProject().progress_pct }}%</div>
-    <div class="metric-sub positive">Phase: {{ getCurrentProject().lifecycle_phase }}</div>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">Overview of your program health and key insights</p>
   </div>
-  <div class="metric-card">
-    <div class="metric-header">Active Projects</div>
-    <div class="metric-value">{{ projects.length }}</div>
-    <div class="metric-sub">Across 5 Lifecycle Phases</div>
-  </div>
-  <div class="metric-card">
-    <div class="metric-header">Portfolio Budget</div>
-    <div class="metric-value positive">$12.5M</div>
-    <div class="metric-sub positive">Variance: -8.5%</div>
-  </div>
-  <div class="metric-card">
-    <div class="metric-header">AI Confidence Score</div>
-    <div class="metric-value positive">95%</div>
-    <div class="metric-sub positive">Groundedness Verified</div>
+  <div style="display:flex; gap:12px">
+    <select class="btn-secondary" style="background:#fff">
+      <option>All Programs</option>
+    </select>
+    <button class="btn-secondary">
+      <span class="material-symbols-outlined">calendar_today</span>
+      May 12 - May 18, 2025
+    </button>
+    <button class="btn-secondary">
+      <span class="material-symbols-outlined">tune</span>
+      Customize
+    </button>
   </div>
 </div>
 
-<div class="grid-2col">
-  <div class="card">
-    <div class="card-title">
-      <span>5x5 Risk Heatmap Matrix ({{ getCurrentProject().code }})</span>
-      <span class="badge badge-risk">Phase: {{ getCurrentProject().lifecycle_phase }}</span>
-    </div>
-    <div class="heatmap-grid">
-      <div class="heatmap-cell heat-low">L1/I1</div>
-      <div class="heatmap-cell heat-low">L1/I2</div>
-      <div class="heatmap-cell heat-med">L1/I3</div>
-      <div class="heatmap-cell heat-med">L1/I4</div>
-      <div class="heatmap-cell heat-high">L1/I5</div>
-
-      <div class="heatmap-cell heat-low">L2/I1</div>
-      <div class="heatmap-cell heat-med">L2/I2</div>
-      <div class="heatmap-cell heat-med">L2/I3</div>
-      <div class="heatmap-cell heat-high">L2/I4</div>
-      <div class="heatmap-cell heat-high">L2/I5</div>
-
-      <div class="heatmap-cell heat-med">L3/I1</div>
-      <div class="heatmap-cell heat-med">L3/I2</div>
-      <div class="heatmap-cell heat-high">L3/I3</div>
-      <div class="heatmap-cell heat-high">L3/I4</div>
-      <div class="heatmap-cell heat-critical">L3/I5 (88)</div>
-
-      <div class="heatmap-cell heat-med">L4/I1</div>
-      <div class="heatmap-cell heat-high">L4/I2</div>
-      <div class="heatmap-cell heat-high">L4/I3</div>
-      <div class="heatmap-cell heat-critical">L4/I4 (85)</div>
-      <div class="heatmap-cell heat-critical">L4/I5 (90)</div>
-
-      <div class="heatmap-cell heat-high">L5/I1</div>
-      <div class="heatmap-cell heat-high">L5/I2</div>
-      <div class="heatmap-cell heat-critical">L5/I3</div>
-      <div class="heatmap-cell heat-critical">L5/I4</div>
-      <div class="heatmap-cell heat-critical">L5/I5</div>
+<!-- 5 KPI Cards Row -->
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-title">Overall Program Health</div>
+    <div class="kpi-value">{{ getCurrentProject().progress_pct }}%</div>
+    <div class="kpi-subtext">
+      <span class="chip chip-warning">Medium Risk</span>
+      <span style="color:var(--secondary); font-weight:600">Phase: {{ getCurrentProject().lifecycle_phase }}</span>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-title">Projects Portfolio Overview</div>
-    <div class="table-container">
-      <table>
+  <div class="kpi-card">
+    <div class="kpi-title">Active Projects</div>
+    <div class="kpi-value">{{ projects.length }}</div>
+    <div class="kpi-subtext" style="color:#059669">
+      <span class="material-symbols-outlined" style="font-size:16px">arrow_upward</span>
+      <strong>3 from last week</strong>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-title">Open RAID Risks</div>
+    <div class="kpi-value" style="color:var(--error)">{{ raidItems.length }}</div>
+    <div class="kpi-subtext" style="color:var(--error)">
+      <span class="material-symbols-outlined" style="font-size:16px">warning</span>
+      <strong>High Score Risk Active</strong>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-title">Pending Approvals</div>
+    <div class="kpi-value" style="color:var(--primary-container)">{{ pendingEmailCount }}</div>
+    <div class="kpi-subtext" style="color:var(--primary-container)">
+      <span class="chip chip-info">Human Approval Required</span>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-title">Budget Variance</div>
+    <div class="kpi-value" style="color:var(--error)">-8.5%</div>
+    <div class="kpi-subtext" style="color:var(--error)">
+      <strong>($1.2M over budget)</strong>
+    </div>
+  </div>
+</div>
+
+<!-- 2 Column Layout: 5x5 Heatmap + Project Phase Breakdown -->
+<div class="grid-2col">
+  <div class="card-box">
+    <div class="card-box-header">
+      <div class="card-box-title">5x5 Risk Heatmap Matrix ({{ getCurrentProject().code }})</div>
+      <span class="chip chip-warning">{{ getCurrentProject().lifecycle_phase }}</span>
+    </div>
+    <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:12px">Likelihood vs. Impact Distribution across RAID Items</p>
+    
+    <div class="heatmap-matrix">
+      <div class="heatmap-cell cell-low">L1/I1</div>
+      <div class="heatmap-cell cell-low">L1/I2</div>
+      <div class="heatmap-cell cell-med">L1/I3</div>
+      <div class="heatmap-cell cell-med">L1/I4</div>
+      <div class="heatmap-cell cell-high">L1/I5</div>
+
+      <div class="heatmap-cell cell-low">L2/I1</div>
+      <div class="heatmap-cell cell-med">L2/I2</div>
+      <div class="heatmap-cell cell-med">L2/I3</div>
+      <div class="heatmap-cell cell-high">L2/I4</div>
+      <div class="heatmap-cell cell-high">L2/I5</div>
+
+      <div class="heatmap-cell cell-med">L3/I1</div>
+      <div class="heatmap-cell cell-med">L3/I2</div>
+      <div class="heatmap-cell cell-high">L3/I3</div>
+      <div class="heatmap-cell cell-high">L3/I4</div>
+      <div class="heatmap-cell cell-critical">L3/I5 (88)</div>
+
+      <div class="heatmap-cell cell-med">L4/I1</div>
+      <div class="heatmap-cell cell-high">L4/I2</div>
+      <div class="heatmap-cell cell-high">L4/I3</div>
+      <div class="heatmap-cell cell-critical">L4/I4 (85)</div>
+      <div class="heatmap-cell cell-critical">L4/I5 (90)</div>
+
+      <div class="heatmap-cell cell-high">L5/I1</div>
+      <div class="heatmap-cell cell-high">L5/I2</div>
+      <div class="heatmap-cell cell-critical">L5/I3</div>
+      <div class="heatmap-cell cell-critical">L5/I4</div>
+      <div class="heatmap-cell cell-critical">L5/I5</div>
+    </div>
+  </div>
+
+  <div class="card-box">
+    <div class="card-box-header">
+      <div class="card-box-title">Project Phase Breakdown</div>
+    </div>
+    <div class="table-responsive">
+      <table class="stitch-table">
         <thead>
-          <tr><th>Code</th><th>Phase</th><th>Health</th><th>Progress</th></tr>
+          <tr><th>Project</th><th>Phase</th><th>Health</th><th>Progress</th></tr>
         </thead>
         <tbody>
           <tr *ngFor="let p of projects" (click)="setProject(p.code)" style="cursor:pointer">
-            <td><strong>{{ p.code }}</strong></td>
+            <td><strong>{{ p.code }}</strong> - {{ p.name }}</td>
             <td>{{ p.lifecycle_phase }}</td>
-            <td><span class="badge" [ngClass]="{'badge-healthy': p.health_status==='Healthy', 'badge-risk': p.health_status==='At Risk', 'badge-critical': p.health_status==='Critical'}">{{ p.health_status }}</span></td>
-            <td>{{ p.progress_pct }}%</td>
+            <td>
+              <span class="chip" [ngClass]="{'chip-success': p.health_status==='Healthy', 'chip-warning': p.health_status==='At Risk', 'chip-danger': p.health_status==='Critical'}">
+                {{ p.health_status }}
+              </span>
+            </td>
+            <td><strong>{{ p.progress_pct }}%</strong></td>
           </tr>
         </tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- Visual Critical Path Flowchart Card -->
+<div class="card-box">
+  <div class="card-box-header">
+    <div class="card-box-title">Critical Path Dependency Map Flowchart ({{ getCurrentProject().code }})</div>
+  </div>
+  <div class="flow-chain">
+    <div class="flow-step completed">Requirements Gathering<br><small style="color:#059669">Completed</small></div>
+    <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+    <div class="flow-step completed">Design Review<br><small style="color:#059669">Completed</small></div>
+    <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+    <div class="flow-step blocked">API Integration<br><small style="color:#dc2626">Blocked (Score 88)</small></div>
+    <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+    <div class="flow-step in-progress">System Testing<br><small style="color:var(--primary-container)">In Progress</small></div>
+    <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+    <div class="flow-step">Deployment<br><small style="color:var(--outline)">Not Started</small></div>
   </div>
 </div>
