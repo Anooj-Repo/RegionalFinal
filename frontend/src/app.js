@@ -1046,14 +1046,6 @@ function renderCommsTab() {
         <p class="page-subtitle">Stakeholder email communications and Mandatory Human Approval workflow for ${state.selectedProjectCode}</p>
       </div>
       <div style="display:flex; align-items:center; gap:12px">
-        <select class="btn-secondary" style="background:#fff; cursor:pointer; height:38px;" onchange="setProject(this.value); renderApp();">
-          <option value="ALL" ${state.selectedProjectCode === 'ALL' ? 'selected' : ''}>ALL PROJECTS (${state.emails.length} Communications)</option>
-          ${state.projects.map(p => `
-            <option value="${p.code}" ${p.code === currentProject.code ? 'selected' : ''}>
-              ${p.code} - ${p.name}
-            </option>
-          `).join('')}
-        </select>
         <span class="chip chip-warning" style="font-size:13px">${pendingCount} Pending</span>
         <span class="chip chip-success" style="font-size:13px">${sentCount} Sent</span>
       </div>
