@@ -3,7 +3,7 @@
     <span>Stakeholder Communication Center (Mandatory Human Approval)</span>
   </div>
   <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">
-    All AI-generated emails remain in PENDING state until reviewed, edited, and explicitly APPROVED. Dispatched via Resend API to linusimon@gmail.com.
+    All AI-generated emails remain in PENDING state until reviewed, edited, and explicitly APPROVED. Dispatched via Resend API to linusimon&#64;gmail.com.
   </p>
 
   <div class="table-container">
@@ -15,7 +15,7 @@
         <tr *ngFor="let e of emails">
           <td>#{{ e.id }}</td>
           <td><span class="badge badge-healthy">{{ e.recipient_role }}</span></td>
-          <td>linusimon@gmail.com <br><small style="color:var(--text-muted)">Intended: {{ e.recipient_email }}</small></td>
+          <td>linusimon&#64;gmail.com <br><small style="color:var(--text-muted)">Intended: {{ e.recipient_email }}</small></td>
           <td><strong>{{ e.subject }}</strong></td>
           <td><span class="badge" [ngClass]="{'badge-healthy': e.status==='SENT', 'badge-risk': e.status==='PENDING', 'badge-critical': e.status==='FAILED'||e.status==='REJECTED'}">{{ e.status }}</span></td>
           <td>

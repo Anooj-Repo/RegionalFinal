@@ -4,7 +4,7 @@
     <p class="page-subtitle">Overview of your program health and key insights</p>
   </div>
   <div style="display:flex; gap:12px">
-    <select class="btn-secondary" style="background:#fff; cursor:pointer" (change)="setProject($event.target.value)">
+    <select class="btn-secondary" style="background:#fff; cursor:pointer" (change)="onProjectChange($event)">
       <option *ngFor="let p of projects" [value]="p.code" [selected]="p.code === getCurrentProject().code">
         {{ p.code }} - {{ p.name }}
       </option>
@@ -86,35 +86,14 @@
     <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:12px">Likelihood vs. Impact Distribution across RAID Items</p>
     
     <div class="heatmap-matrix">
-      <div class="heatmap-cell cell-low">L1/I1</div>
-      <div class="heatmap-cell cell-low">L1/I2</div>
-      <div class="heatmap-cell cell-med">L1/I3</div>
-      <div class="heatmap-cell cell-med">L1/I4</div>
-      <div class="heatmap-cell cell-high">L1/I5</div>
-
-      <div class="heatmap-cell cell-low">L2/I1</div>
-      <div class="heatmap-cell cell-med">L2/I2</div>
-      <div class="heatmap-cell cell-med">L2/I3</div>
-      <div class="heatmap-cell cell-high">L2/I4</div>
-      <div class="heatmap-cell cell-high">L2/I5</div>
-
-      <div class="heatmap-cell cell-med">L3/I1</div>
-      <div class="heatmap-cell cell-med">L3/I2</div>
-      <div class="heatmap-cell cell-high">L3/I3</div>
-      <div class="heatmap-cell cell-high">L3/I4</div>
-      <div class="heatmap-cell cell-critical">L3/I5 (88)</div>
-
-      <div class="heatmap-cell cell-med">L4/I1</div>
-      <div class="heatmap-cell cell-high">L4/I2</div>
-      <div class="heatmap-cell cell-high">L4/I3</div>
-      <div class="heatmap-cell cell-critical">L4/I4 (85)</div>
-      <div class="heatmap-cell cell-critical">L4/I5 (90)</div>
-
-      <div class="heatmap-cell cell-high">L5/I1</div>
-      <div class="heatmap-cell cell-high">L5/I2</div>
-      <div class="heatmap-cell cell-critical">L5/I3</div>
-      <div class="heatmap-cell cell-critical">L5/I4</div>
-      <div class="heatmap-cell cell-critical">L5/I5</div>
+      <ng-container *ngFor="let l of [1, 2, 3, 4, 5]">
+        <div *ngFor="let i of [1, 2, 3, 4, 5]"
+             class="heatmap-cell"
+             [ngClass]="getCellClass(l, i)"
+             [title]="getCellTooltip(l, i)">
+          {{ getCellText(l, i) }}
+        </div>
+      </ng-container>
     </div>
   </div>
 

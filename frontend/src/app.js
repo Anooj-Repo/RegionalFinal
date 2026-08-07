@@ -612,6 +612,91 @@ function renderCurrentTabContent(currentProject) {
   return renderDashboardTab(currentProject);
 }
 
+function getAppProjectRaidItems(currentProject) {
+  const defaultItems = [
+    { project_id: 1, project_code: 'PRJ-001', category: 'Risk', title: 'Third-party API Integration Delay', likelihood: 'High', impact: 'High', risk_score: 85 },
+    { project_id: 1, project_code: 'PRJ-001', category: 'Issue', title: 'Vendor Onboarding Access Bottleneck', likelihood: 'High', impact: 'Medium', risk_score: 75 },
+    { project_id: 2, project_code: 'PRJ-002', category: 'Assumption', title: 'Legacy System Data Compatibility Assumption', likelihood: 'Medium', impact: 'Medium', risk_score: 60 },
+    { project_id: 3, project_code: 'PRJ-003', category: 'Dependency', title: 'Biometric Hardware Module Availability', likelihood: 'High', impact: 'High', risk_score: 80 },
+    { project_id: 4, project_code: 'PRJ-004', category: 'Risk', title: 'Data Migration Validation Failure', likelihood: 'Medium', impact: 'High', risk_score: 90 },
+    { project_id: 5, project_code: 'PRJ-005', category: 'Dependency', title: 'Operational Handover Sign-off', likelihood: 'Low', impact: 'Medium', risk_score: 35 }
+  ];
+
+  const source = (state.raidItems && state.raidItems.length > 0) ? state.raidItems : defaultItems;
+  return source.filter(r => 
+    r.project_id === currentProject.id || 
+    r.project_code === currentProject.code || 
+    (currentProject.code === 'PRJ-001' && (r.project_id === 1 || r.project_code === 'PRJ-001')) ||
+    (currentProject.code === 'PRJ-002' && (r.project_id === 2 || r.project_code === 'PRJ-002')) ||
+    (currentProject.code === 'PRJ-003' && (r.project_id === 3 || r.project_code === 'PRJ-003')) ||
+    (currentProject.code === 'PRJ-004' && (r.project_id === 4 || r.project_code === 'PRJ-004')) ||
+    (currentProject.code === 'PRJ-005' && (r.project_id === 5 || r.project_code === 'PRJ-005'))
+  );
+}
+
+function getAppLikelihoodLevel(l) {
+  if (typeof l === 'number') return l;
+  if (!l) return 3;
+  const str = l.toString().toUpperCase();
+  if (str.includes('1') || str.includes('VERY LOW') || str.includes('RARE')) return 1;
+  if (str.includes('2') || str === 'LOW' || str.includes('UNLIKELY')) return 2;
+  if (str.includes('3') || str === 'MEDIUM' || str.includes('MODERATE') || str.includes('POSSIBLE')) return 3;
+  if (str.includes('4') || str === 'HIGH' || str.includes('LIKELY')) return 4;
+  if (str.includes('5') || str.includes('VERY HIGH') || str.includes('CRITICAL') || str.includes('CERTAIN')) return 5;
+  return 3;
+}
+
+function getAppImpactLevel(i, score) {
+  if (score && score >= 90) return 5;
+  if (typeof i === 'number') return i;
+  if (!i) return 3;
+  const str = i.toString().toUpperCase();
+  if (str.includes('5') || str.includes('VERY HIGH') || str.includes('CRITICAL') || str.includes('SEVERE')) return 5;
+  if (str.includes('4') || str === 'HIGH' || str.includes('MAJOR')) return 4;
+  if (str.includes('3') || str === 'MEDIUM' || str.includes('MODERATE')) return 3;
+  if (str.includes('2') || str === 'LOW' || str.includes('MINOR')) return 2;
+  if (str.includes('1') || str.includes('VERY LOW') || str.includes('NEGLIGIBLE')) return 1;
+  return 3;
+}
+
+function generateHeatmapMatrixHTML(currentProject) {
+  const pItems = getAppProjectRaidItems(currentProject);
+  let html = '';
+  
+  for (let l = 1; l <= 5; l++) {
+    for (let i = 1; i <= 5; i++) {
+      const cellItems = pItems.filter(r => 
+        getAppLikelihoodLevel(r.likelihood) === l && getAppImpactLevel(r.impact, r.risk_score) === i
+      );
+      
+      let cellText = `L${l}/I${i}`;
+      let cellClass = 'cell-low';
+      const sum = l + i;
+      if (sum <= 3) cellClass = 'cell-low';
+      else if (sum <= 5) cellClass = 'cell-med';
+      else if (sum <= 7) cellClass = 'cell-high';
+      else cellClass = 'cell-critical';
+
+      let tooltip = `L${l}/I${i}`;
+
+      if (cellItems.length > 0) {
+        const scores = cellItems.map(item => item.risk_score).filter(s => s !== undefined).join(', ');
+        cellText = `L${l}/I${i} (${scores})`;
+        tooltip = cellItems.map(item => `${item.category}: ${item.title} (Score: ${item.risk_score})`).join(' | ');
+        
+        if (cellItems.some(r => (r.risk_score || 0) >= 70)) {
+          cellClass = 'cell-critical';
+        } else {
+          cellClass = 'cell-high';
+        }
+      }
+      
+      html += `<div class="heatmap-cell ${cellClass}" title="${tooltip}">${cellText}</div>`;
+    }
+  }
+  return html;
+}
+
 // 1. Dashboard Tab View
 function renderDashboardTab(currentProject) {
   // Filter RAID items by selected project AND selected date range
@@ -697,35 +782,7 @@ function renderDashboardTab(currentProject) {
         <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:12px">Likelihood vs. Impact Distribution (${state.selectedDateRange.start} to ${state.selectedDateRange.end})</p>
         
         <div class="heatmap-matrix">
-          <div class="heatmap-cell cell-low">L1/I1</div>
-          <div class="heatmap-cell cell-low">L1/I2</div>
-          <div class="heatmap-cell cell-med">L1/I3</div>
-          <div class="heatmap-cell cell-med">L1/I4</div>
-          <div class="heatmap-cell cell-high">L1/I5</div>
-
-          <div class="heatmap-cell cell-low">L2/I1</div>
-          <div class="heatmap-cell cell-med">L2/I2</div>
-          <div class="heatmap-cell cell-med">L2/I3</div>
-          <div class="heatmap-cell cell-high">L2/I4</div>
-          <div class="heatmap-cell cell-high">L2/I5</div>
-
-          <div class="heatmap-cell cell-med">L3/I1</div>
-          <div class="heatmap-cell cell-med">L3/I2</div>
-          <div class="heatmap-cell cell-high">L3/I3</div>
-          <div class="heatmap-cell cell-high">L3/I4</div>
-          <div class="heatmap-cell cell-critical">L3/I5 (88)</div>
-
-          <div class="heatmap-cell cell-med">L4/I1</div>
-          <div class="heatmap-cell cell-high">L4/I2</div>
-          <div class="heatmap-cell cell-high">L4/I3</div>
-          <div class="heatmap-cell cell-critical">L4/I4 (85)</div>
-          <div class="heatmap-cell cell-critical">L4/I5 (90)</div>
-
-          <div class="heatmap-cell cell-high">L5/I1</div>
-          <div class="heatmap-cell cell-high">L5/I2</div>
-          <div class="heatmap-cell cell-critical">L5/I3</div>
-          <div class="heatmap-cell cell-critical">L5/I4</div>
-          <div class="heatmap-cell cell-critical">L5/I5</div>
+          ${generateHeatmapMatrixHTML(currentProject)}
         </div>
       </div>
     `,
