@@ -740,47 +740,22 @@ function renderDashboardTab(currentProject) {
             <span class="material-symbols-outlined" style="font-size:14px">bolt</span> Live AI Insights
           </span>
         </div>
-        <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:12px">
+        <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px">
           Automated multi-agent risk assessment & strategic recommendations for ${currentProject.code}
         </p>
 
-        <div class="table-responsive">
-          <table class="stitch-table">
-            <thead>
-              <tr>
-                <th>Focus Area</th>
-                <th>AI Status</th>
-                <th>Risk Score</th>
-                <th>AI Recommendation</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Vendor API Spec</strong></td>
-                <td><span class="chip chip-danger">Blocked</span></td>
-                <td><strong style="color:#dc2626">88 / 100</strong></td>
-                <td>Spin up mock sandbox endpoints for dev team.</td>
-              </tr>
-              <tr>
-                <td><strong>ETL Data Pipeline</strong></td>
-                <td><span class="chip chip-warning">At Risk</span></td>
-                <td><strong style="color:#d97706">75 / 100</strong></td>
-                <td>Execute dry-run script with orphan filter.</td>
-              </tr>
-              <tr>
-                <td><strong>Budget & Variance</strong></td>
-                <td><span class="chip chip-success">Optimal</span></td>
-                <td><strong style="color:#059669">35 / 100</strong></td>
-                <td>Reallocate $50k unused design funds.</td>
-              </tr>
-              <tr>
-                <td><strong>Milestone Delivery</strong></td>
-                <td><span class="chip chip-success">On Schedule</span></td>
-                <td><strong style="color:#059669">20 / 100</strong></td>
-                <td>Maintain sprint velocity across WBS 1.1-1.3.</td>
-              </tr>
-            </tbody>
-          </table>
+        <div style="background:var(--surface-container-low); padding:16px; border-radius:10px; border:1px solid var(--outline-variant); display:flex; flex-direction:column; gap:12px">
+          <div style="display:flex; align-items:center; justify-content:space-between">
+            <span style="font-size:13px; font-weight:700; color:var(--on-surface)">Multi-Agent Portfolio Intelligence</span>
+            <span class="chip chip-warning">High Priority Risk</span>
+          </div>
+          <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0">
+            Vendor API spec bottleneck detected on WBS 1.3 (Score 88). LangGraph multi-agent reasoning recommends spinning up mock sandbox endpoints to preserve sprint velocity.
+          </p>
+          <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="triggerMultiAgentWorkflow()">
+            <span class="material-symbols-outlined" style="font-size: 18px; color: #facc15">bolt</span>
+            <span>⚡ Analyze Portfolio Risks</span>
+          </button>
         </div>
       </div>
     `,
@@ -872,10 +847,6 @@ function renderDashboardTab(currentProject) {
           <span style="color:var(--outline); font-size:12px; font-weight:600">-</span>
           <input type="date" id="dateRangeEnd" value="${state.selectedDateRange.end}" onchange="handleDateRangeChange()" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="End Date" />
         </div>
-        <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px; border: none; padding: 8px 16px; height:38px; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="triggerMultiAgentWorkflow()">
-          <span class="material-symbols-outlined" style="font-size: 18px; color: #facc15">bolt</span>
-          <span>⚡ Analyze Portfolio Risks</span>
-        </button>
         <button class="btn-secondary" style="height:38px;" onclick="openCustomizeModal()">
           <span class="material-symbols-outlined">tune</span>
           Customize
