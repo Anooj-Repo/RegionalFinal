@@ -57,7 +57,7 @@ Implement:
 * Role-Based Access Control (RBAC)
 * Separate Admin and User login
 * User Management
-* Admin Console
+* Admin Console and other consoles based om the roles
 * Master Data Management
 * Knowledge Document Management
 * Configuration Management
