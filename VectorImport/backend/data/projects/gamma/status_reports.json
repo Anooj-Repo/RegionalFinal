@@ -1,0 +1,72 @@
+[
+  {
+    "id": 5001,
+    "project_id": 3,
+    "reporting_period": "2026-W29",
+    "accomplishments": [
+      "Zero-Trust Architecture Design (Task 301) and Identity and Access Management Implementation (Task 302) both confirmed as 100% complete. All deliverables signed off by CISO.",
+      "Full IAM migration achieved: 2,400 user accounts migrated to Microsoft Entra ID, Multi-Factor Authentication enforced organisation-wide, Privileged Identity Management (PIM) live for all administrative roles.",
+      "Network micro-segmentation (Task 303) reached 80% completion. 18 of 21 VLAN segments configured and acceptance tested. Remaining 3 legacy manufacturing VLANs in progress.",
+      "SIEM platform (Microsoft Sentinel) fully deployed and ingesting logs from all primary sources: Azure Activity, Entra ID, M365 Defender, Palo Alto NGFWs, and on-premises servers. 65% overall task completion.",
+      "SecureCheck Ltd. engagement contract (v3) submitted to Procurement (CPO: Marcus Reid) on 10 July 2026 for approval signature, initiating the pen test contracting process.",
+      "Pen test readiness planning underway: in-scope system register drafted, test account provisioning initiated, rules of engagement framework agreed with SecureCheck.",
+      "Programme budget spend at 61% of total allocation — on track. No budget variances to report this period.",
+      "Programme RAG status: AMBER overall. Work is progressing well but the pen test workstream is flagged as an emerging dependency risk pending contract sign-off."
+    ],
+    "blockers": [
+      "SecureCheck Ltd. engagement contract submitted to Procurement on 10 July 2026. Approval pending — no sign-off received as of end of Week 29. This is being monitored; escalation will be triggered if not resolved within 10 business days."
+    ],
+    "risks": [
+      "Risk 6002 (Procurement Delay Blocking Pen Test): Added to risk register this period at LOW probability. Contract submitted to Procurement; standard approval timeline is 5–10 business days. Review trigger set for 28 days post-submission if no approval received. Owner: Marcus Reid (CPO).",
+      "Risk 6003 (Post Go-Live Security Breach Pre-Pen Test): Residual risk noted — if programme timeline slips and go-live is attempted before pen test completion, the organisation would be exposed to unvalidated security vulnerabilities. Mitigation: go-live is gated on pen test report and GDPR certification.",
+      "Risk 6005 (Third-Party Vendor Access Misconfiguration): Medium probability identified following network segmentation configuration review. Several third-party vendor VPN accounts have overly broad network access scopes inherited from legacy infrastructure. Remediation plan in progress."
+    ],
+    "next_steps": [
+      "Complete legacy manufacturing VLAN segmentation (3 remaining VLANs) by 31 July.",
+      "Chase Procurement approval for SecureCheck contract if no response by 22 July.",
+      "Complete SIEM SOAR playbooks for top 10 Tier-1 detection use-cases by 1 August.",
+      "Finalise pen test readiness assessment document and in-scope system register.",
+      "Conduct pre-pen-test SIEM baselining exercise to establish normal traffic patterns before test window.",
+      "Update programme risk register — Risk 6002 review due if contract not signed by 7 August."
+    ],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 5002,
+    "project_id": 3,
+    "reporting_period": "2026-W32",
+    "accomplishments": [
+      "Network Segmentation (Task 303): Reached 80% — no further progress this week as legacy VLAN work is awaiting a firmware patch window scheduled for 11 August.",
+      "SIEM Deployment (Task 304): Advanced to 65% completion. Six additional custom detection rules deployed. SOC team completed initial analyst training on Sentinel query language (KQL). Tier-1 SOAR playbooks at 40% completion.",
+      "Pen test technical readiness assessment completed and formally documented by Carlos Rivera (Lead Security Architect). All systems confirmed ready for immediate test commencement upon contract execution.",
+      "SecureCheck Ltd. (engagement manager James Okafor) confirmed via phone that test team is on standby and can mobilise within 24 hours of contract signature.",
+      "Third-party vendor VPN access scope remediation: 7 of 12 identified over-privileged vendor accounts remediated (Risk 6005 mitigation progressing).",
+      "Emergency compliance risk committee convened 7 August. CEO directive issued mandating contract signature by 11 August.",
+      "Board Risk Committee emergency session held. Emergency Procurement Waiver approved to enable contract execution outside standard approval process."
+    ],
+    "blockers": [
+      "CRITICAL — Task 305 (Third-Party Security Penetration Testing) is BLOCKED. The SecureCheck Ltd. engagement contract submitted to Procurement on 10 July 2026 has not been signed after 28 days. No approval received from CPO (Marcus Reid) until 7 August, when a written commitment was given to sign by 12 August following CEO directive. Contract must be executed by 14 August at the absolute latest to preserve the GDPR certification deadline of 18 September 2026.",
+      "Task 306 (GDPR Compliance Certification Application) cannot commence until Task 305 is unblocked and the pen test report is received with all Critical and High findings remediated.",
+      "Task 307 (SOC Handover) is contingently blocked pending resolution of Task 305."
+    ],
+    "risks": [
+      "RISK 6001 — RED: Regulatory Non-Compliance (GDPR Certification Miss). Probability: HIGH. Impact: CRITICAL. The GDPR certification application cannot be submitted by the ICO deadline of 18 September 2026 unless the pen test is completed by approximately 8 September. This window is achievable only if the SecureCheck contract is signed by 11 August. Regulatory fine exposure: up to £2.3M. Reputational and contractual exposure: significant (NHS and MoD client contracts contain data security certification warranty clauses). Board has been notified. £2.3M contingency provision set aside in Q3 accounts.",
+      "RISK 6002 — RED: Procurement Delay Blocking Pen Test. Probability: HIGH (was LOW in W29). The 28-day delay in procurement contract approval has placed the programme in a critical position. CPO has committed to sign by 12 August under CEO directive. Emergency Procurement Waiver approved by Board as additional safeguard. Risk remains open until contract is executed.",
+      "RISK 6003 — OPEN: Post-Go-Live Security Breach (Pre-Pen Test). Low probability but critical impact. Programme go-live is gated on pen test completion; this risk is being actively managed through the go-live gate control.",
+      "RISK 6005 — IN PROGRESS: Third-Party Vendor Access Misconfiguration. Remediation 58% complete. 5 vendor accounts still require access scope reduction. Target completion: 15 August."
+    ],
+    "next_steps": [
+      "PRIORITY 1: Obtain signed SecureCheck Ltd. engagement contract by 11 August 2026 (CEO directive). Programme Manager (Helen Watts) to confirm receipt directly with CPO and SecureCheck.",
+      "Immediately upon contract execution: Brief SecureCheck engagement manager (James Okafor) to mobilise test team. Confirm test start date of 13 August.",
+      "Complete legacy manufacturing VLAN segmentation during firmware patch window (11 August) to achieve Task 303 completion ahead of pen test.",
+      "Continue SIEM SOAR playbook development — target: top 10 playbooks live before test window opens.",
+      "Complete remediation of remaining 5 over-privileged vendor VPN accounts (Risk 6005 mitigation).",
+      "Provide weekly written compliance risk update to Board Risk Committee (Helen Watts).",
+      "Begin preparation of GDPR certification submission pack — non-pen-test sections can be drafted now.",
+      "Helen Watts to brief CEO (David Thornton) on contract status by 09:00 on 12 August."
+    ],
+    "created_at": null,
+    "updated_at": null
+  }
+]

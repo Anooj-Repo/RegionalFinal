@@ -1,0 +1,78 @@
+[
+  {
+    "id": 6001,
+    "project_name": "Legacy Payroll System Migration (2021)",
+    "lessons_learned": [
+      "Conduct a full data quality audit before committing to an ETL design. In 2021, undiscovered null mandatory fields in 12,000 payroll records caused 3 failed migration rehearsals and added 8 weeks to the programme.",
+      "Parallel run period must be at least 6 weeks for financial systems. A 3-week parallel run in 2021 was insufficient to catch monthly payroll cycle edge cases.",
+      "Data remediation is a business process exercise, not just a technical one. Finance sign-off on default-value mapping rules is mandatory before any automated remediation is applied.",
+      "Mandate data reconciliation reports as a programme deliverable, not an afterthought. Automated reconciliation between source and target counts caught 340 discrepancies pre-cutover.",
+      "Define a clear cutover go / no-go checklist with measurable criteria at least 8 weeks before planned cutover date."
+    ],
+    "historical_risks": [
+      {
+        "title": "Payroll Data Integrity Failure During Migration",
+        "probability": "high",
+        "impact": "critical",
+        "mitigation": "Full data audit completed over 6 weeks. All null fields mapped to validated defaults approved by HR and Finance. Three migration rehearsals conducted before live cutover.",
+        "outcome": "Zero data loss on go-live. Two minor discrepancies (14 records) caught by reconciliation framework and resolved within 48 hours of cutover."
+      },
+      {
+        "title": "Year-End Payroll Processing Disruption",
+        "probability": "medium",
+        "impact": "critical",
+        "mitigation": "Parallel run extended from 3 to 8 weeks, spanning a full month-end payroll cycle. Rollback procedure tested and rehearsed.",
+        "outcome": "December payroll processed successfully on new system. Legacy system remained available as fallback for 30 days post-cutover."
+      },
+      {
+        "title": "Supplier (ETL Tool Vendor) Feature Gap",
+        "probability": "low",
+        "impact": "high",
+        "mitigation": "Evaluated three ETL vendors before selection. Proof-of-concept conducted against production-like data volumes.",
+        "outcome": "Selected vendor delivered all contracted features. One performance issue identified in POC and resolved before project start."
+      }
+    ],
+    "successful_mitigations": [
+      "8-week parallel run caught all critical monthly payroll cycle edge cases before decommissioning legacy system.",
+      "Data audit framework (now reused across all migration projects) prevented data loss by identifying issues 12 weeks before planned cutover.",
+      "Finance-approved default-value mapping ruleset eliminated all blocking null-field issues within 4 weeks of audit completion.",
+      "Automated reconciliation reports ran nightly during parallel run, giving the team confidence to proceed with cutover."
+    ],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 6002,
+    "project_name": "Finance Consolidation ERP Migration (Oracle to SAP, 2019)",
+    "lessons_learned": [
+      "Executive sponsorship must be visible and active, not ceremonial. In 2019, passive sponsorship led to business units deprioritising UAT participation, causing a 6-week UAT delay.",
+      "Cutover weekend planning must begin at least 16 weeks before go-live. The 2019 programme started cutover planning 8 weeks out and experienced a 22-hour overrun on cutover weekend.",
+      "Chart of accounts rationalisation must be completed and signed off before ETL design begins. Retroactive changes to CoA mappings invalidated 40% of ETL transformations in 2019.",
+      "SAP ABAP performance issues under production load are best discovered during load-tested QA cycles, not UAT. Three critical performance issues found during UAT in 2019 caused a 4-week delay.",
+      "Define hypercare staffing levels before go-live. The 2019 programme underestimated Day-1 support demand by 60%."
+    ],
+    "historical_risks": [
+      {
+        "title": "Chart of Accounts Mapping Instability",
+        "probability": "medium",
+        "impact": "critical",
+        "mitigation": "CoA freeze mandated 20 weeks before ETL development start. Finance sign-off obtained on all 2,400 account mappings before development commenced.",
+        "outcome": "Zero CoA mapping changes after freeze date. ETL development completed on schedule."
+      },
+      {
+        "title": "Business Unit UAT Non-Participation",
+        "probability": "high",
+        "impact": "high",
+        "mitigation": "CEO mandate issued for UAT participation. UAT co-ordinator appointed in each business unit. UAT readiness gates introduced at Programme Board.",
+        "outcome": "Full business unit participation achieved. UAT completed 2 days ahead of schedule."
+      }
+    ],
+    "successful_mitigations": [
+      "CoA freeze policy prevented retroactive mapping changes that derailed the 2019 programme.",
+      "CEO mandate for UAT participation ensured 100% business unit engagement.",
+      "16-week cutover planning horizon allowed a dry-run rehearsal 4 weeks before go-live, reducing cutover weekend from 22 hours (2019 actual) to 14 hours."
+    ],
+    "created_at": null,
+    "updated_at": null
+  }
+]

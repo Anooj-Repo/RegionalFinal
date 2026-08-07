@@ -1,0 +1,111 @@
+[
+  {
+    "id": 201,
+    "project_id": 2,
+    "title": "SAP Fit-Gap Analysis",
+    "description": "Comprehensive analysis of the business process gaps between current-state SAP ECC 6.0 configuration and SAP S/4HANA 2023 standard. Covers Finance (FI/CO), Procurement (MM), HR, and Treasury modules. Output: Fit-Gap report, configuration workbook, and list of required custom developments.",
+    "owner": "Priya Nair",
+    "priority": "high",
+    "status": "completed",
+    "due_date": "2026-04-30",
+    "completion": 100,
+    "dependencies": [],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 202,
+    "project_id": 2,
+    "title": "System Architecture and Landscape Design",
+    "description": "Design of the target SAP S/4HANA technical landscape including server sizing, network topology, transport routes, high-availability configuration, and integration middleware architecture (SAP Integration Suite). Produces the Technical Architecture Document and Landscape Blueprint approved by Infrastructure and Security.",
+    "owner": "Marcus Chen",
+    "priority": "high",
+    "status": "completed",
+    "due_date": "2026-05-31",
+    "completion": 100,
+    "dependencies": [],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 203,
+    "project_id": 2,
+    "title": "Data Migration Planning and Design",
+    "description": "Design of the end-to-end data migration strategy covering all SAP objects: GL accounts, cost centres, profit centres, vendor/customer master, open items, and asset accounting balances. Includes source-to-target field mapping, transformation rules, reconciliation approach, mock migration schedule, and cut-over runbook. CURRENTLY BLOCKED: data profiling has revealed critical data quality issues in the source GL_ACCOUNTS table that must be resolved before migration design can be finalised.",
+    "owner": "Aisha Kamara",
+    "priority": "critical",
+    "status": "blocked",
+    "due_date": "2026-07-31",
+    "completion": 25,
+    "dependencies": [201, 202],
+    "blockers": [
+      "Data quality audit in progress: 43,847 records in GL_ACCOUNTS table have null mandatory fields (cost_centre, profit_centre, account_type). Migration design cannot be finalised until audit is complete and remediation plan is approved by Finance Director."
+    ],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 204,
+    "project_id": 2,
+    "title": "Custom ABAP Development",
+    "description": "Development and unit testing of all custom ABAP programs identified during the fit-gap analysis. Scope includes: legacy report re-implementation in ABAP Objects/Fiori, custom validation exits for vendor invoice processing, month-end accrual automation program, and bespoke cost allocation engine for the Management Accounting module. Development follows the agreed ABAP coding standards and is subject to code review and performance testing on the DEV sandbox.",
+    "owner": "Marcus Chen",
+    "priority": "high",
+    "status": "in_progress",
+    "due_date": "2026-09-30",
+    "completion": 40,
+    "dependencies": [202],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 205,
+    "project_id": 2,
+    "title": "ETL Pipeline Development",
+    "description": "Development of the full Extract-Transform-Load pipeline to migrate all in-scope data objects from the legacy ECC system to S/4HANA. The pipeline will use SAP BODS (Business Objects Data Services) for extraction and transformation, with SAP LSMW / BAPI wrappers for loading. Automated reconciliation reports will compare source and target record counts and financial balances. Cannot commence until data migration design (Task 203) is complete and the source data quality remediation is signed off.",
+    "owner": "Aisha Kamara",
+    "priority": "critical",
+    "status": "open",
+    "due_date": "2026-10-31",
+    "completion": 0,
+    "dependencies": [203],
+    "blockers": [
+      "Blocked pending completion of Data Migration Design (Task 203). Data quality issues in GL_ACCOUNTS table (43,847 records with null mandatory fields) are unresolved. ETL pipeline cannot be scoped or built until source-to-target mapping and transformation rules are finalised and approved."
+    ],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 206,
+    "project_id": 2,
+    "title": "Integration Testing (SAP-to-peripheral systems)",
+    "description": "End-to-end integration testing of all interfaces between SAP S/4HANA and peripheral systems: HR (SuccessFactors payroll posting), Procurement (Ariba PO integration), Treasury (TMS cash position feeds), and external bank connectivity (SWIFT/MT940 statements). Test cycles will be executed in the QA landscape using cloned production-representative data. Sign-off required from each system owner before progression to UAT.",
+    "owner": "Tom Bradley",
+    "priority": "high",
+    "status": "open",
+    "due_date": "2026-11-30",
+    "completion": 0,
+    "dependencies": [204, 205],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 207,
+    "project_id": 2,
+    "title": "Finance User Acceptance Testing",
+    "description": "Formal UAT cycle for the Finance function covering core FI/CO processes: period-end close, GL journal posting, accounts payable/receivable processing, asset depreciation runs, cost centre reporting, and management accounting allocations. Test scenarios are designed to replicate actual year-end processing. Finance Director (Lin Wei) is the UAT sponsor and must sign off before go-live approval is granted. Timing is critical — UAT must complete before the Q4 2026 close freeze.",
+    "owner": "Lin Wei",
+    "priority": "critical",
+    "status": "open",
+    "due_date": "2027-01-15",
+    "completion": 0,
+    "dependencies": [206],
+    "blockers": [],
+    "created_at": null,
+    "updated_at": null
+  }
+]

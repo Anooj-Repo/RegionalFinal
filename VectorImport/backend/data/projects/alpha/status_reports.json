@@ -1,0 +1,68 @@
+[
+  {
+    "id": 3001,
+    "project_id": 1,
+    "reporting_period": "2026-W30",
+    "accomplishments": [
+      "Task 101 (Define Programme Scope and Objectives) confirmed 100% complete and signed off by the Programme Board.",
+      "Task 103 (Security Architecture and Zero-Trust Design) progressed to 55% completion; IAM policies and network segmentation design approved.",
+      "Task 105 (Data Pipeline Migration) progressed to 25% completion; Azure Data Factory environment provisioned and initial pipeline templates developed.",
+      "CloudSphere formal escalation letter issued; awaiting response with revised delivery commitment.",
+      "SLA penalty clause review initiated with Legal Counsel following Week 28 delivery miss.",
+      "Programme governance improved: bi-weekly workstream leads sync introduced."
+    ],
+    "blockers": [
+      "CloudSphere Inc. has missed the Week 28 (14 July 2026) delivery commitment for API gateway components. Task 102 (Cloud Infrastructure Setup) is formally BLOCKED. No confirmed revised delivery date received at time of reporting."
+    ],
+    "risks": [
+      "Vendor Delivery Failure (HIGH): CloudSphere has not delivered contracted infrastructure components. Risk of 4+ week programme slip if commitment is not received and met within the next two weeks.",
+      "Critical Path Compression (MEDIUM): A delay beyond Week 32 from CloudSphere will reduce UAT and cutover windows to levels that may be unacceptable without scope reduction.",
+      "Budget Impact (MEDIUM): Extended programme management overhead and potential cost of parallel mitigation activities may exhaust contingency reserve if vendor delay persists."
+    ],
+    "next_steps": [
+      "Receive and evaluate CloudSphere's formal response to escalation letter by 20 July 2026.",
+      "Convene emergency vendor escalation meeting if CloudSphere response is unsatisfactory.",
+      "Complete Task 104 (API Integration) preliminary impact assessment to inform board decision-making.",
+      "Continue Task 103 and Task 105 at full pace on infrastructure-independent components.",
+      "Prepare Programme Board briefing note on CloudSphere delay for 1 August board meeting."
+    ],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 3002,
+    "project_id": 1,
+    "reporting_period": "2026-W32",
+    "accomplishments": [
+      "SLA penalty clause formally invoked (22 July 2026); penalty invoice of £340,000 issued to CloudSphere Inc. covering four weeks of delay.",
+      "Emergency vendor escalation meeting held 22 July 2026; CloudSphere committed to revised delivery date of 28 August 2026 (Week 35).",
+      "Director-level signed delivery commitment received from CloudSphere confirming Week 35 date.",
+      "Task 103 (Security Architecture) progressed to 60% completion; zero-trust policy framework drafted and under internal review.",
+      "Task 105 (Data Pipeline Migration) progressed to 35% completion; six of fifteen pipeline groups migrated to Azure Data Factory.",
+      "Task 104 (API Integration) pre-work commenced: interface specifications and API design documentation in progress without dependency on live infrastructure.",
+      "Programme Board approved £120,000 contingency release to fund recovery activities.",
+      "Weekly vendor governance call established; CloudSphere attending Monday 09:00 calls from 27 July."
+    ],
+    "blockers": [
+      "Task 102 (Cloud Infrastructure Setup) remains BLOCKED: CloudSphere Inc. has not delivered API gateway components or network peering configuration. Revised delivery commitment is 28 August 2026 (Week 35). As of 07 Aug 2026, CloudSphere attendance at weekly governance calls has not provided firm confirmation that Week 35 remains on track.",
+      "Task 104 (API Integration Development) cannot begin active development until Task 102 infrastructure is live. Estimated start date is 03 September 2026 at earliest."
+    ],
+    "risks": [
+      "Vendor Delivery Failure (CRITICAL): CloudSphere Week 35 commitment is at risk; vendor unable to confirm status at Week 32 governance call. Any further slippage will push Go-Live beyond 31 December 2026 programme end date.",
+      "Zero Schedule Float: Revised critical path has no remaining float. The programme is operating with a zero-tolerance margin for any further delays, technical issues, or UAT defects.",
+      "Go-Live Date Breach (HIGH): If CloudSphere delivers after 28 August, or if significant defects arise in UAT, the programme will miss the 31 December 2026 go-live target, with commercial and contractual consequences.",
+      "Contract Termination Complexity (MEDIUM): Sourcing an alternative infrastructure vendor would take 8-12 weeks, making this option non-viable within the current programme timeline — limiting our leverage over CloudSphere.",
+      "Team Morale and Retention (MEDIUM): Extended period of blocked workstreams and programme uncertainty is creating frustration within the delivery team. Retention risk for key personnel is elevated."
+    ],
+    "next_steps": [
+      "Monitor CloudSphere delivery status daily from 17 August; obtain written confirmation from CloudSphere by 21 August that Week 35 delivery is confirmed.",
+      "Convene emergency board session within 48 hours if CloudSphere indicates any further slippage from 28 August commitment.",
+      "Complete API Integration interface specifications and test plan pre-work by 21 August to maximise development readiness.",
+      "Continue Task 103 and Task 105 at full pace; target Task 103 at 80% completion and Task 105 at 55% completion by end of Week 34.",
+      "Procure two additional UAT contractor resources by 21 August to enable compressed UAT cycle execution.",
+      "Issue weekly CloudSphere delivery status report to Programme Board every Friday."
+    ],
+    "created_at": null,
+    "updated_at": null
+  }
+]
