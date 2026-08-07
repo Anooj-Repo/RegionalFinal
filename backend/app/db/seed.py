@@ -30,6 +30,7 @@ def seed_backend_db(app):
         # 1. Seed Users (Roles: Admin, Program Manager, Project Manager, Team Lead, Executive, Viewer)
         users = [
             User(username="admin", email="admin@pmai.com", password_hash=generate_password_hash("admin123"), role="Admin", full_name="System Administrator"),
+            User(username="superadmin", email="superadmin@pmai.com", password_hash=generate_password_hash("super123"), role="Super Admin", full_name="Super Administrator"),
             User(username="rohit", email="rohit.verma@pmai.com", password_hash=generate_password_hash("user123"), role="Program Manager", full_name="Rohit Verma"),
             User(username="amit", email="amit.joshi@pmai.com", password_hash=generate_password_hash("user123"), role="Project Manager", full_name="Amit Joshi"),
             User(username="sneha", email="sneha.iyer@pmai.com", password_hash=generate_password_hash("user123"), role="Team Lead", full_name="Sneha Iyer"),
