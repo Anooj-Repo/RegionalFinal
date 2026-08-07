@@ -1200,14 +1200,14 @@ function renderChatTab() {
   `).join('');
 
   return `
-    <div class="page-header">
+    <div class="page-header" style="margin-bottom:12px; padding:0 0 8px 0;">
       <div>
-        <h1 class="page-title">Multi-Modal AI Assistant</h1>
-        <p class="page-subtitle">Full LangGraph pipeline: Data Intelligence → Risk Intelligence → LLM Reasoning → Memory Agent</p>
+        <h1 class="page-title" style="font-size:20px;">Multi-Modal AI Assistant</h1>
+        <p class="page-subtitle" style="font-size:12px; margin:2px 0 0 0;">Full LangGraph pipeline: Data Intelligence → Risk Intelligence → LLM Reasoning → Memory Agent</p>
       </div>
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 260px; gap:16px; align-items:start">
+    <div style="display:grid; grid-template-columns:minmax(0, 1fr) 220px; gap:12px; align-items:stretch; max-width:100%; box-sizing:border-box;">
 
       <!-- ── Main Chat Workspace ── -->
       <div class="chat-workspace">

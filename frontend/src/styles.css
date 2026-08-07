@@ -827,8 +827,11 @@ body {
 .chat-workspace {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 220px);
-  min-height: 560px;
+  height: calc(100vh - 180px);
+  max-height: 560px;
+  min-height: 380px;
+  min-width: 0;
+  max-width: 100%;
   gap: 0;
 }
 
@@ -1282,15 +1285,18 @@ body {
   50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
 }
 
-/* ── Node Trace Side Panel ── */
 .chat-trace-panel {
   flex-shrink: 0;
+  width: 220px;
+  box-sizing: border-box;
   background: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
   border-radius: 12px;
-  padding: 14px;
+  padding: 12px;
   overflow-y: auto;
-  max-height: calc(100vh - 220px);
+  height: calc(100vh - 180px);
+  max-height: 560px;
+  min-height: 380px;
 }
 
 .chat-trace-title {
