@@ -893,6 +893,7 @@ function renderDashboardTab(currentProject) {
     const next = state.dashboardWidgetOrder[i + 1];
 
     if (!state.widgetVisibility[curr]) continue;
+    if (curr === 'breakdown' && !isAdminRole) continue;
 
     if (curr === 'kpis') {
       contentBuffer += widgetHTML.kpis;
@@ -902,13 +903,17 @@ function renderDashboardTab(currentProject) {
       (curr === 'heatmap' && next === 'breakdown') ||
       (curr === 'breakdown' && next === 'heatmap')
     ) {
-      contentBuffer += `
-        <div class="grid-2col">
-          ${widgetHTML[curr]}
-          ${widgetHTML[next]}
-        </div>
-      `;
-      i++;
+      if (next === 'breakdown' && !isAdminRole) {
+        contentBuffer += widgetHTML[curr];
+      } else {
+        contentBuffer += `
+          <div class="grid-2col">
+            ${widgetHTML[curr]}
+            ${widgetHTML[next]}
+          </div>
+        `;
+        i++;
+      }
     } else {
       contentBuffer += widgetHTML[curr];
     }
