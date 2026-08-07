@@ -272,7 +272,18 @@ async function refreshWorkspaceData() {
   if (auditData && auditData.audit_logs) {
     state.auditLogs = auditData.audit_logs;
   }
+
+  const docsData = await apiGet('/admin/knowledge-docs');
+  if (docsData && docsData.rag_chunks) {
+    state.ragChunks = docsData.rag_chunks;
+    state.knowledgeDocs = docsData.documents || [];
+    if (docsData.vector_import_chunks) {
+      state.vectorImportChunks = docsData.vector_import_chunks;
+    }
+  }
 }
+
+
 
 
 // Event Handlers
@@ -978,6 +989,101 @@ function renderProjectsTab() {
   `;
 }
 
+// RAID Risk Discovery Handler
+async function triggerRaidRiskDiscovery() {
+  state.isAnalyzingRisk = true;
+  renderApp();
+
+  const res = await apiPost('/raid/discover-risks', {
+    project_code: state.selectedProjectCode
+  });
+
+  state.isAnalyzingRisk = false;
+
+  if (res && res.supervisor_trace) {
+    state.nodeTraces = res.supervisor_trace;
+  }
+
+  if (res && res.discovered_risks && res.discovered_risks.length > 0) {
+    state.aiDiscoveredRisks = res.discovered_risks;
+    state.aiDiscoveredRisk = res.discovered_risks[0];
+    renderApp();
+  } else if (res && res.discovered_risk) {
+    state.aiDiscoveredRisks = [res.discovered_risk];
+    state.aiDiscoveredRisk = res.discovered_risk;
+    renderApp();
+  } else {
+    alert("AI Risk Analysis completed. No new un-tracked risks discovered for " + state.selectedProjectCode);
+    renderApp();
+  }
+}
+
+async function confirmCreateSingleDiscoveredRisk(idx) {
+  const list = state.aiDiscoveredRisks || [state.aiDiscoveredRisk];
+  if (!list || !list[idx]) return;
+  const d = list[idx];
+
+  const res = await apiPost('/raid', {
+    project_id: d.project_id,
+    category: d.category,
+    title: d.title,
+    description: d.description,
+    likelihood: d.likelihood,
+    impact: d.impact,
+    risk_score: d.risk_score,
+    owner_name: d.owner_name,
+    root_cause: d.root_cause
+  });
+
+  if (res && res.status === 'success') {
+    alert(`Success! New Risk Item "${d.title}" (Score ${d.risk_score}) created in RAID Register (app.db).`);
+    // Remove created risk from modal list
+    list.splice(idx, 1);
+    if (list.length === 0) {
+      state.aiDiscoveredRisks = null;
+      state.aiDiscoveredRisk = null;
+    } else {
+      state.aiDiscoveredRisks = list;
+      state.aiDiscoveredRisk = list[0];
+    }
+    await refreshWorkspaceData();
+    renderApp();
+  }
+}
+
+async function confirmCreateAllDiscoveredRisks() {
+  const list = state.aiDiscoveredRisks || [state.aiDiscoveredRisk];
+  if (!list || list.length === 0) return;
+
+  let createdCount = 0;
+  for (const d of list) {
+    const res = await apiPost('/raid', {
+      project_id: d.project_id,
+      category: d.category,
+      title: d.title,
+      description: d.description,
+      likelihood: d.likelihood,
+      impact: d.impact,
+      risk_score: d.risk_score,
+      owner_name: d.owner_name,
+      root_cause: d.root_cause
+    });
+    if (res && res.status === 'success') {
+      createdCount++;
+    }
+  }
+
+  alert(`Success! Created ${createdCount} new Risk Items in RAID Register (app.db).`);
+  state.aiDiscoveredRisks = null;
+  state.aiDiscoveredRisk = null;
+  await refreshWorkspaceData();
+  renderApp();
+}
+
+async function confirmCreateDiscoveredRisk() {
+  await confirmCreateSingleDiscoveredRisk(0);
+}
+
 // 3. RAID Register / Risk Center Tab View
 function renderRaidTab() {
   const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
@@ -991,8 +1097,9 @@ function renderRaidTab() {
         <p class="page-subtitle">Active risks, assumptions, issues, and dependencies for ${state.selectedProjectCode}</p>
       </div>
       ${canAccessCommsAndBreakdown ? `
-        <button class="btn-primary" onclick="triggerMultiAgentWorkflow()">
-          <span class="material-symbols-outlined">smart_toy</span> Run LangGraph RAID Analysis
+        <button class="btn-primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; font-weight:700; display:flex; align-items:center; gap:8px; border:none; padding:10px 16px; border-radius:8px; cursor:pointer;" onclick="triggerRaidRiskDiscovery()" ${state.isAnalyzingRisk ? 'disabled' : ''}>
+          <span class="material-symbols-outlined" style="color:#facc15">bolt</span>
+          ${state.isAnalyzingRisk ? 'AI Analyzing Project Vector Store...' : 'Run LangGraph RAID Analysis'}
         </button>
       ` : ''}
     </div>
@@ -1024,8 +1131,77 @@ function renderRaidTab() {
         </table>
       </div>
     </div>
+
+    ${(state.aiDiscoveredRisks && state.aiDiscoveredRisks.length > 0) || state.aiDiscoveredRisk ? renderDiscoveredRiskModal() : ''}
   `;
 }
+
+// Render Discovered Risk Modal Overlay (Supports Multiple Discovered Risks)
+function renderDiscoveredRiskModal() {
+  const list = state.aiDiscoveredRisks && state.aiDiscoveredRisks.length > 0
+    ? state.aiDiscoveredRisks
+    : (state.aiDiscoveredRisk ? [state.aiDiscoveredRisk] : []);
+
+  if (list.length === 0) return '';
+
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-window" style="max-width: 850px; max-height: 85vh; overflow-y: auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--outline-variant); padding-bottom:10px;">
+          <div>
+            <h3 style="font-size:18px; font-weight:700; color:var(--on-surface); display:flex; align-items:center; gap:8px;">
+              <span class="material-symbols-outlined" style="color:#facc15">bolt</span>
+              AI RAID Risk Discovery & Recommendations (${list.length} Discovered Risks for ${state.selectedProjectCode})
+            </h3>
+            <p style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">
+              VectorImport Project Intelligence Engine & Graph 2 Decision Pipeline discovered ${list.length} potential un-tracked RAID items. Review and approve below.
+            </p>
+          </div>
+          <button class="btn-secondary" onclick="state.aiDiscoveredRisks=null; state.aiDiscoveredRisk=null; renderApp();" style="padding:4px 8px">✕</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          ${list.map((d, idx) => `
+            <div style="background: linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(239, 68, 68, 0.03) 100%); border: 1px solid rgba(220, 38, 38, 0.25); border-radius: 8px; padding: 14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span class="chip chip-danger" style="font-size:11px; font-weight:700">#${idx + 1} DISCOVERED ${d.category.toUpperCase()}</span>
+                  <span class="chip chip-info" style="font-size:11px">Owner: ${d.owner_name}</span>
+                </div>
+                <span class="chip chip-warning" style="font-size:11px">Score: ${d.risk_score} (HIGH)</span>
+              </div>
+              <h4 style="font-size:15px; font-weight:700; color:var(--on-surface); margin-bottom:6px">${d.title}</h4>
+              <p style="font-size:13px; color:var(--on-surface-variant); line-height:1.5; margin-bottom:10px">${d.description}</p>
+              
+              <div style="background:var(--surface-container-low); padding:10px; border-radius:6px; margin-bottom:10px">
+                <span style="font-size:11px; font-weight:700; color:var(--on-surface-variant)">Identified Root Cause & Source Feed:</span>
+                <p style="font-size:12px; color:var(--on-surface); margin-top:2px">${d.root_cause}</p>
+                <small style="color:var(--primary-container); font-size:11px; display:block; margin-top:4px">Source: ${d.source_feed}</small>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end">
+                <button class="btn-success" style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:#fff; font-weight:700; padding:6px 12px; border:none; border-radius:6px; cursor:pointer; font-size:12px;" onclick="confirmCreateSingleDiscoveredRisk(${idx})">
+                  <span class="material-symbols-outlined" style="font-size:14px">add_circle</span>
+                  Confirm & Create Risk #${idx + 1}
+                </button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--outline-variant); padding-top:12px;">
+          <button class="btn-secondary" onclick="state.aiDiscoveredRisks=null; state.aiDiscoveredRisk=null; renderApp();">Dismiss All</button>
+          <button class="btn-primary" style="background:linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color:#fff; font-weight:700; padding:10px 18px; border:none; border-radius:6px; cursor:pointer;" onclick="confirmCreateAllDiscoveredRisks()">
+            <span class="material-symbols-outlined" style="font-size:16px">done_all</span>
+            ⚡ Confirm & Create All (${list.length}) Risks in Register
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+
 
 // 4. Communication Center Tab View
 // 4. Communication Center Tab View
@@ -1745,11 +1921,13 @@ function chatVoiceInput() {
 
 // 7. System & Technical Admin Tab View
 function renderAdminTab() {
+  const ragCount = state.ragChunks ? state.ragChunks.length : 154;
+
   return `
     <div class="page-header">
       <div>
         <h1 class="page-title">Admin Console & Master Data Management</h1>
-        <p class="page-subtitle">Dual RAG Databases (Static Vector Store & Unstructured GraphRAG), Master User Accounts & Audit Stream</p>
+        <p class="page-subtitle">Dual RAG Databases (FAISS Project Vector Store & Unstructured GraphRAG), Master User Accounts & Audit Stream</p>
       </div>
     </div>
 
@@ -1760,9 +1938,9 @@ function renderAdminTab() {
         <div class="kpi-subtext" style="color:#059669">Status: ${state.telemetry.mcp_status || 'ONLINE'}</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-title">Static RAG Vector Chunks</div>
-        <div class="kpi-value" style="color:#059669">21 Chunks</div>
-        <div class="kpi-subtext">5 Uploaded Documents</div>
+        <div class="kpi-title">Project FAISS & Vector Chunks</div>
+        <div class="kpi-value" style="color:#059669">${ragCount} RAG Chunks</div>
+        <div class="kpi-subtext">5 Project FAISS Vector Stores</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-title">Unstructured GraphRAG</div>
@@ -1776,12 +1954,13 @@ function renderAdminTab() {
       </div>
     </div>
 
-    <!-- RAG DATABASE 1: STATIC DOCUMENT VECTOR STORE -->
+    <!-- RAG DATABASE 1: FAISS PROJECT VECTOR STORE & STATIC RAG -->
     <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:6px">1. Static Knowledge Document Vector RAG Database (backend/app/uploads/)</div>
+      <div class="card-box-title" style="margin-bottom:6px">1. Project FAISS Vector Database & Document Store (backend/app/vector_store/)</div>
       <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
-        Stores static policies, SOWs, and SOP manuals chunked into 128-d vector embeddings via TCSGenAIClient.
+        Stores project-isolated FAISS 384-d dense vector index files (project_prj_001_index.faiss through project_prj_005_index.faiss) and static document chunks.
       </p>
+
 
       <div class="table-responsive" style="margin-bottom:20px;">
         <table class="stitch-table">
@@ -1798,20 +1977,26 @@ function renderAdminTab() {
         </table>
       </div>
 
-      <div class="table-responsive">
+      <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
         <table class="stitch-table">
           <thead>
-            <tr><th>Chunk ID</th><th>Source File</th><th>Content Preview Snippet</th><th>Embedding Dim</th><th>Status</th></tr>
+            <tr><th>Chunk ID</th><th>Source / Project Vector File</th><th>Content Preview Snippet</th><th>Embedding Dim</th><th>Status</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>security_policy.txt_chunk_0</code></td><td>security_policy.txt</td><td><small style="color:var(--on-surface-variant)">All system communications must enforce PII redaction and TLS 1.3 encryption...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>orion_sow.txt_chunk_0</code></td><td>orion_sow.txt</td><td><small style="color:var(--on-surface-variant)">Project Orion Upgrade phase mobilization deliverables and vendor SLA dependencies...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>risk_sop.txt_chunk_0</code></td><td>risk_sop.txt</td><td><small style="color:var(--on-surface-variant)">RAID items exceeding score 70 require executive briefing within 24 hours...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>pegasus_architecture.txt_chunk_0</code></td><td>pegasus_architecture.txt</td><td><small style="color:var(--on-surface-variant)">Core Banking Platform specs, database connection pools, and microservice SLA metrics...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>mobile_compliance.txt_chunk_0</code></td><td>mobile_compliance.txt</td><td><small style="color:var(--on-surface-variant)">Biometric mobile authentication standards, regulatory guidelines, and compliance checks...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
+            ${state.ragChunks && state.ragChunks.length > 0 ? state.ragChunks.map(c => `
+              <tr>
+                <td><code>${c.id}</code></td>
+                <td><strong>${c.filename}</strong></td>
+                <td><small style="color:var(--on-surface-variant)">${c.snippet}</small></td>
+                <td><span class="chip chip-info">${c.embedding_dim}</span></td>
+                <td><span class="chip chip-success">INDEXED</span></td>
+              </tr>
+            `).join('') : `
+              <tr><td><code>chk_prj_001_0</code></td><td>FAISS Store [PROJECT_PRJ_001] (TaskAdapter)</td><td><small style="color:var(--on-surface-variant)">WBS Task [PRJ-001-T01] Integration API Specs (Status: In Progress)</small></td><td><span class="chip chip-info">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
+              <tr><td><code>chk_prj_003_0</code></td><td>FAISS Store [PROJECT_PRJ_003] (ChatAdapter)</td><td><small style="color:var(--on-surface-variant)">Communication Log [Teams] Karan Patel: iOS SDK 18.2 biometric updates delayed...</small></td><td><span class="chip chip-info">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
+            `}
           </tbody>
         </table>
-      </div>
     </div>
 
     <!-- RAG DATABASE 2: UNSTRUCTURED KNOWLEDGE GRAPH RAG STORE (GRAPHRAG) -->
@@ -1878,6 +2063,8 @@ function renderAdminTab() {
     </div>
 
     <!-- Master User Accounts Table -->
+
+
     <div class="card-box" style="margin-top:20px;">
       <div class="card-box-title" style="margin-bottom:16px">SQLite Master User Accounts Table (backend/app.db -> User)</div>
       <div class="table-responsive">
@@ -1914,6 +2101,37 @@ function renderAdminTab() {
         </table>
       </div>
     </div>
+
+    <!-- RAG DATABASE 3: VECTORIMPORT GRAPH 1 & INTELLIGENCE ENGINE RAG STORE -->
+    <div class="card-box" style="margin-top:20px;">
+      <div class="card-box-title" style="margin-bottom:6px">3. VectorImport Graph 1 & Intelligence Engine RAG Vector Store (VectorImport/backend/data/vector_store/)</div>
+      <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
+        Stores 384-dimensional dense FAISS vector index files (project_prog_alpha_2026_index.faiss, project_prog_beta_2026_index.faiss, project_prog_gamma_2026_index.faiss) and document chunks generated by <code>execute_intelligence</code> and Graph 1 ETL.
+      </p>
+
+      <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+        <table class="stitch-table">
+          <thead>
+            <tr><th>Chunk ID</th><th>Source / VectorImport Project Store</th><th>Content Preview Snippet</th><th>Embedding Dim</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            ${state.vectorImportChunks && state.vectorImportChunks.length > 0 ? state.vectorImportChunks.map(c => `
+              <tr>
+                <td><code>${c.id}</code></td>
+                <td><strong>${c.filename}</strong></td>
+                <td><small style="color:var(--on-surface-variant)">${c.snippet}</small></td>
+                <td><span class="chip chip-warning">${c.embedding_dim}</span></td>
+                <td><span class="chip chip-success">INDEXED</span></td>
+              </tr>
+            `).join('') : `
+              <tr><td><code>chunk_0</code></td><td>VectorImport Store [PROJECT_PROG_ALPHA_2026] (Document)</td><td><small style="color:var(--on-surface-variant)">Task Ent [task_102]: Cloud Infrastructure Setup (Azure) - CloudSphere Inc. API gateway delayed...</small></td><td><span class="chip chip-warning">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
+              <tr><td><code>chunk_1</code></td><td>VectorImport Store [PROJECT_PROG_GAMMA_2026] (Document)</td><td><small style="color:var(--on-surface-variant)">Security Audit Email [email_3001]: GDPR Audit Deadline at Risk - Unsigned Pen Test Contract...</small></td><td><span class="chip chip-warning">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
+            `}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
 
     <!-- Master RAID Items Table -->
     <div class="card-box" style="margin-top:20px;">
