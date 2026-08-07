@@ -1090,6 +1090,35 @@ function renderCommsTab() {
 }
 
 
+function exportReportToPDF() {
+  const element = document.getElementById('executiveSummaryReportContainer');
+  if (!element) return;
+
+  const projectCode = state.selectedProjectCode || 'PRJ-001';
+  const opt = {
+    margin:       10,
+    filename:     `Executive_Program_Summary_${projectCode}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, logging: false },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  if (typeof html2pdf !== 'undefined') {
+    html2pdf().set(opt).from(element).save();
+  } else {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    script.onload = () => {
+      html2pdf().set(opt).from(element).save();
+    };
+    script.onerror = () => {
+      alert('Could not load PDF generator library. Opening print view instead.');
+      window.print();
+    };
+    document.head.appendChild(script);
+  }
+}
+
 // 5. Reports Tab View
 function renderReportsTab(currentProject) {
   return `
@@ -1098,13 +1127,13 @@ function renderReportsTab(currentProject) {
         <h1 class="page-title">Program Management Reports</h1>
         <p class="page-subtitle">Executive status reports and AI insights for ${currentProject.code}</p>
       </div>
-      <button class="btn-primary" onclick="window.print()">
-        <span class="material-symbols-outlined">print</span> Export Report
+      <button class="btn-primary" onclick="exportReportToPDF()">
+        <span class="material-symbols-outlined">download</span> Export Report PDF
       </button>
     </div>
 
-    <div class="card-box">
-      <div class="card-box-title" style="margin-bottom:12px">Executive Program Summary</div>
+    <div class="card-box" id="executiveSummaryReportContainer" style="background:#fff; padding:24px; border-radius:12px; border:1px solid var(--outline-variant);">
+      <div class="card-box-title" style="margin-bottom:12px; font-size:18px; font-weight:700;">Executive Program Summary (${currentProject.code})</div>
       <p style="line-height:1.6; color:var(--on-surface)">
         Program <strong>${currentProject.name} (${currentProject.code})</strong> is currently in the <strong>${currentProject.lifecycle_phase}</strong> phase with an overall progress completion rate of <strong>${currentProject.progress_pct}%</strong>. The current program risk profile is categorized as <span class="chip chip-warning">Medium Risk</span>.
       </p>
@@ -1969,14 +1998,14 @@ function renderLoginTab() {
               <label for="loginEmail">Email Address or Username</label>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">mail</span>
-                <input type="text" id="loginEmail" placeholder="Enter your email or username (e.g. rohit, amit, sneha, admin)" value="${state.lastEnteredUsername || ''}" required />
+                <input type="text" id="loginEmail" placeholder="Enter your email or username" value="${state.lastEnteredUsername || ''}" required />
               </div>
             </div>
 
             <div class="form-group">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
                 <label for="loginPassword" style="margin-bottom:0">Password</label>
-                <a href="#" style="font-size:12px; color:var(--primary-container); text-decoration:none; font-weight:600">Forgot Password?</a>
+                
               </div>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">lock</span>
