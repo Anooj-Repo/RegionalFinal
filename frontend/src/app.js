@@ -286,6 +286,42 @@ async function refreshWorkspaceData() {
 
 
 
+// Toast Notification Helper
+function showToast(message, type = 'success') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast-notification toast-${type}`;
+
+  const iconMap = {
+    success: 'check_circle',
+    info: 'info',
+    warning: 'warning',
+    error: 'error'
+  };
+  const icon = iconMap[type] || 'notifications';
+
+  toast.innerHTML = `
+    <span class="material-symbols-outlined" style="font-size:20px;">${icon}</span>
+    <span style="flex:1; line-height:1.4;">${message}</span>
+    <button style="background:none; border:none; color:#fff; cursor:pointer; opacity:0.75; font-size:16px; padding:0; line-height:1;" onclick="this.parentElement.remove()">✕</button>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('toast-fadeOut');
+    setTimeout(() => {
+      if (toast.parentElement) toast.remove();
+    }, 300);
+  }, 4000);
+}
+
 // Event Handlers
 function setRole(roleName) {
   state.currentRole = roleName;
@@ -372,7 +408,7 @@ async function approveEmail() {
 
   const res = await apiPost(`/emails/${emailId}/approve`, {});
   if (res && res.status === 'success') {
-    alert(`Email #${emailId} Approved! Background email service will dispatch to linusimon@gmail.com within 5-10 seconds.`);
+    showToast(`Email #${emailId} Approved! Background email service will dispatch to linusimon@gmail.com within 5-10 seconds.`, 'success');
     closeApprovalModal();
     await refreshWorkspaceData();
     renderApp();
@@ -392,7 +428,7 @@ async function triggerMultiAgentWorkflow() {
     state.nodeTraces = res.workflow_result.graphical_node_traces || [];
     await refreshWorkspaceData();
     renderApp();
-    alert(`LangGraph Workflow Completed! Generated draft email #${res.workflow_result.communication.created_draft_id} for Human Approval.`);
+    showToast(`LangGraph Workflow Completed! Generated draft email #${res.workflow_result.communication.created_draft_id} for Human Approval.`, 'success');
   }
 }
 
@@ -400,7 +436,7 @@ async function triggerMultiAgentWorkflow() {
 function startVoiceRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert("Speech Recognition API is not supported in this browser. Please use Chrome or Edge.");
+    showToast("Speech Recognition API is not supported in this browser. Please use Chrome or Edge.", 'warning');
     return;
   }
 
@@ -1016,7 +1052,7 @@ async function triggerRaidRiskDiscovery() {
     state.aiDiscoveredRisk = res.discovered_risk;
     renderApp();
   } else {
-    alert("AI Risk Analysis completed. No new un-tracked risks discovered for " + state.selectedProjectCode);
+    showToast("AI Risk Analysis completed. No new un-tracked risks discovered for " + state.selectedProjectCode, 'info');
     renderApp();
   }
 }
@@ -1039,7 +1075,7 @@ async function confirmCreateSingleDiscoveredRisk(idx) {
   });
 
   if (res && res.status === 'success') {
-    alert(`Success! New Risk Item "${d.title}" (Score ${d.risk_score}) created in RAID Register (app.db).`);
+    showToast(`Success! New Risk Item "${d.title}" (Score ${d.risk_score}) created in RAID Register (app.db).`, 'success');
     // Remove created risk from modal list
     list.splice(idx, 1);
     if (list.length === 0) {
@@ -1076,7 +1112,7 @@ async function confirmCreateAllDiscoveredRisks() {
     }
   }
 
-  alert(`Success! Created ${createdCount} new Risk Items in RAID Register (app.db).`);
+  showToast(`Success! Created ${createdCount} new Risk Items in RAID Register (app.db).`, 'success');
   state.aiDiscoveredRisks = null;
   state.aiDiscoveredRisk = null;
   await refreshWorkspaceData();
@@ -1295,7 +1331,7 @@ function exportReportToPDF() {
       html2pdf().set(opt).from(element).save();
     };
     script.onerror = () => {
-      alert('Could not load PDF generator library. Opening print view instead.');
+      showToast('Could not load PDF generator library. Opening print view instead.', 'warning');
       window.print();
     };
     document.head.appendChild(script);
@@ -1851,10 +1887,10 @@ async function approveAction(actionId) {
       renderApp();
     } else {
       const errData = await res.json();
-      alert(`Action failed: ${errData.message || res.statusText}`);
+      showToast(`Action failed: ${errData.message || res.statusText}`, 'error');
     }
   } catch (err) {
-    alert(`Action error: ${err.message}`);
+    showToast(`Action error: ${err.message}`, 'error');
   }
 }
 
@@ -1870,7 +1906,7 @@ function cancelAction(actionId) {
 // ─── Voice Input for Chat ────────────────────────────────────────────────────
 function chatVoiceInput() {
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    alert('Voice input is not supported in this browser.');
+    showToast('Voice input is not supported in this browser.', 'warning');
     return;
   }
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
