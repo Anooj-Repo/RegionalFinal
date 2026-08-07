@@ -17,10 +17,19 @@ const state = {
   telemetry: {},
   authToken: null,
   activeTab: 'login',
+  selectedDateRange: { start: '2025-05-12', end: '2025-05-18' },
   selectedEmailForApproval: null,
   isRecordingVoice: false,
   nodeTraces: [],
-  isTraceExpanded: false
+  isTraceExpanded: false,
+  isCustomizeModalOpen: false,
+  dashboardWidgetOrder: ['kpis', 'heatmap', 'breakdown', 'flowchart'],
+  widgetVisibility: {
+    kpis: true,
+    heatmap: true,
+    breakdown: true,
+    flowchart: true
+  }
 };
 
 // Initialize Application
@@ -140,6 +149,56 @@ function setRole(roleName) {
 async function setProject(projectCode) {
   state.selectedProjectCode = projectCode;
   await refreshWorkspaceData();
+  renderApp();
+}
+
+function handleDateRangeChange() {
+  const start = document.getElementById('dateRangeStart')?.value;
+  const end = document.getElementById('dateRangeEnd')?.value;
+  if (start && end) {
+    state.selectedDateRange = { start, end };
+    console.log(`[Date Range Filter] Updated date range: ${start} to ${end}`);
+    renderApp();
+  }
+}
+
+// Dashboard Grid Layout Customizer Handlers
+function openCustomizeModal() {
+  state.isCustomizeModalOpen = true;
+  renderApp();
+}
+
+function closeCustomizeModal() {
+  state.isCustomizeModalOpen = false;
+  renderApp();
+}
+
+function moveWidgetUp(index) {
+  if (index > 0) {
+    const temp = state.dashboardWidgetOrder[index];
+    state.dashboardWidgetOrder[index] = state.dashboardWidgetOrder[index - 1];
+    state.dashboardWidgetOrder[index - 1] = temp;
+    renderApp();
+  }
+}
+
+function moveWidgetDown(index) {
+  if (index < state.dashboardWidgetOrder.length - 1) {
+    const temp = state.dashboardWidgetOrder[index];
+    state.dashboardWidgetOrder[index] = state.dashboardWidgetOrder[index + 1];
+    state.dashboardWidgetOrder[index + 1] = temp;
+    renderApp();
+  }
+}
+
+function toggleWidgetVisibility(widgetKey) {
+  state.widgetVisibility[widgetKey] = !state.widgetVisibility[widgetKey];
+  renderApp();
+}
+
+function resetDashboardLayout() {
+  state.dashboardWidgetOrder = ['kpis', 'heatmap', 'breakdown', 'flowchart'];
+  state.widgetVisibility = { kpis: true, heatmap: true, breakdown: true, flowchart: true };
   renderApp();
 }
 
@@ -306,14 +365,23 @@ function renderApp() {
 
           <div class="header-controls">
             <!-- Notifications & Help Icons -->
-            <button class="icon-btn" title="Notifications">
+            <button class="icon-btn" title="Notifications ${pendingEmailCount > 0 ? '(' + pendingEmailCount + ' Pending Approvals)' : ''}" onclick="state.activeTab='comms'; renderApp();">
               <span class="material-symbols-outlined">notifications</span>
-              <span class="notification-dot"></span>
+              ${pendingEmailCount > 0 ? '<span class="notification-dot"></span>' : ''}
             </button>
 
-            <button class="icon-btn" title="Help">
-              <span class="material-symbols-outlined">help_outline</span>
-            </button>
+            <div class="help-tooltip-container">
+              <button class="icon-btn" title="Help Info">
+                <span class="material-symbols-outlined">help_outline</span>
+              </button>
+              <div class="help-tooltip-box">
+                <div style="font-weight:700; color:var(--tertiary-fixed-dim); margin-bottom:4px; display:flex; align-items:center; gap:6px">
+                  <span class="material-symbols-outlined" style="font-size:16px">info</span>
+                  About PM AI
+                </div>
+                Program Management AI Assistant for Risk Analysis and Stakeholder Communication
+              </div>
+            </div>
 
             <!-- User Profile Avatar -->
             <div class="user-profile">
@@ -337,6 +405,8 @@ function renderApp() {
 
       <!-- Human Email Approval Modal -->
       ${state.selectedEmailForApproval ? renderHumanApprovalModal() : ''}
+      <!-- Dashboard Grid Layout Customize Modal -->
+      ${state.isCustomizeModalOpen ? renderCustomizeModal() : ''}
     </div>
   `;
 }
@@ -365,75 +435,55 @@ function renderCurrentTabContent(currentProject) {
 function renderDashboardTab(currentProject) {
   const pendingCount = state.emails.filter(e => e.status === 'PENDING').length;
   
-  return `
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Overview of your program health and key insights</p>
-      </div>
-      <div style="display:flex; gap:12px">
-        <select class="btn-secondary" style="background:#fff">
-          <option>All Programs</option>
-        </select>
-        <button class="btn-secondary">
-          <span class="material-symbols-outlined">calendar_today</span>
-          May 12 - May 18, 2025
-        </button>
-        <button class="btn-secondary">
-          <span class="material-symbols-outlined">tune</span>
-          Customize
-        </button>
-      </div>
-    </div>
+  const widgetHTML = {
+    kpis: `
+      <!-- 5 KPI Cards Row -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Overall Program Health</div>
+          <div class="kpi-value">${currentProject.progress_pct}%</div>
+          <div class="kpi-subtext">
+            <span class="chip chip-warning">Medium Risk</span>
+            <span style="color:var(--secondary); font-weight:600">Phase: ${currentProject.lifecycle_phase}</span>
+          </div>
+        </div>
 
-    <!-- 5 KPI Cards Row -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-title">Overall Program Health</div>
-        <div class="kpi-value">${currentProject.progress_pct}%</div>
-        <div class="kpi-subtext">
-          <span class="chip chip-warning">Medium Risk</span>
-          <span style="color:var(--secondary); font-weight:600">Phase: ${currentProject.lifecycle_phase}</span>
+        <div class="kpi-card">
+          <div class="kpi-title">Active Projects</div>
+          <div class="kpi-value">${state.projects.length}</div>
+          <div class="kpi-subtext" style="color:#059669">
+            <span class="material-symbols-outlined" style="font-size:16px">arrow_upward</span>
+            <strong>3 from last week</strong>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">Open RAID Risks</div>
+          <div class="kpi-value" style="color:var(--error)">${state.raidItems.length}</div>
+          <div class="kpi-subtext" style="color:var(--error)">
+            <span class="material-symbols-outlined" style="font-size:16px">warning</span>
+            <strong>${state.raidItems.filter(r => r.risk_score >= 70).length} High Score (&gt;70)</strong>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">Pending Approvals</div>
+          <div class="kpi-value" style="color:var(--primary-container)">${pendingCount}</div>
+          <div class="kpi-subtext" style="color:var(--primary-container)">
+            <span class="chip chip-info">Human Approval Required</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">Budget Variance</div>
+          <div class="kpi-value" style="color:var(--error)">-8.5%</div>
+          <div class="kpi-subtext" style="color:var(--error)">
+            <strong>($1.2M over budget)</strong>
+          </div>
         </div>
       </div>
-
-      <div class="kpi-card">
-        <div class="kpi-title">Active Projects</div>
-        <div class="kpi-value">${state.projects.length}</div>
-        <div class="kpi-subtext" style="color:#059669">
-          <span class="material-symbols-outlined" style="font-size:16px">arrow_upward</span>
-          <strong>3 from last week</strong>
-        </div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-title">Open RAID Risks</div>
-        <div class="kpi-value" style="color:var(--error)">${state.raidItems.length}</div>
-        <div class="kpi-subtext" style="color:var(--error)">
-          <span class="material-symbols-outlined" style="font-size:16px">warning</span>
-          <strong>${state.raidItems.filter(r => r.risk_score >= 70).length} High Score (&gt;70)</strong>
-        </div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-title">Pending Approvals</div>
-        <div class="kpi-value" style="color:var(--primary-container)">${pendingCount}</div>
-        <div class="kpi-subtext" style="color:var(--primary-container)">
-          <span class="chip chip-info">Human Approval Required</span>
-        </div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="kpi-title">Budget Variance</div>
-        <div class="kpi-value" style="color:var(--error)">-8.5%</div>
-        <div class="kpi-subtext" style="color:var(--error)">
-          <strong>($1.2M over budget)</strong>
-        </div>
-      </div>
-    </div>
-
-    <!-- 2 Column Layout: 5x5 Heatmap + Project Phase Table -->
-    <div class="grid-2col">
+    `,
+    heatmap: `
       <div class="card-box">
         <div class="card-box-header">
           <div class="card-box-title">5x5 Risk Heatmap Matrix (${currentProject.code})</div>
@@ -473,7 +523,8 @@ function renderDashboardTab(currentProject) {
           <div class="heatmap-cell cell-critical">L5/I5</div>
         </div>
       </div>
-
+    `,
+    breakdown: `
       <div class="card-box">
         <div class="card-box-header">
           <div class="card-box-title">Project Phase Breakdown</div>
@@ -485,7 +536,7 @@ function renderDashboardTab(currentProject) {
             </thead>
             <tbody>
               ${state.projects.map(p => `
-                <tr style="cursor:pointer" onclick="setProject('${p.code}')">
+                <tr style="cursor:pointer; ${p.code === currentProject.code ? 'background-color: var(--surface-container-high);' : ''}" onclick="setProject('${p.code}')">
                   <td><strong>${p.code}</strong> - ${p.name}</td>
                   <td>${p.lifecycle_phase}</td>
                   <td>
@@ -500,25 +551,75 @@ function renderDashboardTab(currentProject) {
           </table>
         </div>
       </div>
+    `,
+    flowchart: `
+      <div class="card-box">
+        <div class="card-box-header">
+          <div class="card-box-title">Critical Path Dependency Map Flowchart (${currentProject.code})</div>
+        </div>
+        <div class="flow-chain">
+          <div class="flow-step completed">Requirements Gathering<br><small style="color:#059669">Completed</small></div>
+          <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+          <div class="flow-step completed">Design Review<br><small style="color:#059669">Completed</small></div>
+          <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+          <div class="flow-step blocked">API Integration<br><small style="color:#dc2626">Blocked (Score 88)</small></div>
+          <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+          <div class="flow-step in-progress">System Testing<br><small style="color:var(--primary-container)">In Progress</small></div>
+          <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
+          <div class="flow-step">Deployment<br><small style="color:var(--outline)">Not Started</small></div>
+        </div>
+      </div>
+    `
+  };
+
+  const visibleWidgets = state.dashboardWidgetOrder.filter(w => state.widgetVisibility[w]);
+  let contentBuffer = '';
+
+  for (let i = 0; i < visibleWidgets.length; i++) {
+    const curr = visibleWidgets[i];
+    const next = visibleWidgets[i + 1];
+
+    if ((curr === 'heatmap' && next === 'breakdown') || (curr === 'breakdown' && next === 'heatmap')) {
+      contentBuffer += `
+        <div class="grid-2col">
+          ${widgetHTML[curr]}
+          ${widgetHTML[next]}
+        </div>
+      `;
+      i++;
+    } else {
+      contentBuffer += widgetHTML[curr];
+    }
+  }
+
+  return `
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Overview of your program health and key insights</p>
+      </div>
+      <div style="display:flex; gap:12px">
+        <select class="btn-secondary" style="background:#fff; cursor:pointer" onchange="setProject(this.value)">
+          ${state.projects.map(p => `
+            <option value="${p.code}" ${p.code === currentProject.code ? 'selected' : ''}>
+              ${p.code} - ${p.name}
+            </option>
+          `).join('')}
+        </select>
+        <div class="btn-secondary" style="background:#fff; display:flex; align-items:center; gap:8px; padding:6px 12px">
+          <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary-container)">calendar_today</span>
+          <input type="date" id="dateRangeStart" value="${state.selectedDateRange.start}" onchange="handleDateRangeChange()" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="Start Date" />
+          <span style="color:var(--outline); font-size:12px; font-weight:600">-</span>
+          <input type="date" id="dateRangeEnd" value="${state.selectedDateRange.end}" onchange="handleDateRangeChange()" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="End Date" />
+        </div>
+        <button class="btn-secondary" onclick="openCustomizeModal()">
+          <span class="material-symbols-outlined">tune</span>
+          Customize
+        </button>
+      </div>
     </div>
 
-    <!-- Visual Critical Path Flowchart Card -->
-    <div class="card-box">
-      <div class="card-box-header">
-        <div class="card-box-title">Critical Path Dependency Map Flowchart (${currentProject.code})</div>
-      </div>
-      <div class="flow-chain">
-        <div class="flow-step completed">Requirements Gathering<br><small style="color:#059669">Completed</small></div>
-        <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
-        <div class="flow-step completed">Design Review<br><small style="color:#059669">Completed</small></div>
-        <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
-        <div class="flow-step blocked">API Integration<br><small style="color:#dc2626">Blocked (Score 88)</small></div>
-        <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
-        <div class="flow-step in-progress">System Testing<br><small style="color:var(--primary-container)">In Progress</small></div>
-        <span class="material-symbols-outlined" style="color:var(--outline)">arrow_forward</span>
-        <div class="flow-step">Deployment<br><small style="color:var(--outline)">Not Started</small></div>
-      </div>
-    </div>
+    ${contentBuffer}
   `;
 }
 
@@ -1037,6 +1138,58 @@ function renderHumanApprovalModal() {
           <button class="btn-success" onclick="approveEmail()">
             <span class="material-symbols-outlined">send</span> Approve & Dispatch via Resend
           </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Render Dashboard Grid Customizer Modal Overlay
+function renderCustomizeModal() {
+  const widgetTitles = {
+    kpis: '5 KPI Metrics Overview Cards Row',
+    heatmap: '5x5 Risk Heatmap Matrix',
+    breakdown: 'Project Phase Breakdown Table',
+    flowchart: 'Critical Path Dependency Flowchart'
+  };
+
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-window">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+          <h3 style="font-size:18px; font-weight:700; color:var(--on-surface)">Customize Dashboard Layout</h3>
+          <button class="btn-secondary" onclick="closeCustomizeModal()" style="padding:4px 8px">✕</button>
+        </div>
+
+        <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px">
+          Rearrange widget cards or toggle visibility to personalize your Program Manager workspace layout.
+        </p>
+
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px">
+          ${state.dashboardWidgetOrder.map((key, idx) => {
+            const isVisible = state.widgetVisibility[key];
+            return `
+              <div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface-container-low); padding:10px 14px; border-radius:8px; border:1px solid var(--outline-variant)">
+                <div style="display:flex; align-items:center; gap:10px">
+                  <span class="material-symbols-outlined" style="color:var(--outline)">drag_indicator</span>
+                  <span style="font-size:13px; font-weight:700; color:var(--on-surface)">${widgetTitles[key]}</span>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:6px">
+                  <button class="btn-secondary" onclick="moveWidgetUp(${idx})" ${idx === 0 ? 'disabled' : ''} style="padding:4px 8px; font-size:11px" title="Move Up">▲</button>
+                  <button class="btn-secondary" onclick="moveWidgetDown(${idx})" ${idx === state.dashboardWidgetOrder.length - 1 ? 'disabled' : ''} style="padding:4px 8px; font-size:11px" title="Move Down">▼</button>
+                  <button class="${isVisible ? 'btn-primary' : 'btn-secondary'}" onclick="toggleWidgetVisibility('${key}')" style="padding:4px 10px; font-size:11px">
+                    ${isVisible ? 'Visible' : 'Hidden'}
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <button class="btn-secondary" onclick="resetDashboardLayout()">Reset Default Layout</button>
+          <button class="btn-primary" onclick="closeCustomizeModal()">Done & Save</button>
         </div>
       </div>
     </div>
