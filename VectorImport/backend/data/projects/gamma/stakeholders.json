@@ -1,0 +1,52 @@
+[
+  {
+    "id": 301,
+    "project_id": 3,
+    "name": "David Thornton",
+    "role": "Chief Executive Officer / Sponsor",
+    "department": "Executive Office",
+    "communication_preference": "email",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 302,
+    "project_id": 3,
+    "name": "Helen Watts",
+    "role": "Chief Information Security Officer / PM",
+    "department": "Information Security",
+    "communication_preference": "email",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 303,
+    "project_id": 3,
+    "name": "Marcus Reid",
+    "role": "Chief Procurement Officer",
+    "department": "Procurement",
+    "communication_preference": "meeting",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 304,
+    "project_id": 3,
+    "name": "Carlos Rivera",
+    "role": "Lead Security Architect",
+    "department": "Security Engineering",
+    "communication_preference": "chat",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 305,
+    "project_id": 3,
+    "name": "Fatima Al-Hassan",
+    "role": "SOC Operations Lead",
+    "department": "Security Operations",
+    "communication_preference": "chat",
+    "created_at": null,
+    "updated_at": null
+  }
+]

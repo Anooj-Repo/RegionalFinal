@@ -1,0 +1,13 @@
+{
+  "id": 1,
+  "project_id": "PROG-ALPHA-2026",
+  "name": "Digital Transformation Programme",
+  "description": "Enterprise-wide migration to cloud-native infrastructure and services, replacing on-premise legacy systems with Azure-based scalable cloud solutions to support the organisation's 2027 growth strategy.",
+  "start_date": "2026-01-15",
+  "end_date": "2026-12-31",
+  "status": "active",
+  "sponsor": "Sarah Mitchell",
+  "program_manager": "James Okonkwo",
+  "created_at": null,
+  "updated_at": null
+}

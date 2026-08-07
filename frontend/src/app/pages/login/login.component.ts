@@ -18,7 +18,10 @@ export class LoginComponent {
 
   constructor(private authService: AuthService, private router: Router) {}
 
-  onLogin(): void {
+  onLogin(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+    }
     this.isLoading = true;
     this.errorMessage = '';
 

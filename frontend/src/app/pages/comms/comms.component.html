@@ -1,26 +1,43 @@
-<div class="card">
-  <div class="card-title">
-    <span>Stakeholder Communication Center (Mandatory Human Approval)</span>
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Communication Center</h1>
+    <p class="page-subtitle">Stakeholder email communications and Mandatory Human Approval workflow for {{ selectedProjectCode }}</p>
+  </div>
+  <div style="display:flex; align-items:center; gap:12px">
+    <select class="btn-secondary" style="background:#fff; cursor:pointer; height:38px;" (change)="setProject($event.target.value)">
+      <option value="ALL" [selected]="selectedProjectCode === 'ALL'">ALL PROJECTS ({{ emails.length }} Communications)</option>
+      <option *ngFor="let p of projects" [value]="p.code" [selected]="p.code === selectedProjectCode">
+        {{ p.code }} - {{ p.name }}
+      </option>
+    </select>
+    <span class="chip chip-warning" style="font-size:13px">{{ getPendingCount() }} Pending</span>
+    <span class="chip chip-success" style="font-size:13px">{{ getSentCount() }} Sent</span>
   </div>
   <p style="color:var(--text-muted); font-size:12px; margin-bottom:16px;">
-    All AI-generated emails remain in PENDING state until reviewed, edited, and explicitly APPROVED. Dispatched via Resend API to linusimon@gmail.com.
+    All AI-generated emails remain in PENDING state until reviewed, edited, and explicitly APPROVED. Dispatched via Resend API to linusimon&#64;gmail.com.
   </p>
 
-  <div class="table-container">
-    <table>
+  <div class="table-responsive">
+    <table class="stitch-table">
       <thead>
-        <tr><th>ID</th><th>Recipient Role</th><th>Target Email</th><th>Subject</th><th>Status</th><th>Action</th></tr>
+        <tr><th>ID</th><th>Project</th><th>Recipient Role</th><th>Target Recipient</th><th>Subject Line</th><th>Status</th><th>Action</th></tr>
       </thead>
       <tbody>
-        <tr *ngFor="let e of emails">
+        <tr *ngFor="let e of getFilteredEmails()">
           <td>#{{ e.id }}</td>
           <td><span class="badge badge-healthy">{{ e.recipient_role }}</span></td>
-          <td>linusimon@gmail.com <br><small style="color:var(--text-muted)">Intended: {{ e.recipient_email }}</small></td>
+          <td>linusimon&#64;gmail.com <br><small style="color:var(--text-muted)">Intended: {{ e.recipient_email }}</small></td>
           <td><strong>{{ e.subject }}</strong></td>
-          <td><span class="badge" [ngClass]="{'badge-healthy': e.status==='SENT', 'badge-risk': e.status==='PENDING', 'badge-critical': e.status==='FAILED'||e.status==='REJECTED'}">{{ e.status }}</span></td>
           <td>
-            <button *ngIf="e.status==='PENDING'" class="btn btn-success" (click)="openApprovalModal(e)">Review & Approve</button>
-            <span *ngIf="e.status!=='PENDING'" style="color:var(--text-muted); font-size:12px;">{{ e.status }} at {{ e.sent_at || e.created_at }}</span>
+            <span class="chip" [ngClass]="{'chip-success': e.status==='SENT', 'chip-warning': e.status==='PENDING', 'chip-danger': e.status==='FAILED'}">{{ e.status }}</span>
+          </td>
+          <td>
+            <button *ngIf="e.status==='PENDING'" class="btn-success" style="padding:6px 12px; font-weight:600;" (click)="openApprovalModal(e)">
+              <span class="material-symbols-outlined" style="font-size:16px">check_circle</span> Review & Approve
+            </button>
+            <button *ngIf="e.status!=='PENDING'" class="btn-secondary" style="padding:6px 12px; display:inline-flex; align-items:center; gap:4px; font-weight:600;" (click)="openApprovalModal(e)">
+              <span class="material-symbols-outlined" style="font-size:16px">visibility</span> 👁 View Sent Email
+            </button>
           </td>
         </tr>
       </tbody>
@@ -29,21 +46,67 @@
 </div>
 
 <!-- Modal -->
-<div *ngIf="selectedEmail" class="modal-overlay">
-  <div class="modal-card">
-    <div class="card-title">
-      <span>Human Approval Interface (Email ID #{{ selectedEmail.id }})</span>
-      <button class="btn btn-secondary" (click)="closeModal()">✕</button>
+<div *ngIf="selectedEmail" class="modal-backdrop">
+  <div class="modal-window" style="max-width: 680px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+      <h3 style="font-size:18px; font-weight:700; color:var(--on-surface)">
+        {{ selectedEmail.status === 'SENT' ? '📧 Dispatched Email Inspector (Draft #' + selectedEmail.id + ')' : 'Human Approval Interface (Draft #' + selectedEmail.id + ')' }}
+      </h3>
+      <button class="btn-secondary" (click)="closeModal()" style="padding:4px 8px">✕</button>
     </div>
-    <label style="font-size:12px; font-weight:bold;">Recipient Role:</label>
-    <input type="text" [value]="selectedEmail.recipient_role" disabled style="width:100%; background:var(--bg-dark); border:1px solid var(--card-border); color:#fff; padding:8px; margin-bottom:12px; border-radius:4px;">
-    <label style="font-size:12px; font-weight:bold;">Subject Line:</label>
-    <input type="text" [(ngModel)]="selectedEmail.subject" style="width:100%; background:var(--bg-dark); border:1px solid var(--card-border); color:#fff; padding:8px; margin-bottom:12px; border-radius:4px;">
-    <label style="font-size:12px; font-weight:bold;">Email Body Content:</label>
-    <textarea [(ngModel)]="selectedEmail.body" rows="8"></textarea>
-    <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:12px;">
-      <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
-      <button class="btn btn-success" (click)="approveEmail()">Approve & Dispatch via Resend</button>
+
+    <div style="margin-bottom:12px; display:flex; align-items:center; justify-content:space-between">
+      <span class="chip" [ngClass]="{'chip-success': selectedEmail.status==='SENT', 'chip-warning': selectedEmail.status!=='SENT'}" style="font-size:12px; font-weight:700">
+        {{ selectedEmail.status === 'SENT' ? 'STATUS: SENT (Dispatched via Resend API)' : 'STATUS: PENDING (Human Approval Required)' }}
+      </span>
+      <span style="font-size:12px; color:var(--on-surface-variant)">
+        {{ selectedEmail.status === 'SENT' ? 'Dispatched at: ' + (selectedEmail.sent_at || selectedEmail.updated_at || '2026-08-07 10:11:26') : 'Created at: ' + (selectedEmail.created_at || 'Recently') }}
+      </span>
+    </div>
+
+    <div style="background:var(--surface-container-low); padding:12px; border-radius:8px; margin-bottom:16px">
+      <div style="font-size:12px; color:var(--on-surface-variant); margin-bottom:4px">
+        <strong>Target Recipient:</strong> linusimon@gmail.com <span class="chip chip-info" style="font-size:10px">Role: {{ selectedEmail.recipient_role }}</span>
+      </div>
+      <div style="font-size:12px; color:var(--on-surface-variant)">
+        <strong>Original Intended Email:</strong> {{ selectedEmail.recipient_email }}
+      </div>
+    </div>
+
+    <!-- AI Tone & Sentiment Refiner Bar -->
+    <div *ngIf="selectedEmail.status !== 'SENT'" style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(14, 165, 233, 0.08) 100%); border: 1px solid rgba(2, 132, 199, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-size:12px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:6px;">
+          <span class="material-symbols-outlined" style="font-size:16px; color:#facc15">auto_awesome</span>
+          AI Tone & Sentiment Refiner (TCS GenAI API)
+        </span>
+        <span class="chip chip-info" style="font-size:10px;">gemini-1.5-pro</span>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <select [(ngModel)]="selectedTone" class="btn-secondary" style="background:#fff; height:36px; font-size:12px; font-weight:600; cursor:pointer;">
+          <option value="Executive">👔 Executive Brief (Formal & Concise)</option>
+          <option value="Diplomatic">🤝 Diplomatic & Solution-Oriented</option>
+          <option value="Urgent">🚨 Urgent Escalation (High Risk Impact)</option>
+          <option value="Technical">💡 Technical Lead (Engineering Detail)</option>
+        </select>
+        <button [disabled]="isRefiningTone" class="btn-primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); height:36px; padding:0 14px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; border:none; border-radius:6px; cursor:pointer; color:#fff;" (click)="refineToneWithAI()">
+          <span class="material-symbols-outlined" style="font-size:16px; color:#facc15">bolt</span>
+          <span>{{ isRefiningTone ? 'Transforming Tone...' : '✨ Transform Tone with AI' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <label style="font-size:12px; font-weight:700; color:var(--on-surface)">Subject Line:</label>
+    <input type="text" [(ngModel)]="selectedEmail.subject" [disabled]="selectedEmail.status === 'SENT'" [style.background]="selectedEmail.status === 'SENT' ? 'var(--surface-container-low)' : 'var(--surface-container)'" style="width:100%; border:1px solid var(--outline); color:var(--on-surface); padding:8px; margin-bottom:12px; border-radius:6px;" />
+
+    <label style="font-size:12px; font-weight:700; color:var(--on-surface); margin-top:12px; display:block">Full Email Body Content:</label>
+    <textarea [(ngModel)]="selectedEmail.body" rows="10" [disabled]="selectedEmail.status === 'SENT'" [style.background]="selectedEmail.status === 'SENT' ? 'var(--surface-container-low)' : 'var(--surface-container)'" style="width:100%; border:1px solid var(--outline); color:var(--on-surface); padding:8px; border-radius:6px; line-height:1.6;"></textarea>
+
+    <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:16px">
+      <button class="btn-secondary" (click)="closeModal()">{{ selectedEmail.status === 'SENT' ? 'Close Viewer' : 'Cancel' }}</button>
+      <button *ngIf="selectedEmail.status !== 'SENT'" class="btn-success" (click)="approveEmail()">
+        <span class="material-symbols-outlined">send</span> Approve & Dispatch via Resend
+      </button>
     </div>
   </div>
 </div>

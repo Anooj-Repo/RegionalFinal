@@ -1,0 +1,149 @@
+[
+  {
+    "id": 2001,
+    "project_id": 1,
+    "meeting_title": "Weekly Programme Steering Committee - Week 30",
+    "attendees": [
+      "James Okonkwo (Programme Manager)",
+      "Sarah Mitchell (Programme Sponsor)",
+      "Carlos Rivera (Infrastructure Lead)",
+      "Priya Nair (Data Migration Lead)",
+      "Tom Bradley (UAT Lead)"
+    ],
+    "decisions": [
+      "CloudSphere vendor delay to be formally escalated via contract governance channel if no confirmed revised date received by 17 July 2026.",
+      "Risk Register entry for Vendor Delivery Failure (CloudSphere) to be elevated from 'medium' to 'high' probability effective immediately.",
+      "Programme team to continue Task 103 (Security Architecture) and Task 105 (Data Pipeline Migration) at full pace; no scope reduction approved at this stage."
+    ],
+    "action_items": [
+      {
+        "description": "Issue formal written notice to CloudSphere Inc. requesting root cause explanation and confirmed revised delivery date by EOD 17 July 2026.",
+        "owner": "James Okonkwo",
+        "due_date": "2026-07-17",
+        "done": true
+      },
+      {
+        "description": "Update Risk Register: elevate Vendor Delivery Failure risk to high probability and document current impact assessment.",
+        "owner": "James Okonkwo",
+        "due_date": "2026-07-17",
+        "done": true
+      },
+      {
+        "description": "Prepare preliminary impact assessment for Task 104 (API Integration) assuming a 4-week CloudSphere delay scenario, for review at next steering committee.",
+        "owner": "Aisha Kamara",
+        "due_date": "2026-07-24",
+        "done": true
+      }
+    ],
+    "transcript": "James opened the meeting noting that CloudSphere had missed the Week 28 delivery commitment as of 14 July and had not provided any explanation or revised schedule. Carlos confirmed Task 102 was formally blocked. Sarah expressed serious concern and authorised escalation via the contract governance channel if no response was received within the week. The group reviewed the risk register and agreed to elevate the vendor risk to high probability given the lack of communication from CloudSphere. Priya confirmed data pipeline work was continuing on components not dependent on the gateway. Tom noted that UAT planning was at risk if the critical path slipped by more than three weeks. Action items were agreed and the meeting closed at 10:45.",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2002,
+    "project_id": 1,
+    "meeting_title": "Emergency Vendor Escalation Meeting - CloudSphere Delivery Failure",
+    "attendees": [
+      "James Okonkwo (Programme Manager)",
+      "Sarah Mitchell (Programme Sponsor)",
+      "Carlos Rivera (Infrastructure Lead)",
+      "Aisha Kamara (Integration Lead)",
+      "Rachel Huang (Legal Counsel)",
+      "Marcus Osei (Procurement Manager)",
+      "Dan Webb (Delivery Director, CloudSphere Inc.) — remote"
+    ],
+    "decisions": [
+      "SLA penalty clause under Section 14.3 of the CloudSphere contract to be formally invoked with immediate effect. Legal to issue written notice by 22 July 2026.",
+      "CloudSphere's revised delivery commitment of 28 August 2026 (Week 35) accepted as the new contractual milestone; any further slippage will result in escalation to contract termination review.",
+      "A formally signed written delivery commitment from a CloudSphere Director must be received by 24 July 2026 as a condition of the penalty notice.",
+      "CloudSphere to join the weekly programme governance call every Monday commencing 27 July 2026 until infrastructure handover is confirmed.",
+      "Programme team authorised to begin parallel API design documentation (Task 104 pre-work) without infrastructure being available, to recover float where possible."
+    ],
+    "action_items": [
+      {
+        "description": "Issue formal SLA penalty clause notice to CloudSphere Inc. under Section 14.3 of the contract, referencing Week 28 missed commitment.",
+        "owner": "Rachel Huang",
+        "due_date": "2026-07-22",
+        "done": true
+      },
+      {
+        "description": "Obtain signed Director-level written delivery commitment from CloudSphere confirming 28 August 2026 handover date.",
+        "owner": "James Okonkwo",
+        "due_date": "2026-07-24",
+        "done": true
+      },
+      {
+        "description": "Produce revised programme critical path and schedule at-risk analysis for Programme Board presentation on 1 August 2026.",
+        "owner": "James Okonkwo",
+        "due_date": "2026-07-31",
+        "done": true
+      },
+      {
+        "description": "Begin API Integration design documentation, interface specification, and test plan preparation (infrastructure-independent pre-work).",
+        "owner": "Aisha Kamara",
+        "due_date": "2026-08-07",
+        "done": false
+      },
+      {
+        "description": "Review contract provisions for termination for cause and prepare summary of options for Programme Board if CloudSphere misses Week 35 commitment.",
+        "owner": "Rachel Huang",
+        "due_date": "2026-07-31",
+        "done": true
+      }
+    ],
+    "transcript": "Sarah Mitchell opened the meeting at 09:00 on 22 July 2026 noting the severity of the situation and the need for decisive action. Dan Webb (CloudSphere) joined remotely and apologised unreservedly for the Week 28 miss, attributing it to semiconductor supply chain issues affecting networking hardware. He confirmed CloudSphere's ability to commit to Week 35 (28 August) delivery. Sarah accepted the revised date but made clear this was the final extension and that penalty provisions would be invoked immediately. Rachel Huang (Legal) confirmed that Section 14.3 of the contract supported invocation of the SLA penalty clause and would proceed with issuing formal notice same day. Marcus Osei (Procurement) confirmed the contractual quantum of the penalty was £85,000 per week of delay beyond the original committed date. Aisha Kamara outlined the cascade impact on Task 104 and proposed beginning parallel design work to recover partial float. The Programme Board presentation scope was agreed and the meeting closed at 10:30.",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2003,
+    "project_id": 1,
+    "meeting_title": "Programme Board Monthly Review - August 2026",
+    "attendees": [
+      "Sarah Mitchell (Programme Sponsor, Chair)",
+      "James Okonkwo (Programme Manager)",
+      "David Thornton (Chief Technology Officer)",
+      "Linda Park (Chief Financial Officer)",
+      "Rachel Huang (Legal Counsel)",
+      "Marcus Osei (Procurement Manager)",
+      "Carlos Rivera (Infrastructure Lead)",
+      "Aisha Kamara (Integration Lead)"
+    ],
+    "decisions": [
+      "Programme Board formally acknowledged the CloudSphere delivery failure and accepted the revised programme critical path presented by James Okonkwo.",
+      "Board approved release of £120,000 contingency reserve to fund parallel API design pre-work, accelerated UAT resourcing, and additional programme management overhead caused by the vendor delay.",
+      "Board agreed that if CloudSphere fails to deliver by 28 August 2026, an emergency board session will be convened within 48 hours to consider contract termination and appointment of an alternative vendor.",
+      "Go-Live target of 31 December 2026 remains the programme commitment; Board noted zero float remaining and approved weekly escalation reporting from this date.",
+      "Legal to continue pursuing SLA penalty recovery; initial penalty invoice of £340,000 (representing four weeks at £85,000/week) to be issued to CloudSphere by 5 August 2026."
+    ],
+    "action_items": [
+      {
+        "description": "Issue SLA penalty invoice of £340,000 to CloudSphere Inc. representing four weeks of delay (Week 28 to Week 32 inclusive).",
+        "owner": "Marcus Osei",
+        "due_date": "2026-08-05",
+        "done": true
+      },
+      {
+        "description": "Establish weekly escalation reporting cadence: Programme Manager to submit a one-page CloudSphere delivery status report to the Board every Friday until handover confirmed.",
+        "owner": "James Okonkwo",
+        "due_date": "2026-08-07",
+        "done": false
+      },
+      {
+        "description": "Procure additional UAT resource (2 x business analyst contractors) to enable compressed UAT cycle planning, funded from released contingency.",
+        "owner": "Tom Bradley",
+        "due_date": "2026-08-21",
+        "done": false
+      },
+      {
+        "description": "Prepare contract termination options paper for contingency use if CloudSphere misses Week 35 commitment.",
+        "owner": "Rachel Huang",
+        "due_date": "2026-08-14",
+        "done": false
+      }
+    ],
+    "transcript": "The meeting convened at 09:30 on 1 August 2026, chaired by Sarah Mitchell. James Okonkwo presented the CloudSphere delay impact summary and revised critical path. David Thornton (CTO) noted this was a pattern he had seen before in cloud infrastructure programmes and emphasised the importance of maintaining the December go-live commitment given board-level expectations. Linda Park (CFO) confirmed the contingency release of £120,000 was within the programme's approved risk budget and authorised release immediately. Rachel Huang confirmed the SLA penalty notice had been issued and CloudSphere had acknowledged receipt. The Board discussed the option of sourcing alternative infrastructure but agreed this would take longer than waiting for CloudSphere given lead times for alternative suppliers. The decision to maintain CloudSphere as vendor with zero-tolerance for further slippage was confirmed. Sarah Mitchell closed the meeting at 11:15 with a clear mandate that the December go-live was non-negotiable.",
+    "created_at": null,
+    "updated_at": null
+  }
+]

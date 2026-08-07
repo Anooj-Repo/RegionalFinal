@@ -346,16 +346,22 @@ body {
 /* KPI Cards Grid */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
   margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
 }
 
 .kpi-card {
   background-color: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
   border-radius: 12px;
-  padding: 20px;
+  padding: 14px 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -369,21 +375,25 @@ body {
   font-size: 12px;
   font-weight: 600;
   color: var(--on-surface-variant);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kpi-value {
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--on-surface);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .kpi-subtext {
-  font-size: 12px;
+  font-size: 11px;
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-wrap: wrap;
 }
 
 /* Badge Chips */

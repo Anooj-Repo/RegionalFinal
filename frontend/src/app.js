@@ -7,13 +7,8 @@ const API_BASE_URL = 'http://127.0.0.1:5000/api';
 
 // Application State Store
 const state = {
-  currentRole: 'Program Manager',
-  currentUser: {
-    username: 'rohit',
-    full_name: 'Rohit Verma',
-    role: 'Program Manager',
-    email: 'rohit.verma@pmai.com'
-  },
+  currentRole: 'Viewer',
+  currentUser: null,
   selectedProjectCode: 'PRJ-001',
   projects: [],
   tasks: [],
@@ -23,6 +18,7 @@ const state = {
   telemetry: {},
   authToken: null,
   loginError: null,
+  lastEnteredUsername: '',
   activeTab: 'login',
   selectedDateRange: { start: '2025-05-12', end: '2025-05-18' },
   selectedEmailForApproval: null,
@@ -30,44 +26,24 @@ const state = {
   nodeTraces: [],
   isTraceExpanded: false,
   isCustomizeModalOpen: false,
-  dashboardWidgetOrder: ['kpis', 'heatmap', 'breakdown', 'flowchart'],
+  dashboardWidgetOrder: ['kpis', 'flowchart', 'heatmap', 'aiAnalyse', 'breakdown'],
   widgetVisibility: {
     kpis: true,
+    flowchart: true,
     heatmap: true,
-    breakdown: true,
-    flowchart: true
-  },
-  // ── Enterprise Chat State ──
-  chatMessages: [],          // [{id, role, content, status, action, telemetry, timestamp}]
-  isChatStreaming: false,    // streaming lock flag
-  chatInput: '',             // current textarea value
-  chatNodeTraces: []         // live node traces for the trace panel
+    aiAnalyse: true,
+    breakdown: true
+  }
 };
 
 // Initialize Application
 async function initApp() {
-  console.log('[PM AI App] Initializing Stitch PM Portal Engine...');
+  console.log('[PM AI App] Initializing PM Portal Engine (Landing on Login)...');
 
-  const savedToken = localStorage.getItem('pmai_auth_token');
-  const savedUser = localStorage.getItem('pmai_current_user');
-  const savedTab = localStorage.getItem('pmai_active_tab');
-  const savedProject = localStorage.getItem('pmai_selected_project');
-
-  if (savedToken && savedUser) {
-    try {
-      state.authToken = savedToken;
-      state.currentUser = JSON.parse(savedUser);
-      state.currentRole = state.currentUser.role || 'Program Manager';
-      state.activeTab = (savedTab && savedTab !== 'login') ? savedTab : 'dashboard';
-      if (savedProject) state.selectedProjectCode = savedProject;
-      console.log(`[Auth Session Restored] Restored session for ${state.currentUser.full_name} (${state.activeTab})`);
-    } catch (e) {
-      console.warn('[Auth Session Error] Restoring session failed:', e);
-      state.activeTab = 'login';
-    }
-  } else {
-    state.activeTab = 'login';
-  }
+  // Always land on Login page as Home Page
+  state.activeTab = 'login';
+  state.currentUser = null;
+  state.authToken = null;
 
   await loadProjects();
   await refreshWorkspaceData();
@@ -129,6 +105,7 @@ async function handleLoginSubmit(event) {
 
   const usernameInput = document.getElementById('loginEmail')?.value || '';
   const passwordInput = document.getElementById('loginPassword')?.value || '';
+  state.lastEnteredUsername = usernameInput;
 
   let username = usernameInput.trim();
   if (username.includes('@')) {
@@ -351,8 +328,8 @@ function toggleWidgetVisibility(widgetKey) {
 }
 
 function resetDashboardLayout() {
-  state.dashboardWidgetOrder = ['kpis', 'heatmap', 'breakdown', 'flowchart'];
-  state.widgetVisibility = { kpis: true, heatmap: true, breakdown: true, flowchart: true };
+  state.dashboardWidgetOrder = ['kpis', 'flowchart', 'heatmap', 'aiAnalyse', 'breakdown'];
+  state.widgetVisibility = { kpis: true, flowchart: true, heatmap: true, aiAnalyse: true, breakdown: true };
   renderApp();
 }
 
@@ -454,11 +431,12 @@ function renderApp() {
 
   const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
   const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
-  const isViewerRole = userRole === 'Viewer';
+  const canAccessCommsAndBreakdown = userRole === 'Program Manager' || isAdminRole;
 
-  if (isViewerRole && state.activeTab !== 'raid' && state.activeTab !== 'comms') {
-    state.activeTab = 'raid';
-  } else if (!isAdminRole && state.activeTab === 'admin') {
+  if (!isAdminRole && state.activeTab === 'admin') {
+    state.activeTab = 'dashboard';
+  }
+  if (!canAccessCommsAndBreakdown && state.activeTab === 'comms') {
     state.activeTab = 'dashboard';
   }
 
@@ -483,34 +461,32 @@ function renderApp() {
         </div>
 
         <div class="sidebar-menu">
-          ${!isViewerRole ? `
-            <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
-              <span class="material-symbols-outlined">dashboard</span>
-              <span>Dashboard</span>
-            </button>
-            <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
-              <span class="material-symbols-outlined">assignment</span>
-              <span>Projects</span>
-            </button>
-          ` : ''}
+          <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
+            <span class="material-symbols-outlined">assignment</span>
+            <span>Projects</span>
+          </button>
           <button class="nav-link ${state.activeTab === 'raid' ? 'active' : ''}" onclick="switchTab('raid')">
             <span class="material-symbols-outlined">warning</span>
             <span>Risk Center</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="switchTab('comms')">
-            <span class="material-symbols-outlined">chat</span>
-            <span>Communication ${pendingEmailCount > 0 ? `(${pendingEmailCount})` : ''}</span>
-          </button>
-          ${!isViewerRole ? `
-            <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
-              <span class="material-symbols-outlined">assessment</span>
-              <span>Reports</span>
-            </button>
-            <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
-              <span class="material-symbols-outlined">smart_toy</span>
-              <span>AI Assistant</span>
+          ${canAccessCommsAndBreakdown ? `
+            <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined">chat</span>
+              <span>Communication ${pendingEmailCount > 0 ? `(${pendingEmailCount})` : ''}</span>
             </button>
           ` : ''}
+          <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
+            <span class="material-symbols-outlined">assessment</span>
+            <span>Reports</span>
+          </button>
+          <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
+            <span class="material-symbols-outlined">smart_toy</span>
+            <span>AI Assistant</span>
+          </button>
           ${isAdminRole ? `
             <button class="nav-link ${state.activeTab === 'admin' ? 'active' : ''}" onclick="switchTab('admin')">
               <span class="material-symbols-outlined">settings</span>
@@ -528,16 +504,27 @@ function renderApp() {
       <div class="main-wrapper">
         <!-- Top Sticky Header -->
         <header class="top-app-bar">
-          <div style="display:flex; align-items:center; gap:8px">
-            <span class="material-symbols-outlined" style="color:var(--primary-container); font-size:22px">waving_hand</span>
-            <span style="font-size:15px; font-weight:700; color:var(--on-surface)">
-              Welcome back, ${state.currentUser ? state.currentUser.full_name : 'Rohit Verma'}!
-            </span>
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap">
+            <div style="display:flex; align-items:center; gap:8px">
+              <span class="material-symbols-outlined" style="color:var(--primary-container); font-size:22px">waving_hand</span>
+              <span style="font-size:15px; font-weight:700; color:var(--on-surface)">
+                Welcome back, ${state.currentUser ? state.currentUser.full_name : 'Rohit Verma'}!
+              </span>
+            </div>
+
+            <!-- Active Project Selector Dropdown -->
+            <select class="btn-secondary" style="background:#fff; cursor:pointer; height:38px;" onchange="setProject(this.value)">
+              ${state.projects.map(p => `
+                <option value="${p.code}" ${p.code === currentProject.code ? 'selected' : ''}>
+                  ${p.code} - ${p.name}
+                </option>
+              `).join('')}
+            </select>
           </div>
 
           <div class="header-controls">
             <!-- Notifications & Help Icons -->
-            <button class="icon-btn" title="Notifications ${pendingEmailCount > 0 ? '(' + pendingEmailCount + ' Pending Approvals)' : ''}" onclick="state.activeTab='comms'; renderApp();">
+            <button class="icon-btn" title="Notifications ${pendingEmailCount > 0 ? '(' + pendingEmailCount + ' Pending Approvals)' : ''}" onclick="${canAccessCommsAndBreakdown ? "state.activeTab='comms'; renderApp();" : "state.activeTab='dashboard'; renderApp();"}">
               <span class="material-symbols-outlined">notifications</span>
               ${pendingEmailCount > 0 ? '<span class="notification-dot"></span>' : ''}
             </button>
@@ -603,8 +590,97 @@ function renderCurrentTabContent(currentProject) {
   return renderDashboardTab(currentProject);
 }
 
+function getAppProjectRaidItems(currentProject) {
+  const defaultItems = [
+    { project_id: 1, project_code: 'PRJ-001', category: 'Risk', title: 'Third-party API Integration Delay', likelihood: 'High', impact: 'High', risk_score: 85 },
+    { project_id: 1, project_code: 'PRJ-001', category: 'Issue', title: 'Vendor Onboarding Access Bottleneck', likelihood: 'High', impact: 'Medium', risk_score: 75 },
+    { project_id: 2, project_code: 'PRJ-002', category: 'Assumption', title: 'Legacy System Data Compatibility Assumption', likelihood: 'Medium', impact: 'Medium', risk_score: 60 },
+    { project_id: 3, project_code: 'PRJ-003', category: 'Dependency', title: 'Biometric Hardware Module Availability', likelihood: 'High', impact: 'High', risk_score: 80 },
+    { project_id: 4, project_code: 'PRJ-004', category: 'Risk', title: 'Data Migration Validation Failure', likelihood: 'Medium', impact: 'High', risk_score: 90 },
+    { project_id: 5, project_code: 'PRJ-005', category: 'Dependency', title: 'Operational Handover Sign-off', likelihood: 'Low', impact: 'Medium', risk_score: 35 }
+  ];
+
+  const source = (state.raidItems && state.raidItems.length > 0) ? state.raidItems : defaultItems;
+  return source.filter(r => 
+    r.project_id === currentProject.id || 
+    r.project_code === currentProject.code || 
+    (currentProject.code === 'PRJ-001' && (r.project_id === 1 || r.project_code === 'PRJ-001')) ||
+    (currentProject.code === 'PRJ-002' && (r.project_id === 2 || r.project_code === 'PRJ-002')) ||
+    (currentProject.code === 'PRJ-003' && (r.project_id === 3 || r.project_code === 'PRJ-003')) ||
+    (currentProject.code === 'PRJ-004' && (r.project_id === 4 || r.project_code === 'PRJ-004')) ||
+    (currentProject.code === 'PRJ-005' && (r.project_id === 5 || r.project_code === 'PRJ-005'))
+  );
+}
+
+function getAppLikelihoodLevel(l) {
+  if (typeof l === 'number') return l;
+  if (!l) return 3;
+  const str = l.toString().toUpperCase();
+  if (str.includes('1') || str.includes('VERY LOW') || str.includes('RARE')) return 1;
+  if (str.includes('2') || str === 'LOW' || str.includes('UNLIKELY')) return 2;
+  if (str.includes('3') || str === 'MEDIUM' || str.includes('MODERATE') || str.includes('POSSIBLE')) return 3;
+  if (str.includes('4') || str === 'HIGH' || str.includes('LIKELY')) return 4;
+  if (str.includes('5') || str.includes('VERY HIGH') || str.includes('CRITICAL') || str.includes('CERTAIN')) return 5;
+  return 3;
+}
+
+function getAppImpactLevel(i, score) {
+  if (score && score >= 90) return 5;
+  if (typeof i === 'number') return i;
+  if (!i) return 3;
+  const str = i.toString().toUpperCase();
+  if (str.includes('5') || str.includes('VERY HIGH') || str.includes('CRITICAL') || str.includes('SEVERE')) return 5;
+  if (str.includes('4') || str === 'HIGH' || str.includes('MAJOR')) return 4;
+  if (str.includes('3') || str === 'MEDIUM' || str.includes('MODERATE')) return 3;
+  if (str.includes('2') || str === 'LOW' || str.includes('MINOR')) return 2;
+  if (str.includes('1') || str.includes('VERY LOW') || str.includes('NEGLIGIBLE')) return 1;
+  return 3;
+}
+
+function generateHeatmapMatrixHTML(currentProject) {
+  const pItems = getAppProjectRaidItems(currentProject);
+  let html = '';
+  
+  for (let l = 1; l <= 5; l++) {
+    for (let i = 1; i <= 5; i++) {
+      const cellItems = pItems.filter(r => 
+        getAppLikelihoodLevel(r.likelihood) === l && getAppImpactLevel(r.impact, r.risk_score) === i
+      );
+      
+      let cellText = `L${l}/I${i}`;
+      let cellClass = 'cell-low';
+      const sum = l + i;
+      if (sum <= 3) cellClass = 'cell-low';
+      else if (sum <= 5) cellClass = 'cell-med';
+      else if (sum <= 7) cellClass = 'cell-high';
+      else cellClass = 'cell-critical';
+
+      let tooltip = `L${l}/I${i}`;
+
+      if (cellItems.length > 0) {
+        const scores = cellItems.map(item => item.risk_score).filter(s => s !== undefined).join(', ');
+        cellText = `L${l}/I${i} (${scores})`;
+        tooltip = cellItems.map(item => `${item.category}: ${item.title} (Score: ${item.risk_score})`).join(' | ');
+        
+        if (cellItems.some(r => (r.risk_score || 0) >= 70)) {
+          cellClass = 'cell-critical';
+        } else {
+          cellClass = 'cell-high';
+        }
+      }
+      
+      html += `<div class="heatmap-cell ${cellClass}" title="${tooltip}">${cellText}</div>`;
+    }
+  }
+  return html;
+}
+
 // 1. Dashboard Tab View
 function renderDashboardTab(currentProject) {
+  const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
+  const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
+  const canAccessCommsAndBreakdown = userRole === 'Program Manager' || isAdminRole;
+
   // Filter RAID items by selected project AND selected date range
   const filteredRaidItems = state.raidItems.filter(r => {
     const isProj = r.project_id === currentProject.id || r.project_code === currentProject.code;
@@ -688,35 +764,57 @@ function renderDashboardTab(currentProject) {
         <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:12px">Likelihood vs. Impact Distribution (${state.selectedDateRange.start} to ${state.selectedDateRange.end})</p>
         
         <div class="heatmap-matrix">
-          <div class="heatmap-cell cell-low">L1/I1</div>
-          <div class="heatmap-cell cell-low">L1/I2</div>
-          <div class="heatmap-cell cell-med">L1/I3</div>
-          <div class="heatmap-cell cell-med">L1/I4</div>
-          <div class="heatmap-cell cell-high">L1/I5</div>
+          ${generateHeatmapMatrixHTML(currentProject)}
+        </div>
+      </div>
+    `,
+    aiAnalyse: `
+      <div class="card-box">
+        <div class="card-box-header">
+          <div class="card-box-title" style="display:flex; align-items:center; gap:8px">
+            <span class="material-symbols-outlined" style="color:var(--primary-container); font-size:20px">auto_awesome</span>
+            <span>AI Analyse</span>
+          </div>
+          <span class="chip chip-info" style="display:flex; align-items:center; gap:4px">
+            <span class="material-symbols-outlined" style="font-size:14px">bolt</span> Live AI Insights
+          </span>
+        </div>
+        <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px">
+          Automated multi-agent risk assessment & strategic recommendations for ${currentProject.code}
+        </p>
 
-          <div class="heatmap-cell cell-low">L2/I1</div>
-          <div class="heatmap-cell cell-med">L2/I2</div>
-          <div class="heatmap-cell cell-med">L2/I3</div>
-          <div class="heatmap-cell cell-high">L2/I4</div>
-          <div class="heatmap-cell cell-high">L2/I5</div>
+        <!-- Section 1: Multi-Agent Portfolio Intelligence -->
+        <div style="background:var(--surface-container-low); padding:16px; border-radius:10px; border:1px solid var(--outline-variant); display:flex; flex-direction:column; gap:12px; margin-bottom:12px">
+          <div style="display:flex; align-items:center; justify-content:space-between">
+            <span style="font-size:13px; font-weight:700; color:var(--on-surface)">Multi-Agent Portfolio Intelligence</span>
+            <span class="chip chip-warning">High Priority Risk</span>
+          </div>
+          <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0">
+            Vendor API spec bottleneck detected on WBS 1.3 (Score 88). LangGraph multi-agent reasoning recommends spinning up mock sandbox endpoints to preserve sprint velocity.
+          </p>
+          ${canAccessCommsAndBreakdown ? `
+            <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">chat</span>
+              <span>Communicate</span>
+            </button>
+          ` : ''}
+        </div>
 
-          <div class="heatmap-cell cell-med">L3/I1</div>
-          <div class="heatmap-cell cell-med">L3/I2</div>
-          <div class="heatmap-cell cell-high">L3/I3</div>
-          <div class="heatmap-cell cell-high">L3/I4</div>
-          <div class="heatmap-cell cell-critical">L3/I5 (88)</div>
-
-          <div class="heatmap-cell cell-med">L4/I1</div>
-          <div class="heatmap-cell cell-high">L4/I2</div>
-          <div class="heatmap-cell cell-high">L4/I3</div>
-          <div class="heatmap-cell cell-critical">L4/I4 (85)</div>
-          <div class="heatmap-cell cell-critical">L4/I5 (90)</div>
-
-          <div class="heatmap-cell cell-high">L5/I1</div>
-          <div class="heatmap-cell cell-high">L5/I2</div>
-          <div class="heatmap-cell cell-critical">L5/I3</div>
-          <div class="heatmap-cell cell-critical">L5/I4</div>
-          <div class="heatmap-cell cell-critical">L5/I5</div>
+        <!-- Section 2: Mitigation -->
+        <div style="background:var(--surface-container-low); padding:16px; border-radius:10px; border:1px solid var(--outline-variant); display:flex; flex-direction:column; gap:12px">
+          <div style="display:flex; align-items:center; justify-content:space-between">
+            <span style="font-size:13px; font-weight:700; color:var(--on-surface)">Mitigation</span>
+            <span class="chip chip-success">Action Required</span>
+          </div>
+          <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0">
+            Deploy automated mock sandbox server & adjust critical path integration milestone by 10 business days to mitigate vendor turnaround delay.
+          </p>
+          ${canAccessCommsAndBreakdown ? `
+            <button class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">play_arrow</span>
+              <span>Take Action</span>
+            </button>
+          ` : ''}
         </div>
       </div>
     `,
@@ -724,6 +822,7 @@ function renderDashboardTab(currentProject) {
       <div class="card-box">
         <div class="card-box-header">
           <div class="card-box-title">Project Phase Breakdown</div>
+          <span class="chip chip-info" style="font-size:11px">Portfolio View (${state.projects.length} Projects)</span>
         </div>
         <div class="table-responsive">
           <table class="stitch-table">
@@ -732,8 +831,11 @@ function renderDashboardTab(currentProject) {
             </thead>
             <tbody>
               ${state.projects.map(p => `
-                <tr style="cursor:pointer; ${p.code === currentProject.code ? 'background-color: var(--surface-container-high);' : ''}" onclick="setProject('${p.code}')">
-                  <td><strong>${p.code}</strong> - ${p.name}</td>
+                <tr style="cursor:pointer; ${p.code === currentProject.code ? 'background-color: rgba(2, 132, 199, 0.15); border-left: 4px solid var(--primary);' : ''}" onclick="setProject('${p.code}')">
+                  <td>
+                    <strong>${p.code}</strong> - ${p.name}
+                    ${p.code === currentProject.code ? '<span class="chip chip-info" style="margin-left:8px; font-size:10px; font-weight:700">SELECTED</span>' : ''}
+                  </td>
                   <td>${p.lifecycle_phase}</td>
                   <td>
                     <span class="chip ${p.health_status==='Healthy'?'chip-success':p.health_status==='At Risk'?'chip-warning':'chip-danger'}">
@@ -748,6 +850,7 @@ function renderDashboardTab(currentProject) {
         </div>
       </div>
     `,
+
     flowchart: `
       <div class="card-box">
         <div class="card-box-header">
@@ -774,19 +877,27 @@ function renderDashboardTab(currentProject) {
     const next = state.dashboardWidgetOrder[i + 1];
 
     if (!state.widgetVisibility[curr]) continue;
+    if (curr === 'breakdown' && !canAccessCommsAndBreakdown) continue;
 
     if (curr === 'kpis') {
       contentBuffer += widgetHTML.kpis;
-    } else if (curr === 'flowchart') {
-      contentBuffer += widgetHTML.flowchart;
-    } else if ((curr === 'heatmap' && next === 'breakdown') || (curr === 'breakdown' && next === 'heatmap')) {
-      contentBuffer += `
-        <div class="grid-2col">
-          ${widgetHTML[curr]}
-          ${widgetHTML[next]}
-        </div>
-      `;
-      i++;
+    } else if (
+      (curr === 'heatmap' && next === 'aiAnalyse') ||
+      (curr === 'aiAnalyse' && next === 'heatmap') ||
+      (curr === 'heatmap' && next === 'breakdown') ||
+      (curr === 'breakdown' && next === 'heatmap')
+    ) {
+      if (next === 'breakdown' && !canAccessCommsAndBreakdown) {
+        contentBuffer += widgetHTML[curr];
+      } else {
+        contentBuffer += `
+          <div class="grid-2col">
+            ${widgetHTML[curr]}
+            ${widgetHTML[next]}
+          </div>
+        `;
+        i++;
+      }
     } else {
       contentBuffer += widgetHTML[curr];
     }
@@ -799,23 +910,12 @@ function renderDashboardTab(currentProject) {
         <p class="page-subtitle">Overview of your program health and key insights</p>
       </div>
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <select class="btn-secondary" style="background:#fff; cursor:pointer; height:38px;" onchange="setProject(this.value)">
-          ${state.projects.map(p => `
-            <option value="${p.code}" ${p.code === currentProject.code ? 'selected' : ''}>
-              ${p.code} - ${p.name}
-            </option>
-          `).join('')}
-        </select>
-        <div class="btn-secondary" style="background:#fff; display:flex; align-items:center; gap:8px; padding:6px 12px; height:38px;">
+        <div class="btn-secondary" style="display:none; background:#fff; align-items:center; gap:8px; padding:6px 12px; height:38px;">
           <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary-container)">calendar_today</span>
           <input type="date" id="dateRangeStart" value="${state.selectedDateRange.start}" onchange="handleDateRangeChange()" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="Start Date" />
           <span style="color:var(--outline); font-size:12px; font-weight:600">-</span>
           <input type="date" id="dateRangeEnd" value="${state.selectedDateRange.end}" onchange="handleDateRangeChange()" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="End Date" />
         </div>
-        <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px; border: none; padding: 8px 16px; height:38px; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="triggerMultiAgentWorkflow()">
-          <span class="material-symbols-outlined" style="font-size: 18px; color: #facc15">bolt</span>
-          <span>⚡ Analyze Portfolio Risks</span>
-        </button>
         <button class="btn-secondary" style="height:38px;" onclick="openCustomizeModal()">
           <span class="material-symbols-outlined">tune</span>
           Customize
@@ -835,9 +935,6 @@ function renderProjectsTab() {
         <h1 class="page-title">Projects Portfolio</h1>
         <p class="page-subtitle">Detailed status, lifecycle phases, and metrics for all active projects</p>
       </div>
-      <button class="btn-primary">
-        <span class="material-symbols-outlined">add</span> New Project
-      </button>
     </div>
 
     <div class="card-box">
@@ -879,15 +976,21 @@ function renderProjectsTab() {
 
 // 3. RAID Register / Risk Center Tab View
 function renderRaidTab() {
+  const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
+  const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
+  const canAccessCommsAndBreakdown = userRole === 'Program Manager' || isAdminRole;
+
   return `
     <div class="page-header">
       <div>
         <h1 class="page-title">Risk Center (RAID Register)</h1>
         <p class="page-subtitle">Active risks, assumptions, issues, and dependencies for ${state.selectedProjectCode}</p>
       </div>
-      <button class="btn-primary" onclick="triggerMultiAgentWorkflow()">
-        <span class="material-symbols-outlined">smart_toy</span> Run LangGraph RAID Analysis
-      </button>
+      ${canAccessCommsAndBreakdown ? `
+        <button class="btn-primary" onclick="triggerMultiAgentWorkflow()">
+          <span class="material-symbols-outlined">smart_toy</span> Run LangGraph RAID Analysis
+        </button>
+      ` : ''}
     </div>
 
     <div class="card-box">
@@ -921,32 +1024,45 @@ function renderRaidTab() {
 }
 
 // 4. Communication Center Tab View
+// 4. Communication Center Tab View
 function renderCommsTab() {
-  const pendingCount = state.emails.filter(e => e.status === 'PENDING').length;
+  const currentProject = state.projects.find(p => p.code === state.selectedProjectCode) || { id: 1, code: 'PRJ-001' };
+
+  // Filter emails by selected project OR show all if "ALL"
+  const projectEmails = state.selectedProjectCode === 'ALL'
+    ? state.emails
+    : state.emails.filter(e => e.project_id === currentProject.id || e.project_code === currentProject.code);
+
+  const pendingCount = projectEmails.filter(e => e.status === 'PENDING').length;
+  const sentCount = projectEmails.filter(e => e.status === 'SENT').length;
 
   return `
-    <div class="page-header">
+    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
       <div>
         <h1 class="page-title">Communication Center</h1>
-        <p class="page-subtitle">Mandatory Human Approval workflow for AI-generated stakeholder communications</p>
+        <p class="page-subtitle">Stakeholder email communications and Mandatory Human Approval workflow for ${state.selectedProjectCode}</p>
       </div>
-      <span class="chip chip-warning" style="font-size:13px">${pendingCount} Drafts Awaiting Approval</span>
+      <div style="display:flex; align-items:center; gap:12px">
+        <span class="chip chip-warning" style="font-size:13px">${pendingCount} Pending</span>
+        <span class="chip chip-success" style="font-size:13px">${sentCount} Sent</span>
+      </div>
     </div>
 
     <div class="card-box">
       <p style="color:var(--on-surface-variant); font-size:13px; margin-bottom:16px">
-        All AI-generated emails remain in <strong>PENDING</strong> status until reviewed, edited, and explicitly APPROVED by a human. Approved communications are dispatched via Resend API to target recipient.
+        All AI-generated emails remain in <strong>PENDING</strong> status until reviewed, edited, and explicitly APPROVED by a human. Approved communications are dispatched via Resend API to <strong>linusimon@gmail.com</strong>.
       </p>
 
       <div class="table-responsive">
         <table class="stitch-table">
           <thead>
-            <tr><th>ID</th><th>Recipient Role</th><th>Target Recipient</th><th>Subject Line</th><th>Status</th><th>Action</th></tr>
+            <tr><th>ID</th><th>Project</th><th>Recipient Role</th><th>Target Recipient</th><th>Subject Line</th><th>Status</th><th>Action</th></tr>
           </thead>
           <tbody>
-            ${state.emails.map(e => `
+            ${projectEmails.map(e => `
               <tr>
                 <td>#${e.id}</td>
+                <td><span class="chip chip-info">${e.project_code || state.selectedProjectCode}</span></td>
                 <td><span class="chip chip-info">${e.recipient_role}</span></td>
                 <td>linusimon@gmail.com <br><small style="color:var(--on-surface-variant)">Target: ${e.recipient_email}</small></td>
                 <td><strong>${e.subject}</strong></td>
@@ -955,11 +1071,13 @@ function renderCommsTab() {
                 </td>
                 <td>
                   ${e.status === 'PENDING' ? `
-                    <button class="btn-success" onclick="openApprovalModal(${e.id})">
-                      <span class="material-symbols-outlined">check_circle</span> Review & Approve
+                    <button class="btn-success" style="padding:6px 12px; font-weight:600;" onclick="openApprovalModal(${e.id})">
+                      <span class="material-symbols-outlined" style="font-size:16px">check_circle</span> Review & Approve
                     </button>
                   ` : `
-                    <span style="color:var(--on-surface-variant); font-size:12px">${e.status} at ${e.sent_at || e.created_at}</span>
+                    <button class="btn-secondary" style="padding:6px 12px; display:inline-flex; align-items:center; gap:4px; font-weight:600;" onclick="openApprovalModal(${e.id})">
+                      <span class="material-symbols-outlined" style="font-size:16px">visibility</span> 👁 View Sent Email
+                    </button>
                   `}
                 </td>
               </tr>
@@ -970,6 +1088,7 @@ function renderCommsTab() {
     </div>
   `;
 }
+
 
 // 5. Reports Tab View
 function renderReportsTab(currentProject) {
@@ -1850,7 +1969,7 @@ function renderLoginTab() {
               <label for="loginEmail">Email Address or Username</label>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">mail</span>
-                <input type="text" id="loginEmail" placeholder="Enter your email or username (e.g. rohit, amit, sneha, admin)" value="${state.currentUser ? state.currentUser.username : 'rohit'}" required />
+                <input type="text" id="loginEmail" placeholder="Enter your email or username (e.g. rohit, amit, sneha, admin)" value="${state.lastEnteredUsername || ''}" required />
               </div>
             </div>
 
@@ -1861,7 +1980,7 @@ function renderLoginTab() {
               </div>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">lock</span>
-                <input type="password" id="loginPassword" placeholder="Enter your password" value="user123" required />
+                <input type="password" id="loginPassword" placeholder="Enter your password" value="" required />
               </div>
             </div>
 
@@ -2126,46 +2245,122 @@ function renderCollapsibleTracePanel() {
 
 
 
-// Render Human Approval Modal Overlay
+// AI Tone & Sentiment Transformation Handler
+async function refineToneWithAI(toneName) {
+  const subjectInput = document.getElementById('editSubject');
+  const bodyInput = document.getElementById('editBody');
+  const refineBtn = document.getElementById('btnRefineTone');
+
+  if (!bodyInput || !bodyInput.value) return;
+
+  if (refineBtn) {
+    refineBtn.disabled = true;
+    refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">sync</span> Transforming Tone...';
+  }
+
+  const res = await apiPost('/emails/refine-tone', {
+    subject: subjectInput ? subjectInput.value : '',
+    body: bodyInput.value,
+    tone: toneName || 'Executive'
+  });
+
+  if (refineBtn) {
+    refineBtn.disabled = false;
+    refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; color:#facc15">bolt</span> ✨ Transform Tone with AI';
+  }
+
+  if (res && res.status === 'success') {
+    if (subjectInput && res.refined_subject) subjectInput.value = res.refined_subject;
+    if (bodyInput && res.refined_body) bodyInput.value = res.refined_body;
+    alert(`AI Tone Transformation Applied! Converted email content to '${res.tone_applied}' sentiment.`);
+  }
+}
+
+// Render Human Approval & Sent Email Inspector Modal Overlay
 function renderHumanApprovalModal() {
   const e = state.selectedEmailForApproval;
+  const isSent = e.status === 'SENT';
+
   return `
     <div class="modal-backdrop">
-      <div class="modal-window">
+      <div class="modal-window" style="max-width: 680px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-          <h3 style="font-size:18px; font-weight:700; color:var(--on-surface)">Human Approval Interface (Draft #${e.id})</h3>
+          <h3 style="font-size:18px; font-weight:700; color:var(--on-surface)">
+            ${isSent ? `📧 Dispatched Email Inspector (Draft #${e.id})` : `Human Approval Interface (Draft #${e.id})`}
+          </h3>
           <button class="btn-secondary" onclick="closeApprovalModal()" style="padding:4px 8px">✕</button>
         </div>
 
-        <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px">
-          Review and edit AI-generated copy before approving email dispatch to <strong>linusimon@gmail.com</strong>.
-        </p>
+        <div style="margin-bottom:12px; display:flex; align-items:center; justify-content:space-between">
+          <span class="chip ${isSent ? 'chip-success' : 'chip-warning'}" style="font-size:12px; font-weight:700">
+            ${isSent ? 'STATUS: SENT (Dispatched via Resend API)' : 'STATUS: PENDING (Human Approval Required)'}
+          </span>
+          <span style="font-size:12px; color:var(--on-surface-variant)">
+            ${isSent ? `Dispatched at: ${e.sent_at || e.updated_at || '2026-08-07 10:11:26'}` : `Created at: ${e.created_at || 'Recently'}`}
+          </span>
+        </div>
 
-        <label style="font-size:12px; font-weight:700; color:var(--on-surface)">Recipient Role:</label>
-        <input type="text" value="${e.recipient_role}" disabled style="background:var(--surface-container-low)" />
+        <div style="background:var(--surface-container-low); padding:12px; border-radius:8px; margin-bottom:16px">
+          <div style="font-size:12px; color:var(--on-surface-variant); margin-bottom:4px">
+            <strong>Target Recipient:</strong> linusimon@gmail.com <span class="chip chip-info" style="font-size:10px">Role: ${e.recipient_role}</span>
+          </div>
+          <div style="font-size:12px; color:var(--on-surface-variant)">
+            <strong>Original Intended Email:</strong> ${e.recipient_email}
+          </div>
+        </div>
+
+        ${!isSent ? `
+          <!-- AI Tone & Sentiment Refiner Bar -->
+          <div style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(14, 165, 233, 0.08) 100%); border: 1px solid rgba(2, 132, 199, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:12px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:6px;">
+                <span class="material-symbols-outlined" style="font-size:16px; color:#facc15">auto_awesome</span>
+                AI Tone & Sentiment Refiner (TCS GenAI API)
+              </span>
+              <span class="chip chip-info" style="font-size:10px;">gemini-1.5-pro</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <select id="selectedToneSelect" class="btn-secondary" style="background:#fff; height:36px; font-size:12px; font-weight:600; cursor:pointer;">
+                <option value="Executive">👔 Executive Brief (Formal & Concise)</option>
+                <option value="Diplomatic">🤝 Diplomatic & Solution-Oriented</option>
+                <option value="Urgent">🚨 Urgent Escalation (High Risk Impact)</option>
+                <option value="Technical">💡 Technical Lead (Engineering Detail)</option>
+              </select>
+              <button id="btnRefineTone" class="btn-primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); height:36px; padding:0 14px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; border:none; border-radius:6px; cursor:pointer; color:#fff;" onclick="refineToneWithAI(document.getElementById('selectedToneSelect').value)">
+                <span class="material-symbols-outlined" style="font-size:16px; color:#facc15">bolt</span>
+                <span>✨ Transform Tone with AI</span>
+              </button>
+            </div>
+          </div>
+        ` : ''}
 
         <label style="font-size:12px; font-weight:700; color:var(--on-surface)">Subject Line:</label>
-        <input type="text" id="editSubject" value="${e.subject}" />
+        <input type="text" id="editSubject" value="${e.subject}" ${isSent ? 'disabled style="background:var(--surface-container-low); color:var(--on-surface)"' : ''} />
 
-        <label style="font-size:12px; font-weight:700; color:var(--on-surface)">Email Body Content:</label>
-        <textarea id="editBody" rows="8">${e.body}</textarea>
+        <label style="font-size:12px; font-weight:700; color:var(--on-surface); margin-top:12px; display:block">Full Email Body Content:</label>
+        <textarea id="editBody" rows="10" ${isSent ? 'disabled style="background:var(--surface-container-low); color:var(--on-surface); line-height:1.6;"' : ''}>${e.body}</textarea>
 
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:16px">
-          <button class="btn-secondary" onclick="closeApprovalModal()">Cancel</button>
-          <button class="btn-success" onclick="approveEmail()">
-            <span class="material-symbols-outlined">send</span> Approve & Dispatch via Resend
-          </button>
+          <button class="btn-secondary" onclick="closeApprovalModal()">${isSent ? 'Close Viewer' : 'Cancel'}</button>
+          ${!isSent ? `
+            <button class="btn-success" onclick="approveEmail()">
+              <span class="material-symbols-outlined">send</span> Approve & Dispatch via Resend
+            </button>
+          ` : ''}
         </div>
       </div>
     </div>
   `;
 }
 
+
+
 // Render Dashboard Grid Customizer Modal Overlay
 function renderCustomizeModal() {
   const widgetTitles = {
     kpis: '5 KPI Metrics Overview Cards Row',
     heatmap: '5x5 Risk Heatmap Matrix',
+    aiAnalyse: 'AI Analyse Live Insights Table',
     breakdown: 'Project Phase Breakdown Table',
     flowchart: 'Critical Path Dependency Flowchart'
   };
