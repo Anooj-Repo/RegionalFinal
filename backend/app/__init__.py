@@ -45,5 +45,13 @@ def create_app():
             'version': '1.0.0'
         }), 200
 
+    # Start Background FAISS Vector Store Scheduler
+    try:
+        from backend.app.core.scheduler import start_background_scheduler
+        start_background_scheduler()
+    except Exception as e:
+        print(f"[Scheduler Startup Warning] {e}")
+
     return app
+
 

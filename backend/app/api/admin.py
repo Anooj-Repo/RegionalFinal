@@ -53,11 +53,55 @@ def get_all_db_tables():
 @admin_bp.route('/knowledge-docs', methods=['GET'])
 @role_required(['Admin', 'Super Admin', 'Program Manager'])
 def get_knowledge_docs():
-    """Retrieves uploaded RAG documents and dynamic chunk breakdown details."""
-    docs = KnowledgeDoc.query.order_by(KnowledgeDoc.created_at.desc()).all()
-    
-    chunks = global_rag_engine.static_docs
-    chunk_summary = [
+    """Retrieves uploaded RAG documents, FAISS project indices, and dynamic chunk breakdown details."""
+    docs = KnowledgeDoc.query.order_by(KnowledgeDoc.id.desc()).all()
+
+
+    chunks = list(global_rag_engine.static_docs)
+
+    import json, glob
+    vector_store_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "vector_store")
+    faiss_chunks = []
+
+    if os.path.exists(vector_store_dir):
+        for meta_file in glob.glob(os.path.join(vector_store_dir, "*_metadata.json")):
+            try:
+                with open(meta_file, 'r', encoding='utf-8') as fh:
+                    items = json.load(fh)
+                    proj_name = os.path.basename(meta_file).replace('_metadata.json', '').upper()
+                    for item in items:
+                        faiss_chunks.append({
+                            'id': item.get('chunk_id', 'faiss_chunk'),
+                            'filename': f"FAISS Store [{proj_name}] ({item.get('source')})",
+                            'snippet': item.get('text', '')[:140] + '...',
+                            'word_count': len(item.get('text', '').split()),
+                            'embedding_dim': '384-d FAISS Dense Vector',
+                            'status': 'INDEXED'
+                        })
+            except Exception as e:
+                print(f"[Admin FAISS Read Error] {e}")
+
+    vector_import_chunks = []
+    vector_import_dir = os.path.abspath(os.path.join(os.getcwd(), "VectorImport", "backend", "data", "vector_store"))
+    if os.path.exists(vector_import_dir):
+        for meta_file in glob.glob(os.path.join(vector_import_dir, "*_metadata.json")):
+            try:
+                with open(meta_file, 'r', encoding='utf-8') as fh:
+                    items = json.load(fh)
+                    proj_name = os.path.basename(meta_file).replace('_metadata.json', '').upper()
+                    for item in items:
+                        vector_import_chunks.append({
+                            'id': item.get('chunk_id', 'vimport_chunk'),
+                            'filename': f"VectorImport Store [{proj_name}] ({item.get('source_doc_id', item.get('source', 'document'))})",
+                            'snippet': item.get('text', '')[:140] + '...',
+                            'word_count': len(item.get('text', '').split()),
+                            'embedding_dim': '384-d FAISS Dense Vector (VectorImport Engine)',
+                            'status': 'INDEXED'
+                        })
+            except Exception as e:
+                print(f"[Admin VectorImport FAISS Read Error] {e}")
+
+    all_chunks = [
         {
             'id': c['id'],
             'filename': c['filename'],
@@ -67,15 +111,19 @@ def get_knowledge_docs():
             'status': 'INDEXED'
         }
         for c in chunks
-    ]
+    ] + faiss_chunks
 
     return jsonify({
         'status': 'success',
         'total_documents': len(docs),
-        'total_rag_chunks': len(chunks),
+        'total_rag_chunks': len(all_chunks),
         'documents': [d.to_dict() for d in docs],
-        'rag_chunks': chunk_summary
+        'rag_chunks': all_chunks,
+        'vector_import_chunks': vector_import_chunks,
+        'total_vector_import_chunks': len(vector_import_chunks)
     }), 200
+
+
 
 @admin_bp.route('/users', methods=['GET'])
 @role_required(['Admin', 'Super Admin', 'Program Manager'])
