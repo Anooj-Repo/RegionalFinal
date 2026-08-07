@@ -43,6 +43,132 @@
   },
   {
     "index_pos": 3,
+    "chunk_id": "chk_PRJ-001_task_12",
+    "doc_id": "doc_PRJ-001_tasks",
+    "source": "TaskAdapter",
+    "title": "Technical Gateway Mocking & Fallback Integration for R#1",
+    "text": "WBS Task [PRJ-001-R1-T1] Technical Gateway Mocking & Fallback Integration for R#1 (Status: Completed, Priority: High)",
+    "metadata": {
+      "project_code": "PRJ-001",
+      "type": "task",
+      "wbs_code": "PRJ-001-R1-T1",
+      "status": "Completed"
+    }
+  },
+  {
+    "index_pos": 4,
+    "chunk_id": "chk_PRJ-001_task_13",
+    "doc_id": "doc_PRJ-001_tasks",
+    "source": "TaskAdapter",
+    "title": "SecOps Security Compliance Clearance for R#1",
+    "text": "WBS Task [PRJ-001-R1-T2] SecOps Security Compliance Clearance for R#1 (Status: Completed, Priority: High)",
+    "metadata": {
+      "project_code": "PRJ-001",
+      "type": "task",
+      "wbs_code": "PRJ-001-R1-T2",
+      "status": "Completed"
+    }
+  },
+  {
+    "index_pos": 5,
+    "chunk_id": "chk_PRJ-001_task_14",
+    "doc_id": "doc_PRJ-001_tasks",
+    "source": "TaskAdapter",
+    "title": "Vendor SLA Penalty Escalation & Sprint Alignment for R#1",
+    "text": "WBS Task [PRJ-001-R1-T3] Vendor SLA Penalty Escalation & Sprint Alignment for R#1 (Status: Completed, Priority: High)",
+    "metadata": {
+      "project_code": "PRJ-001",
+      "type": "task",
+      "wbs_code": "PRJ-001-R1-T3",
+      "status": "Completed"
+    }
+  },
+  {
+    "index_pos": 6,
+    "chunk_id": "chk_PRJ-001_task_15",
+    "doc_id": "doc_PRJ-001_tasks",
+    "source": "TaskAdapter",
+    "title": "Technical Gateway Mocking & Fallback Integration for R#1",
+    "text": "WBS Task [PRJ-001-R1-T1] Technical Gateway Mocking & Fallback Integration for R#1 (Status: Completed, Priority: High)",
+    "metadata": {
+      "project_code": "PRJ-001",
+      "type": "task",
+      "wbs_code": "PRJ-001-R1-T1",
+      "status": "Completed"
+    }
+  },
+  {
+    "index_pos": 7,
+    "chunk_id": "chk_PRJ-001_task_16",
+    "doc_id": "doc_PRJ-001_tasks",
+    "source": "TaskAdapter",
+    "title": "SecOps Security Compliance Clearance for R#1",
+    "text": "WBS Task [PRJ-001-R1-T2] SecOps Security Compliance Clearance for R#1 (Status: Completed, Priority: High)",
+    "metadata": {
+      "project_code": "PRJ-001",
+      "type": "task",
+      "wbs_code": "PRJ-001-R1-T2",
+      "status": "Completed"
+    }
+  },
+  {
+    "index_pos": 8,
+    "chunk_id": "chk_PRJ-001_task_17",
+    "doc_id": "doc_PRJ-001_tasks",
+    "source": "TaskAdapter",
+    "title": "Vendor SLA Penalty Escalation & Sprint Alignment for R#1",
+    "text": "WBS Task [PRJ-001-R1-T3] Vendor SLA Penalty Escalation & Sprint Alignment for R#1 (Status: Completed, Priority: High)",
+    "metadata": {
+      "project_code": "PRJ-001",
+      "type": "task",
+      "wbs_code": "PRJ-001-R1-T3",
+      "status": "Completed"
+    }
+  },
+  {
+    "index_pos": 9,
+    "chunk_id": "chk_PRJ-001_task_18",
+    "doc_id": "doc_PRJ-001_tasks",
+    "source": "TaskAdapter",
+    "title": "Deploy Secondary Technical Stub & Gateway Mock for Third-party API Integration Delay",
+    "text": "WBS Task [PRJ-001-R1-T1] Deploy Secondary Technical Stub & Gateway Mock for Third-party API Integration Delay (Status: Not Started, Priority: High)",
+    "metadata": {
+      "project_code": "PRJ-001",
+      "type": "task",
+      "wbs_code": "PRJ-001-R1-T1",
+      "status": "Not Started"
+    }
+  },
+  {
+    "index_pos": 10,
+    "chunk_id": "chk_PRJ-001_task_19",
+    "doc_id": "doc_PRJ-001_tasks",
+    "source": "TaskAdapter",
+    "title": "Initiate Fast-Track SecOps & Governance Audit for Third-party API Integration Delay",
+    "text": "WBS Task [PRJ-001-R1-T2] Initiate Fast-Track SecOps & Governance Audit for Third-party API Integration Delay (Status: Not Started, Priority: High)",
+    "metadata": {
+      "project_code": "PRJ-001",
+      "type": "task",
+      "wbs_code": "PRJ-001-R1-T2",
+      "status": "Not Started"
+    }
+  },
+  {
+    "index_pos": 11,
+    "chunk_id": "chk_PRJ-001_task_20",
+    "doc_id": "doc_PRJ-001_tasks",
+    "source": "TaskAdapter",
+    "title": "Execute Sprint Contingency & Vendor SLA Escalation for Third-party API Integration Delay",
+    "text": "WBS Task [PRJ-001-R1-T3] Execute Sprint Contingency & Vendor SLA Escalation for Third-party API Integration Delay (Status: Not Started, Priority: High)",
+    "metadata": {
+      "project_code": "PRJ-001",
+      "type": "task",
+      "wbs_code": "PRJ-001-R1-T3",
+      "status": "Not Started"
+    }
+  },
+  {
+    "index_pos": 12,
     "chunk_id": "chk_PRJ-001_raid_1",
     "doc_id": "doc_PRJ-001_raid",
     "source": "RiskRegisterAdapter",
@@ -56,7 +182,7 @@
     }
   },
   {
-    "index_pos": 4,
+    "index_pos": 13,
     "chunk_id": "chk_PRJ-001_raid_2",
     "doc_id": "doc_PRJ-001_raid",
     "source": "RiskRegisterAdapter",
@@ -70,7 +196,7 @@
     }
   },
   {
-    "index_pos": 5,
+    "index_pos": 14,
     "chunk_id": "chk_PRJ-001_raid_7",
     "doc_id": "doc_PRJ-001_raid",
     "source": "RiskRegisterAdapter",
@@ -84,7 +210,7 @@
     }
   },
   {
-    "index_pos": 6,
+    "index_pos": 15,
     "chunk_id": "chk_PRJ-001_raid_8",
     "doc_id": "doc_PRJ-001_raid",
     "source": "RiskRegisterAdapter",
@@ -98,7 +224,7 @@
     }
   },
   {
-    "index_pos": 7,
+    "index_pos": 16,
     "chunk_id": "chk_PRJ-001_raid_9",
     "doc_id": "doc_PRJ-001_raid",
     "source": "RiskRegisterAdapter",
@@ -112,7 +238,7 @@
     }
   },
   {
-    "index_pos": 8,
+    "index_pos": 17,
     "chunk_id": "chk_PRJ-001_comm_15",
     "doc_id": "doc_PRJ-001_comms",
     "source": "ChatAdapter",
@@ -123,7 +249,7 @@
     }
   },
   {
-    "index_pos": 9,
+    "index_pos": 18,
     "chunk_id": "chk_PRJ-001_comm_16",
     "doc_id": "doc_PRJ-001_comms",
     "source": "ChatAdapter",
@@ -134,7 +260,7 @@
     }
   },
   {
-    "index_pos": 10,
+    "index_pos": 19,
     "chunk_id": "chk_PRJ-001_comm_17",
     "doc_id": "doc_PRJ-001_comms",
     "source": "ChatAdapter",
@@ -145,7 +271,7 @@
     }
   },
   {
-    "index_pos": 11,
+    "index_pos": 20,
     "chunk_id": "chk_PRJ-001_doc_mobile_compliance.txt_0",
     "doc_id": "doc_file_mobile_compliance.txt",
     "source": "FileAdapter",
@@ -158,7 +284,7 @@
     }
   },
   {
-    "index_pos": 12,
+    "index_pos": 21,
     "chunk_id": "chk_PRJ-001_doc_mobile_compliance.txt_1",
     "doc_id": "doc_file_mobile_compliance.txt",
     "source": "FileAdapter",
@@ -171,7 +297,7 @@
     }
   },
   {
-    "index_pos": 13,
+    "index_pos": 22,
     "chunk_id": "chk_PRJ-001_doc_mobile_compliance.txt_2",
     "doc_id": "doc_file_mobile_compliance.txt",
     "source": "FileAdapter",
@@ -184,7 +310,7 @@
     }
   },
   {
-    "index_pos": 14,
+    "index_pos": 23,
     "chunk_id": "chk_PRJ-001_doc_orion_sow.txt_0",
     "doc_id": "doc_file_orion_sow.txt",
     "source": "FileAdapter",
@@ -197,7 +323,7 @@
     }
   },
   {
-    "index_pos": 15,
+    "index_pos": 24,
     "chunk_id": "chk_PRJ-001_doc_orion_sow.txt_1",
     "doc_id": "doc_file_orion_sow.txt",
     "source": "FileAdapter",
@@ -210,7 +336,7 @@
     }
   },
   {
-    "index_pos": 16,
+    "index_pos": 25,
     "chunk_id": "chk_PRJ-001_doc_orion_sow.txt_2",
     "doc_id": "doc_file_orion_sow.txt",
     "source": "FileAdapter",
@@ -223,7 +349,7 @@
     }
   },
   {
-    "index_pos": 17,
+    "index_pos": 26,
     "chunk_id": "chk_PRJ-001_doc_orion_sow.txt_3",
     "doc_id": "doc_file_orion_sow.txt",
     "source": "FileAdapter",
@@ -236,7 +362,7 @@
     }
   },
   {
-    "index_pos": 18,
+    "index_pos": 27,
     "chunk_id": "chk_PRJ-001_doc_orion_sow.txt_4",
     "doc_id": "doc_file_orion_sow.txt",
     "source": "FileAdapter",
@@ -249,7 +375,7 @@
     }
   },
   {
-    "index_pos": 19,
+    "index_pos": 28,
     "chunk_id": "chk_PRJ-001_doc_pegasus_architecture.txt_0",
     "doc_id": "doc_file_pegasus_architecture.txt",
     "source": "FileAdapter",
@@ -262,7 +388,7 @@
     }
   },
   {
-    "index_pos": 20,
+    "index_pos": 29,
     "chunk_id": "chk_PRJ-001_doc_pegasus_architecture.txt_1",
     "doc_id": "doc_file_pegasus_architecture.txt",
     "source": "FileAdapter",
@@ -275,7 +401,7 @@
     }
   },
   {
-    "index_pos": 21,
+    "index_pos": 30,
     "chunk_id": "chk_PRJ-001_doc_pegasus_architecture.txt_2",
     "doc_id": "doc_file_pegasus_architecture.txt",
     "source": "FileAdapter",
@@ -288,7 +414,7 @@
     }
   },
   {
-    "index_pos": 22,
+    "index_pos": 31,
     "chunk_id": "chk_PRJ-001_doc_risk_sop.txt_0",
     "doc_id": "doc_file_risk_sop.txt",
     "source": "FileAdapter",
@@ -301,7 +427,7 @@
     }
   },
   {
-    "index_pos": 23,
+    "index_pos": 32,
     "chunk_id": "chk_PRJ-001_doc_risk_sop.txt_1",
     "doc_id": "doc_file_risk_sop.txt",
     "source": "FileAdapter",
@@ -314,7 +440,7 @@
     }
   },
   {
-    "index_pos": 24,
+    "index_pos": 33,
     "chunk_id": "chk_PRJ-001_doc_risk_sop.txt_2",
     "doc_id": "doc_file_risk_sop.txt",
     "source": "FileAdapter",
@@ -327,7 +453,7 @@
     }
   },
   {
-    "index_pos": 25,
+    "index_pos": 34,
     "chunk_id": "chk_PRJ-001_doc_risk_sop.txt_3",
     "doc_id": "doc_file_risk_sop.txt",
     "source": "FileAdapter",
@@ -340,7 +466,7 @@
     }
   },
   {
-    "index_pos": 26,
+    "index_pos": 35,
     "chunk_id": "chk_PRJ-001_doc_risk_sop.txt_4",
     "doc_id": "doc_file_risk_sop.txt",
     "source": "FileAdapter",
@@ -353,7 +479,7 @@
     }
   },
   {
-    "index_pos": 27,
+    "index_pos": 36,
     "chunk_id": "chk_PRJ-001_doc_security_policy.txt_0",
     "doc_id": "doc_file_security_policy.txt",
     "source": "FileAdapter",
@@ -366,7 +492,7 @@
     }
   },
   {
-    "index_pos": 28,
+    "index_pos": 37,
     "chunk_id": "chk_PRJ-001_doc_security_policy.txt_1",
     "doc_id": "doc_file_security_policy.txt",
     "source": "FileAdapter",
@@ -379,7 +505,7 @@
     }
   },
   {
-    "index_pos": 29,
+    "index_pos": 38,
     "chunk_id": "chk_PRJ-001_doc_security_policy.txt_2",
     "doc_id": "doc_file_security_policy.txt",
     "source": "FileAdapter",
@@ -392,7 +518,7 @@
     }
   },
   {
-    "index_pos": 30,
+    "index_pos": 39,
     "chunk_id": "chk_PRJ-001_doc_security_policy.txt_3",
     "doc_id": "doc_file_security_policy.txt",
     "source": "FileAdapter",
@@ -405,7 +531,7 @@
     }
   },
   {
-    "index_pos": 31,
+    "index_pos": 40,
     "chunk_id": "chk_PRJ-001_doc_security_policy.txt_4",
     "doc_id": "doc_file_security_policy.txt",
     "source": "FileAdapter",
