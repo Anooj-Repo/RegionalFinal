@@ -1793,7 +1793,9 @@ async function refineToneWithAI(toneName) {
   const res = await apiPost('/emails/refine-tone', {
     subject: subjectInput ? subjectInput.value : '',
     body: bodyInput.value,
-    tone: toneName || 'Executive'
+    tone: toneName || 'Executive',
+    recipient_role: state.selectedEmailForApproval ? state.selectedEmailForApproval.recipient_role : '',
+    recipient_email: state.selectedEmailForApproval ? state.selectedEmailForApproval.recipient_email : ''
   });
 
   if (refineBtn) {
@@ -1804,14 +1806,23 @@ async function refineToneWithAI(toneName) {
   if (res && res.status === 'success') {
     if (subjectInput && res.refined_subject) subjectInput.value = res.refined_subject;
     if (bodyInput && res.refined_body) bodyInput.value = res.refined_body;
+    if (state.selectedEmailForApproval) {
+      if (res.refined_subject) state.selectedEmailForApproval.subject = res.refined_subject;
+      if (res.refined_body) state.selectedEmailForApproval.body = res.refined_body;
+    }
     alert(`AI Tone Transformation Applied! Converted email content to '${res.tone_applied}' sentiment.`);
   }
+}
+
+function getAppRecipientName(role, email) {
+  return 'Linus Simon';
 }
 
 // Render Human Approval & Sent Email Inspector Modal Overlay
 function renderHumanApprovalModal() {
   const e = state.selectedEmailForApproval;
   const isSent = e.status === 'SENT';
+  const recipientName = getAppRecipientName(e.recipient_role, e.recipient_email);
 
   return `
     <div class="modal-backdrop">
@@ -1834,10 +1845,10 @@ function renderHumanApprovalModal() {
 
         <div style="background:var(--surface-container-low); padding:12px; border-radius:8px; margin-bottom:16px">
           <div style="font-size:12px; color:var(--on-surface-variant); margin-bottom:4px">
-            <strong>Target Recipient:</strong> linusimon@gmail.com <span class="chip chip-info" style="font-size:10px">Role: ${e.recipient_role}</span>
+            <strong>Target Recipient:</strong> ${recipientName} (linusimon@gmail.com) <span class="chip chip-info" style="font-size:10px; margin-left:6px;">Role: ${e.recipient_role}</span>
           </div>
           <div style="font-size:12px; color:var(--on-surface-variant)">
-            <strong>Original Intended Email:</strong> ${e.recipient_email}
+            <strong>Original Intended Route:</strong> ${e.recipient_email}
           </div>
         </div>
 

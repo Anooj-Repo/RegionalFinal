@@ -259,7 +259,7 @@ def seed_backend_db(app):
         db.session.add_all(mitigations)
         db.session.commit()
 
-        # 6. Seed Email Drafts (Pending Human Approval)
+        # 6. Seed Email Drafts (Pending Human Approval) for all projects
         emails = [
             EmailDraft(
                 project_id=p1.id,
@@ -267,7 +267,37 @@ def seed_backend_db(app):
                 recipient_role="Executive",
                 recipient_email="executive@company.com",
                 subject="Executive Update: API Integration Delay Risk on Project Orion Upgrade",
-                body="Dear Executive Team,\n\nWe have identified a high-severity risk on Project Orion Upgrade regarding Third-Party API Integration. The third-party vendor has delayed spec delivery by 3 weeks.\n\nMitigation Action: We are building a mock API server to keep frontend development on schedule. Impact to final launch is estimated at under 5 days.\n\nBest regards,\nRohit Verma (Program Manager)",
+                body="Dear Linus Simon,\n\nWe have identified a high-severity risk on Project Orion Upgrade regarding Third-Party API Integration. The third-party vendor has delayed spec delivery by 3 weeks.\n\nMitigation Action: We are building a mock API server to keep frontend development on schedule. Impact to final launch is estimated at under 5 days.\n\nBest regards,\nProgram Management Office",
+                status="PENDING",
+                created_by="Communication Agent"
+            ),
+            EmailDraft(
+                project_id=p1.id,
+                raid_id=r1.id,
+                recipient_role="Admin",
+                recipient_email="linusimon@gmail.com",
+                subject="[Admin Alert] Risk Mitigation Summary for PRJ-001",
+                body="Dear Linus Simon,\n\nProject PRJ-001 (Mobilization Phase) has identified an active Risk: 'Third-party API Integration Delay' with Risk Score 85/100.\n\nMitigation Strategy: Execute fallback mock integration to unblock sprint timelines.\n\nBest regards,\nProgram Management Office",
+                status="PENDING",
+                created_by="Communication Agent"
+            ),
+            EmailDraft(
+                project_id=p2.id,
+                raid_id=r1.id,
+                recipient_role="Program Manager",
+                recipient_email="rohit.verma@pmai.com",
+                subject="ERP Cloud Migration: Data Loss Concern & Governance Review",
+                body="Dear Linus Simon,\n\nLegacy database schema conversion has flagged a data loss risk during staging ETL pipeline execution. We require immediate PMO review.\n\nMitigation Action: Execute isolated sandbox dry-run with rollback scripts.\n\nBest regards,\nProgram Management Office",
+                status="PENDING",
+                created_by="Communication Agent"
+            ),
+            EmailDraft(
+                project_id=p3.id,
+                raid_id=r1.id,
+                recipient_role="Executive",
+                recipient_email="karan.patel@pmai.com",
+                subject="Executive Alert: Core Banking Security Audit Compliance Delay",
+                body="Dear Linus Simon,\n\nSecurity compliance audit requirements for OAuth2 token rotation require additional 48 hours for third-party penetration testing.\n\nMitigation Action: Fast-track security review with external audit vendor.\n\nBest regards,\nProgram Management Office",
                 status="PENDING",
                 created_by="Communication Agent"
             ),
@@ -277,7 +307,17 @@ def seed_backend_db(app):
                 recipient_role="Tech Lead",
                 recipient_email="sneha.iyer@pmai.com",
                 subject="Technical Action Required: Data Validation Scripts for Migration Phase",
-                body="Hi Sneha,\n\nPlease review the legacy database ETL validation scripts. We detected potential foreign key mismatch risks. Ensure staging dry run runs before Friday.\n\nRegards,\nAmit Joshi",
+                body="Dear Linus Simon,\n\nPlease review the legacy database ETL validation scripts. We detected potential foreign key mismatch risks. Ensure staging dry run runs before Friday.\n\nBest regards,\nProgram Management Office",
+                status="PENDING",
+                created_by="Communication Agent"
+            ),
+            EmailDraft(
+                project_id=p5.id,
+                raid_id=r4.id,
+                recipient_role="Program Manager",
+                recipient_email="rohit.verma@pmai.com",
+                subject="AI Engine Sprint Alignment: GPU Cluster Provisioning Dependency",
+                body="Dear Linus Simon,\n\nAI model training cluster provisioning is pending cloud quota approval. Recommendation is to provision temporary server instances.\n\nBest regards,\nProgram Management Office",
                 status="PENDING",
                 created_by="Communication Agent"
             )
