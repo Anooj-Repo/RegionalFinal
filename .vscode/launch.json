@@ -5,8 +5,8 @@
       "name": "Debug Backend API (Flask)",
       "type": "debugpy",
       "request": "launch",
-      "python": "C:\\Program Files\\Python312\\python.exe",
-      "program": "${workspaceFolder}/backend/app.py",
+      "python": "${workspaceFolder}/venv/Scripts/python.exe",
+      "program": "${workspaceFolder}/backend/run.py",
       "console": "integratedTerminal",
       "env": {
         "FLASK_DEBUG": "False",
@@ -18,7 +18,7 @@
       "name": "Debug MCP Protocol Server",
       "type": "debugpy",
       "request": "launch",
-      "python": "C:\\Program Files\\Python312\\python.exe",
+      "python": "${workspaceFolder}/venv/Scripts/python.exe",
       "program": "${workspaceFolder}/mcp/server.py",
       "console": "integratedTerminal",
       "env": {
@@ -28,23 +28,11 @@
       }
     },
     {
-      "name": "Debug Alert Email Worker",
-      "type": "debugpy",
-      "request": "launch",
-      "python": "C:\\Program Files\\Python312\\python.exe",
-      "program": "${workspaceFolder}/scripts/alert_worker.py",
-      "args": ["--once"],
-      "console": "integratedTerminal",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
       "name": "Debug All Unit Tests",
       "type": "debugpy",
       "request": "launch",
-      "python": "C:\\Program Files\\Python312\\python.exe",
-      "program": "${workspaceFolder}/unit_tests/run_all_unit_tests.py",
+      "python": "${workspaceFolder}/venv/Scripts/python.exe",
+      "program": "${workspaceFolder}/tests/test_all_features.py",
       "console": "integratedTerminal",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
@@ -54,7 +42,7 @@
       "name": "Debug Current Active Python File",
       "type": "debugpy",
       "request": "launch",
-      "python": "C:\\Program Files\\Python312\\python.exe",
+      "python": "${workspaceFolder}/venv/Scripts/python.exe",
       "program": "${file}",
       "console": "integratedTerminal",
       "env": {

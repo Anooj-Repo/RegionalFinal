@@ -62,13 +62,11 @@
           </tbody>
         </table>
       </div>
-    </div>
-
     <div>
       <h3 style="color:var(--primary-container); font-size:16px; margin-bottom:8px; font-weight:700;">
         2. Unstructured Knowledge Graph RAG Database (`mcp/mcp.db` -> GraphRAG)
       </h3>
-      <div class="table-responsive">
+      <div class="table-responsive" style="margin-bottom:24px;">
         <table class="stitch-table">
           <thead>
             <tr><th>Triple ID</th><th>Subject Entity</th><th>Relationship Predicate</th><th>Object Entity</th><th>Communication Source</th><th>Category</th><th>Confidence</th></tr>
@@ -87,8 +85,29 @@
         </table>
       </div>
 
+      <h3 style="color:var(--primary-container); font-size:16px; margin-bottom:8px; font-weight:700;">
+        3. VectorImport Graph 1 & Intelligence Engine RAG Vector Store (`VectorImport/backend/data/vector_store/`)
+      </h3>
+      <div class="table-responsive">
+        <table class="stitch-table">
+          <thead>
+            <tr><th>Chunk ID</th><th>Source / VectorImport Project Store</th><th>Content Preview Snippet</th><th>Embedding Dim</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of vectorImportChunks">
+              <td><code>{{ c.id }}</code></td>
+              <td><strong>{{ c.filename }}</strong></td>
+              <td><small style="color:var(--on-surface-variant)">{{ c.snippet }}</small></td>
+              <td><span class="chip chip-warning">{{ c.embedding_dim }}</span></td>
+              <td><span class="chip chip-success">INDEXED</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
+
+
 
   <!-- SECTION 2: SQLITE DB MASTER TABLES INSPECTOR (ALL 8 TABLES) -->
   <div *ngIf="activeSubTab === 'db_tables'">
