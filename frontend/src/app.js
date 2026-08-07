@@ -33,7 +33,11 @@ const state = {
     heatmap: true,
     aiAnalyse: true,
     breakdown: true
-  }
+  },
+  chatMessages: [],
+  chatNodeTraces: [],
+  chatInput: '',
+  isChatStreaming: false
 };
 
 // Initialize Application
@@ -1163,10 +1167,12 @@ function renderReportsTab(currentProject) {
 // 6. AI Assistant & Voice Chat Tab View — Enterprise Chat Workspace
 function renderChatTab() {
   const projectCode = state.selectedProjectCode || 'PRJ-001';
-  const userRole = state.currentUser.role || 'Program Manager';
+  const userRole = state.currentUser ? (state.currentUser.role || 'Program Manager') : (state.currentRole || 'Program Manager');
+  const chatMessages = state.chatMessages || [];
+  const chatNodeTraces = state.chatNodeTraces || [];
 
   // Build message feed HTML
-  const feedHtml = state.chatMessages.length === 0 ? `
+  const feedHtml = chatMessages.length === 0 ? `
     <div class="chat-empty-state">
       <span class="chat-empty-icon material-symbols-outlined">smart_toy</span>
       <div class="chat-empty-title">Enterprise AI Assistant</div>
@@ -1175,14 +1181,14 @@ function renderChatTab() {
         ${_getQuickChips().map(c => `<button class="chat-reply-chip" onclick="chatQuickSend('${c.prompt}')">${c.label}</button>`).join('')}
       </div>
     </div>
-  ` : state.chatMessages.map(msg => _renderChatMessage(msg)).join('');
+  ` : chatMessages.map(msg => _renderChatMessage(msg)).join('');
 
   // Build node trace panel HTML
-  const traceHtml = state.chatNodeTraces.length === 0 ? `
+  const traceHtml = chatNodeTraces.length === 0 ? `
     <div style="color:var(--on-surface-variant); font-size:12px; text-align:center; padding:20px; opacity:0.6">
       Node traces will appear here during agent execution.
     </div>
-  ` : state.chatNodeTraces.map(n => `
+  ` : chatNodeTraces.map(n => `
     <div class="chat-trace-node node-${n.status === 'COMPLETED' ? 'completed' : n.status === 'BLOCKED' ? 'blocked' : 'running'}">
       <div class="chat-trace-dot"></div>
       <div style="flex:1">
