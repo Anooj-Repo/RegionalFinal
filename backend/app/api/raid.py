@@ -245,8 +245,18 @@ def discover_risks_with_ai():
                 'source_feed': source_label
             })
 
+    # 3. Filter out risks that are already confirmed and registered in app.db for this project
+    existing_raids = RAIDItem.query.filter_by(project_id=project.id).all()
+    existing_titles = [r.title.strip().lower() for r in existing_raids]
 
+    unregistered_list = []
+    for item in discovered_list:
+        t_lower = item['title'].strip().lower()
+        is_already_added = any(t_lower in ext or ext in t_lower for ext in existing_titles)
+        if not is_already_added:
+            unregistered_list.append(item)
 
+    discovered_list = unregistered_list
 
     supervisor_trace = [
         {'name': '1. VectorImport Graph 1 Knowledge Bundle', 'status': 'COMPLETED', 'latency_ms': 12},
@@ -256,13 +266,14 @@ def discover_risks_with_ai():
 
     return jsonify({
         'status': 'success',
-        'message': f'VectorImport execute_intelligence and execute_analysis completed for {project_code}. Found {len(discovered_list)} risks.',
+        'message': f'VectorImport execute_intelligence and execute_analysis completed for {project_code}. Found {len(discovered_list)} new un-tracked risks.',
         'intelligence': intel_res,
         'discovered_risk': discovered_list[0] if discovered_list else None,
         'discovered_risks': discovered_list,
         'total_discovered': len(discovered_list),
         'supervisor_trace': supervisor_trace
     }), 200
+
 
 
 
