@@ -1096,13 +1096,13 @@ function renderRaidTab() {
   return `
     <div class="page-header">
       <div>
-        <h1 class="page-title">Risk Center (RAID Register)</h1>
+        <h1 class="page-title">Risk Center</h1>
         <p class="page-subtitle">Active risks, assumptions, issues, and dependencies for ${state.selectedProjectCode}</p>
       </div>
       ${canAccessCommsAndBreakdown ? `
         <button class="btn-primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; font-weight:700; display:flex; align-items:center; gap:8px; border:none; padding:10px 16px; border-radius:8px; cursor:pointer;" onclick="triggerRaidRiskDiscovery()" ${state.isAnalyzingRisk ? 'disabled' : ''}>
           <span class="material-symbols-outlined" style="color:#facc15">bolt</span>
-          ${state.isAnalyzingRisk ? 'AI Analyzing Project Vector Store...' : 'Run LangGraph RAID Analysis'}
+          ${state.isAnalyzingRisk ? 'AI Analyzing Project Vector Store...' : 'Risk Analysis'}
         </button>
       ` : ''}
     </div>
