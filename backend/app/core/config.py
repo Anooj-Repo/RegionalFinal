@@ -10,11 +10,15 @@ load_dotenv()
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
 DB_PATH = os.path.join(BASE_DIR, 'backend', 'app.db').replace('\\', '/')
 
+from datetime import timedelta
+
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'enterprise-secret-key-change-in-production')
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'enterprise-jwt-secret-key-change-in-production')
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', f'sqlite:///{DB_PATH}')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
 
 
 

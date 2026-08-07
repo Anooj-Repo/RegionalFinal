@@ -15,12 +15,17 @@
       <span style="color:var(--outline); font-size:12px; font-weight:600">-</span>
       <input type="date" value="2025-05-18" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="End Date" />
     </div>
-    <button class="btn-secondary" (click)="openCustomizeModal()">
+    <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" (click)="triggerWorkflow()">
+      <span class="material-symbols-outlined" style="font-size: 18px; color: #facc15">bolt</span>
+      <span>⚡ Analyze Portfolio Risks</span>
+    </button>
+    <button class="btn-secondary">
       <span class="material-symbols-outlined">tune</span>
       Customize
     </button>
   </div>
 </div>
+
 
 <!-- 5 KPI Cards Row -->
 <div class="kpi-grid">
@@ -28,7 +33,9 @@
     <div class="kpi-title">Overall Program Health</div>
     <div class="kpi-value">{{ getCurrentProject().progress_pct }}%</div>
     <div class="kpi-subtext">
-      <span class="chip chip-warning">Medium Risk</span>
+      <span class="chip" [ngClass]="{'chip-success': getCurrentProject().health_status==='Healthy', 'chip-warning': getCurrentProject().health_status!=='Healthy'}">
+        {{ getCurrentProject().health_status }}
+      </span>
       <span style="color:var(--secondary); font-weight:600">Phase: {{ getCurrentProject().lifecycle_phase }}</span>
     </div>
   </div>
@@ -38,22 +45,22 @@
     <div class="kpi-value">{{ projects.length }}</div>
     <div class="kpi-subtext" style="color:#059669">
       <span class="material-symbols-outlined" style="font-size:16px">arrow_upward</span>
-      <strong>3 from last week</strong>
+      <strong>Across 5 Lifecycle Phases</strong>
     </div>
   </div>
 
   <div class="kpi-card">
     <div class="kpi-title">Open RAID Risks</div>
-    <div class="kpi-value" style="color:var(--error)">{{ raidItems.length }}</div>
+    <div class="kpi-value" style="color:var(--error)">{{ getProjectRaidItems().length }}</div>
     <div class="kpi-subtext" style="color:var(--error)">
       <span class="material-symbols-outlined" style="font-size:16px">warning</span>
-      <strong>High Score Risk Active</strong>
+      <strong>{{ getProjectHighRiskCount() }} High Score (&gt;70)</strong>
     </div>
   </div>
 
   <div class="kpi-card">
     <div class="kpi-title">Pending Approvals</div>
-    <div class="kpi-value" style="color:var(--primary-container)">{{ pendingEmailCount }}</div>
+    <div class="kpi-value" style="color:var(--primary-container)">{{ getProjectPendingEmailCount() }}</div>
     <div class="kpi-subtext" style="color:var(--primary-container)">
       <span class="chip chip-info">Human Approval Required</span>
     </div>
@@ -61,12 +68,13 @@
 
   <div class="kpi-card">
     <div class="kpi-title">Budget Variance</div>
-    <div class="kpi-value" style="color:var(--error)">-8.5%</div>
-    <div class="kpi-subtext" style="color:var(--error)">
-      <strong>($1.2M over budget)</strong>
+    <div class="kpi-value" [style.color]="getBudgetVarianceColor()">{{ getBudgetVarianceValue() }}</div>
+    <div class="kpi-subtext" [style.color]="getBudgetVarianceColor()">
+      <strong>{{ getBudgetVarianceSubtext() }}</strong>
     </div>
   </div>
 </div>
+
 
 <!-- 2 Column Layout: 5x5 Heatmap + Project Phase Breakdown -->
 <div class="grid-2col">

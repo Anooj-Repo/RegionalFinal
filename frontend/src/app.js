@@ -190,13 +190,18 @@ function logoutUser() {
   renderApp();
 }
 
-// API Helpers
-async function apiGet(endpoint) {
+// API Helpers with Automatic 401 Token Expiration Retry
+async function apiGet(endpoint, isRetry = false) {
   if (!state.authToken) await loginAsDefaultUser();
   try {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: { 'Authorization': `Bearer ${state.authToken}` }
     });
+    if (res.status === 401 && !isRetry) {
+      console.warn(`[Auth Warning] JWT Token expired for GET ${endpoint}. Re-authenticating...`);
+      await loginAsDefaultUser();
+      return await apiGet(endpoint, true);
+    }
     return await res.json();
   } catch (err) {
     console.error(`[API Error] GET ${endpoint}:`, err);
@@ -204,7 +209,7 @@ async function apiGet(endpoint) {
   }
 }
 
-async function apiPost(endpoint, body) {
+async function apiPost(endpoint, body, isRetry = false) {
   if (!state.authToken) await loginAsDefaultUser();
   try {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -215,12 +220,18 @@ async function apiPost(endpoint, body) {
       },
       body: JSON.stringify(body)
     });
+    if (res.status === 401 && !isRetry) {
+      console.warn(`[Auth Warning] JWT Token expired for POST ${endpoint}. Re-authenticating...`);
+      await loginAsDefaultUser();
+      return await apiPost(endpoint, body, true);
+    }
     return await res.json();
   } catch (err) {
     console.error(`[API Error] POST ${endpoint}:`, err);
     return null;
   }
 }
+
 
 async function apiPut(endpoint, body) {
   if (!state.authToken) await loginAsDefaultUser();
@@ -255,6 +266,11 @@ async function refreshWorkspaceData() {
     state.raidItems = projData.project.raid_items || [];
   }
 
+  const raidFilteredData = await apiGet(`/raid?start_date=${state.selectedDateRange.start}&end_date=${state.selectedDateRange.end}`);
+  if (raidFilteredData && raidFilteredData.raid_items && raidFilteredData.raid_items.length > 0) {
+    state.raidItems = raidFilteredData.raid_items;
+  }
+
   const emailsData = await apiGet('/emails');
   if (emailsData && emailsData.emails) {
     state.emails = emailsData.emails;
@@ -270,6 +286,7 @@ async function refreshWorkspaceData() {
     state.auditLogs = auditData.audit_logs;
   }
 }
+
 
 // Event Handlers
 function setRole(roleName) {
@@ -564,7 +581,30 @@ function renderCurrentTabContent(currentProject) {
 
 // 1. Dashboard Tab View
 function renderDashboardTab(currentProject) {
-  const pendingCount = state.emails.filter(e => e.status === 'PENDING').length;
+  // Filter RAID items by selected project AND selected date range
+  const filteredRaidItems = state.raidItems.filter(r => {
+    const isProj = r.project_id === currentProject.id || r.project_code === currentProject.code;
+    if (!isProj) return false;
+    if (!r.created_at) return true;
+    const rDate = r.created_at.substring(0, 10);
+    return rDate >= state.selectedDateRange.start && rDate <= state.selectedDateRange.end;
+  });
+
+  // Project-specific pending email count
+  const projectPendingCount = state.emails.filter(e => 
+    (e.project_id === currentProject.id || e.project_code === currentProject.code) && e.status === 'PENDING'
+  ).length;
+
+  // Dynamic project-specific budget variance calculation
+  const budget = currentProject.budget || 2500000;
+  const spent = currentProject.spent || 1450000;
+  const variance = budget - spent;
+  const variancePct = ((variance / budget) * 100).toFixed(1);
+  const isOverBudget = variance < 0;
+  const formattedDiff = (Math.abs(variance) / 1000000).toFixed(1);
+  const varianceValueText = isOverBudget ? `-${Math.abs(variancePct)}%` : `+${variancePct}%`;
+  const varianceSubtext = isOverBudget ? `($${formattedDiff}M over budget)` : `($${formattedDiff}M under budget)`;
+  const varianceColor = isOverBudget ? 'var(--error)' : '#059669';
   
   const widgetHTML = {
     kpis: `
@@ -574,7 +614,7 @@ function renderDashboardTab(currentProject) {
           <div class="kpi-title">Overall Program Health</div>
           <div class="kpi-value">${currentProject.progress_pct}%</div>
           <div class="kpi-subtext">
-            <span class="chip chip-warning">Medium Risk</span>
+            <span class="chip ${currentProject.health_status === 'Healthy' ? 'chip-success' : 'chip-warning'}">${currentProject.health_status}</span>
             <span style="color:var(--secondary); font-weight:600">Phase: ${currentProject.lifecycle_phase}</span>
           </div>
         </div>
@@ -584,22 +624,22 @@ function renderDashboardTab(currentProject) {
           <div class="kpi-value">${state.projects.length}</div>
           <div class="kpi-subtext" style="color:#059669">
             <span class="material-symbols-outlined" style="font-size:16px">arrow_upward</span>
-            <strong>3 from last week</strong>
+            <strong>Across 5 Lifecycle Phases</strong>
           </div>
         </div>
 
         <div class="kpi-card">
           <div class="kpi-title">Open RAID Risks</div>
-          <div class="kpi-value" style="color:var(--error)">${state.raidItems.length}</div>
+          <div class="kpi-value" style="color:var(--error)">${filteredRaidItems.length}</div>
           <div class="kpi-subtext" style="color:var(--error)">
             <span class="material-symbols-outlined" style="font-size:16px">warning</span>
-            <strong>${state.raidItems.filter(r => r.risk_score >= 70).length} High Score (&gt;70)</strong>
+            <strong>${filteredRaidItems.filter(r => (r.risk_score || 0) >= 70).length} High Score (&gt;70)</strong>
           </div>
         </div>
 
         <div class="kpi-card">
           <div class="kpi-title">Pending Approvals</div>
-          <div class="kpi-value" style="color:var(--primary-container)">${pendingCount}</div>
+          <div class="kpi-value" style="color:var(--primary-container)">${projectPendingCount}</div>
           <div class="kpi-subtext" style="color:var(--primary-container)">
             <span class="chip chip-info">Human Approval Required</span>
           </div>
@@ -607,20 +647,21 @@ function renderDashboardTab(currentProject) {
 
         <div class="kpi-card">
           <div class="kpi-title">Budget Variance</div>
-          <div class="kpi-value" style="color:var(--error)">-8.5%</div>
-          <div class="kpi-subtext" style="color:var(--error)">
-            <strong>($1.2M over budget)</strong>
+          <div class="kpi-value" style="color:${varianceColor}">${varianceValueText}</div>
+          <div class="kpi-subtext" style="color:${varianceColor}">
+            <strong>${varianceSubtext}</strong>
           </div>
         </div>
       </div>
     `,
+
     heatmap: `
       <div class="card-box">
         <div class="card-box-header">
           <div class="card-box-title">5x5 Risk Heatmap Matrix (${currentProject.code})</div>
           <span class="chip chip-warning">${currentProject.lifecycle_phase}</span>
         </div>
-        <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:12px">Likelihood vs. Impact Distribution across RAID Items</p>
+        <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:12px">Likelihood vs. Impact Distribution (${state.selectedDateRange.start} to ${state.selectedDateRange.end})</p>
         
         <div class="heatmap-matrix">
           <div class="heatmap-cell cell-low">L1/I1</div>
@@ -703,14 +744,18 @@ function renderDashboardTab(currentProject) {
     `
   };
 
-  const visibleWidgets = state.dashboardWidgetOrder.filter(w => state.widgetVisibility[w]);
   let contentBuffer = '';
+  for (let i = 0; i < state.dashboardWidgetOrder.length; i++) {
+    const curr = state.dashboardWidgetOrder[i];
+    const next = state.dashboardWidgetOrder[i + 1];
 
-  for (let i = 0; i < visibleWidgets.length; i++) {
-    const curr = visibleWidgets[i];
-    const next = visibleWidgets[i + 1];
+    if (!state.widgetVisibility[curr]) continue;
 
-    if ((curr === 'heatmap' && next === 'breakdown') || (curr === 'breakdown' && next === 'heatmap')) {
+    if (curr === 'kpis') {
+      contentBuffer += widgetHTML.kpis;
+    } else if (curr === 'flowchart') {
+      contentBuffer += widgetHTML.flowchart;
+    } else if ((curr === 'heatmap' && next === 'breakdown') || (curr === 'breakdown' && next === 'heatmap')) {
       contentBuffer += `
         <div class="grid-2col">
           ${widgetHTML[curr]}
@@ -724,26 +769,30 @@ function renderDashboardTab(currentProject) {
   }
 
   return `
-    <div class="page-header">
+    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
       <div>
         <h1 class="page-title">Dashboard</h1>
         <p class="page-subtitle">Overview of your program health and key insights</p>
       </div>
-      <div style="display:flex; gap:12px">
-        <select class="btn-secondary" style="background:#fff; cursor:pointer" onchange="setProject(this.value)">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <select class="btn-secondary" style="background:#fff; cursor:pointer; height:38px;" onchange="setProject(this.value)">
           ${state.projects.map(p => `
             <option value="${p.code}" ${p.code === currentProject.code ? 'selected' : ''}>
               ${p.code} - ${p.name}
             </option>
           `).join('')}
         </select>
-        <div class="btn-secondary" style="background:#fff; display:flex; align-items:center; gap:8px; padding:6px 12px">
+        <div class="btn-secondary" style="background:#fff; display:flex; align-items:center; gap:8px; padding:6px 12px; height:38px;">
           <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary-container)">calendar_today</span>
           <input type="date" id="dateRangeStart" value="${state.selectedDateRange.start}" onchange="handleDateRangeChange()" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="Start Date" />
           <span style="color:var(--outline); font-size:12px; font-weight:600">-</span>
           <input type="date" id="dateRangeEnd" value="${state.selectedDateRange.end}" onchange="handleDateRangeChange()" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="End Date" />
         </div>
-        <button class="btn-secondary" onclick="openCustomizeModal()">
+        <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px; border: none; padding: 8px 16px; height:38px; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="triggerMultiAgentWorkflow()">
+          <span class="material-symbols-outlined" style="font-size: 18px; color: #facc15">bolt</span>
+          <span>⚡ Analyze Portfolio Risks</span>
+        </button>
+        <button class="btn-secondary" style="height:38px;" onclick="openCustomizeModal()">
           <span class="material-symbols-outlined">tune</span>
           Customize
         </button>
