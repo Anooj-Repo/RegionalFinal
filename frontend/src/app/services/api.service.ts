@@ -55,7 +55,12 @@ export class ApiService {
     return this.http.put(`${this.baseUrl}/emails/${id}`, { subject, body }, { headers: this.getHeaders() });
   }
 
+  refineEmailTone(subject: string, body: string, tone: string, customPrompt: string = ''): Observable<any> {
+    return this.http.post(`${this.baseUrl}/emails/refine-tone`, { subject, body, tone, custom_prompt: customPrompt }, { headers: this.getHeaders() });
+  }
+
   approveEmail(id: number): Observable<any> {
+
     return this.http.post(`${this.baseUrl}/emails/${id}/approve`, {}, { headers: this.getHeaders() });
   }
 

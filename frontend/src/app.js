@@ -921,32 +921,53 @@ function renderRaidTab() {
 }
 
 // 4. Communication Center Tab View
+// 4. Communication Center Tab View
 function renderCommsTab() {
-  const pendingCount = state.emails.filter(e => e.status === 'PENDING').length;
+  const currentProject = state.projects.find(p => p.code === state.selectedProjectCode) || { id: 1, code: 'PRJ-001' };
+
+  // Filter emails by selected project OR show all if "ALL"
+  const projectEmails = state.selectedProjectCode === 'ALL'
+    ? state.emails
+    : state.emails.filter(e => e.project_id === currentProject.id || e.project_code === currentProject.code);
+
+  const pendingCount = projectEmails.filter(e => e.status === 'PENDING').length;
+  const sentCount = projectEmails.filter(e => e.status === 'SENT').length;
 
   return `
-    <div class="page-header">
+    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
       <div>
         <h1 class="page-title">Communication Center</h1>
-        <p class="page-subtitle">Mandatory Human Approval workflow for AI-generated stakeholder communications</p>
+        <p class="page-subtitle">Stakeholder email communications and Mandatory Human Approval workflow for ${state.selectedProjectCode}</p>
       </div>
-      <span class="chip chip-warning" style="font-size:13px">${pendingCount} Drafts Awaiting Approval</span>
+      <div style="display:flex; align-items:center; gap:12px">
+        <select class="btn-secondary" style="background:#fff; cursor:pointer; height:38px;" onchange="setProject(this.value); renderApp();">
+          <option value="ALL" ${state.selectedProjectCode === 'ALL' ? 'selected' : ''}>ALL PROJECTS (${state.emails.length} Communications)</option>
+          ${state.projects.map(p => `
+            <option value="${p.code}" ${p.code === currentProject.code ? 'selected' : ''}>
+              ${p.code} - ${p.name}
+            </option>
+          `).join('')}
+        </select>
+        <span class="chip chip-warning" style="font-size:13px">${pendingCount} Pending</span>
+        <span class="chip chip-success" style="font-size:13px">${sentCount} Sent</span>
+      </div>
     </div>
 
     <div class="card-box">
       <p style="color:var(--on-surface-variant); font-size:13px; margin-bottom:16px">
-        All AI-generated emails remain in <strong>PENDING</strong> status until reviewed, edited, and explicitly APPROVED by a human. Approved communications are dispatched via Resend API to target recipient.
+        All AI-generated emails remain in <strong>PENDING</strong> status until reviewed, edited, and explicitly APPROVED by a human. Approved communications are dispatched via Resend API to <strong>linusimon@gmail.com</strong>.
       </p>
 
       <div class="table-responsive">
         <table class="stitch-table">
           <thead>
-            <tr><th>ID</th><th>Recipient Role</th><th>Target Recipient</th><th>Subject Line</th><th>Status</th><th>Action</th></tr>
+            <tr><th>ID</th><th>Project</th><th>Recipient Role</th><th>Target Recipient</th><th>Subject Line</th><th>Status</th><th>Action</th></tr>
           </thead>
           <tbody>
-            ${state.emails.map(e => `
+            ${projectEmails.map(e => `
               <tr>
                 <td>#${e.id}</td>
+                <td><span class="chip chip-info">${e.project_code || state.selectedProjectCode}</span></td>
                 <td><span class="chip chip-info">${e.recipient_role}</span></td>
                 <td>linusimon@gmail.com <br><small style="color:var(--on-surface-variant)">Target: ${e.recipient_email}</small></td>
                 <td><strong>${e.subject}</strong></td>
@@ -955,11 +976,13 @@ function renderCommsTab() {
                 </td>
                 <td>
                   ${e.status === 'PENDING' ? `
-                    <button class="btn-success" onclick="openApprovalModal(${e.id})">
-                      <span class="material-symbols-outlined">check_circle</span> Review & Approve
+                    <button class="btn-success" style="padding:6px 12px; font-weight:600;" onclick="openApprovalModal(${e.id})">
+                      <span class="material-symbols-outlined" style="font-size:16px">check_circle</span> Review & Approve
                     </button>
                   ` : `
-                    <span style="color:var(--on-surface-variant); font-size:12px">${e.status} at ${e.sent_at || e.created_at}</span>
+                    <button class="btn-secondary" style="padding:6px 12px; display:inline-flex; align-items:center; gap:4px; font-weight:600;" onclick="openApprovalModal(${e.id})">
+                      <span class="material-symbols-outlined" style="font-size:16px">visibility</span> 👁 View Sent Email
+                    </button>
                   `}
                 </td>
               </tr>
@@ -970,6 +993,7 @@ function renderCommsTab() {
     </div>
   `;
 }
+
 
 // 5. Reports Tab View
 function renderReportsTab(currentProject) {
@@ -1647,40 +1671,115 @@ function renderCollapsibleTracePanel() {
 
 
 
-// Render Human Approval Modal Overlay
+// AI Tone & Sentiment Transformation Handler
+async function refineToneWithAI(toneName) {
+  const subjectInput = document.getElementById('editSubject');
+  const bodyInput = document.getElementById('editBody');
+  const refineBtn = document.getElementById('btnRefineTone');
+
+  if (!bodyInput || !bodyInput.value) return;
+
+  if (refineBtn) {
+    refineBtn.disabled = true;
+    refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">sync</span> Transforming Tone...';
+  }
+
+  const res = await apiPost('/emails/refine-tone', {
+    subject: subjectInput ? subjectInput.value : '',
+    body: bodyInput.value,
+    tone: toneName || 'Executive'
+  });
+
+  if (refineBtn) {
+    refineBtn.disabled = false;
+    refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; color:#facc15">bolt</span> ✨ Transform Tone with AI';
+  }
+
+  if (res && res.status === 'success') {
+    if (subjectInput && res.refined_subject) subjectInput.value = res.refined_subject;
+    if (bodyInput && res.refined_body) bodyInput.value = res.refined_body;
+    alert(`AI Tone Transformation Applied! Converted email content to '${res.tone_applied}' sentiment.`);
+  }
+}
+
+// Render Human Approval & Sent Email Inspector Modal Overlay
 function renderHumanApprovalModal() {
   const e = state.selectedEmailForApproval;
+  const isSent = e.status === 'SENT';
+
   return `
     <div class="modal-backdrop">
-      <div class="modal-window">
+      <div class="modal-window" style="max-width: 680px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-          <h3 style="font-size:18px; font-weight:700; color:var(--on-surface)">Human Approval Interface (Draft #${e.id})</h3>
+          <h3 style="font-size:18px; font-weight:700; color:var(--on-surface)">
+            ${isSent ? `📧 Dispatched Email Inspector (Draft #${e.id})` : `Human Approval Interface (Draft #${e.id})`}
+          </h3>
           <button class="btn-secondary" onclick="closeApprovalModal()" style="padding:4px 8px">✕</button>
         </div>
 
-        <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px">
-          Review and edit AI-generated copy before approving email dispatch to <strong>linusimon@gmail.com</strong>.
-        </p>
+        <div style="margin-bottom:12px; display:flex; align-items:center; justify-content:space-between">
+          <span class="chip ${isSent ? 'chip-success' : 'chip-warning'}" style="font-size:12px; font-weight:700">
+            ${isSent ? 'STATUS: SENT (Dispatched via Resend API)' : 'STATUS: PENDING (Human Approval Required)'}
+          </span>
+          <span style="font-size:12px; color:var(--on-surface-variant)">
+            ${isSent ? `Dispatched at: ${e.sent_at || e.updated_at || '2026-08-07 10:11:26'}` : `Created at: ${e.created_at || 'Recently'}`}
+          </span>
+        </div>
 
-        <label style="font-size:12px; font-weight:700; color:var(--on-surface)">Recipient Role:</label>
-        <input type="text" value="${e.recipient_role}" disabled style="background:var(--surface-container-low)" />
+        <div style="background:var(--surface-container-low); padding:12px; border-radius:8px; margin-bottom:16px">
+          <div style="font-size:12px; color:var(--on-surface-variant); margin-bottom:4px">
+            <strong>Target Recipient:</strong> linusimon@gmail.com <span class="chip chip-info" style="font-size:10px">Role: ${e.recipient_role}</span>
+          </div>
+          <div style="font-size:12px; color:var(--on-surface-variant)">
+            <strong>Original Intended Email:</strong> ${e.recipient_email}
+          </div>
+        </div>
+
+        ${!isSent ? `
+          <!-- AI Tone & Sentiment Refiner Bar -->
+          <div style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(14, 165, 233, 0.08) 100%); border: 1px solid rgba(2, 132, 199, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:12px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:6px;">
+                <span class="material-symbols-outlined" style="font-size:16px; color:#facc15">auto_awesome</span>
+                AI Tone & Sentiment Refiner (TCS GenAI API)
+              </span>
+              <span class="chip chip-info" style="font-size:10px;">gemini-1.5-pro</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <select id="selectedToneSelect" class="btn-secondary" style="background:#fff; height:36px; font-size:12px; font-weight:600; cursor:pointer;">
+                <option value="Executive">👔 Executive Brief (Formal & Concise)</option>
+                <option value="Diplomatic">🤝 Diplomatic & Solution-Oriented</option>
+                <option value="Urgent">🚨 Urgent Escalation (High Risk Impact)</option>
+                <option value="Technical">💡 Technical Lead (Engineering Detail)</option>
+              </select>
+              <button id="btnRefineTone" class="btn-primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); height:36px; padding:0 14px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; border:none; border-radius:6px; cursor:pointer; color:#fff;" onclick="refineToneWithAI(document.getElementById('selectedToneSelect').value)">
+                <span class="material-symbols-outlined" style="font-size:16px; color:#facc15">bolt</span>
+                <span>✨ Transform Tone with AI</span>
+              </button>
+            </div>
+          </div>
+        ` : ''}
 
         <label style="font-size:12px; font-weight:700; color:var(--on-surface)">Subject Line:</label>
-        <input type="text" id="editSubject" value="${e.subject}" />
+        <input type="text" id="editSubject" value="${e.subject}" ${isSent ? 'disabled style="background:var(--surface-container-low); color:var(--on-surface)"' : ''} />
 
-        <label style="font-size:12px; font-weight:700; color:var(--on-surface)">Email Body Content:</label>
-        <textarea id="editBody" rows="8">${e.body}</textarea>
+        <label style="font-size:12px; font-weight:700; color:var(--on-surface); margin-top:12px; display:block">Full Email Body Content:</label>
+        <textarea id="editBody" rows="10" ${isSent ? 'disabled style="background:var(--surface-container-low); color:var(--on-surface); line-height:1.6;"' : ''}>${e.body}</textarea>
 
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:16px">
-          <button class="btn-secondary" onclick="closeApprovalModal()">Cancel</button>
-          <button class="btn-success" onclick="approveEmail()">
-            <span class="material-symbols-outlined">send</span> Approve & Dispatch via Resend
-          </button>
+          <button class="btn-secondary" onclick="closeApprovalModal()">${isSent ? 'Close Viewer' : 'Cancel'}</button>
+          ${!isSent ? `
+            <button class="btn-success" onclick="approveEmail()">
+              <span class="material-symbols-outlined">send</span> Approve & Dispatch via Resend
+            </button>
+          ` : ''}
         </div>
       </div>
     </div>
   `;
 }
+
+
 
 // Render Dashboard Grid Customizer Modal Overlay
 function renderCustomizeModal() {
