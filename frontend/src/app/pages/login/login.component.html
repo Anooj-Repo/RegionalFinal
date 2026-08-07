@@ -26,10 +26,10 @@
 
       <form (submit)="onLogin($event)">
         <div class="form-group">
-          <label for="email">Email Address</label>
+          <label for="email">Email Address or Username</label>
           <div class="input-with-icon">
             <span class="material-symbols-outlined">mail</span>
-            <input type="email" id="email" placeholder="Enter your email" value="rohit@company.com" required />
+            <input type="text" id="email" placeholder="Enter your email or username" value="" required />
           </div>
         </div>
 
@@ -40,7 +40,7 @@
           </div>
           <div class="input-with-icon">
             <span class="material-symbols-outlined">lock</span>
-            <input type="password" id="password" placeholder="Enter your password" value="••••••••" required />
+            <input type="password" id="password" placeholder="Enter your password" value="" required />
           </div>
         </div>
 
