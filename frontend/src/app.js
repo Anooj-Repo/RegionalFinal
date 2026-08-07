@@ -8,6 +8,12 @@ const API_BASE_URL = 'http://127.0.0.1:5000/api';
 // Application State Store
 const state = {
   currentRole: 'Program Manager',
+  currentUser: {
+    username: 'rohit',
+    full_name: 'Rohit Verma',
+    role: 'Program Manager',
+    email: 'rohit.verma@pmai.com'
+  },
   selectedProjectCode: 'PRJ-001',
   projects: [],
   tasks: [],
@@ -35,7 +41,28 @@ const state = {
 // Initialize Application
 async function initApp() {
   console.log('[PM AI App] Initializing Stitch PM Portal Engine...');
-  await loginAsDefaultUser();
+
+  const savedToken = localStorage.getItem('pmai_auth_token');
+  const savedUser = localStorage.getItem('pmai_current_user');
+  const savedTab = localStorage.getItem('pmai_active_tab');
+  const savedProject = localStorage.getItem('pmai_selected_project');
+
+  if (savedToken && savedUser) {
+    try {
+      state.authToken = savedToken;
+      state.currentUser = JSON.parse(savedUser);
+      state.currentRole = state.currentUser.role || 'Program Manager';
+      state.activeTab = (savedTab && savedTab !== 'login') ? savedTab : 'dashboard';
+      if (savedProject) state.selectedProjectCode = savedProject;
+      console.log(`[Auth Session Restored] Restored session for ${state.currentUser.full_name} (${state.activeTab})`);
+    } catch (e) {
+      console.warn('[Auth Session Error] Restoring session failed:', e);
+      state.activeTab = 'login';
+    }
+  } else {
+    state.activeTab = 'login';
+  }
+
   await loadProjects();
   await refreshWorkspaceData();
   renderApp();
@@ -52,11 +79,120 @@ async function loginAsDefaultUser() {
     if (res.ok) {
       const data = await res.json();
       state.authToken = data.access_token;
-      console.log(`[Auth] Authenticated as ${data.user.full_name} (${data.user.role})`);
+      if (data.user) {
+        state.currentUser = data.user;
+        state.currentRole = data.user.role || 'Program Manager';
+      }
+      persistSession();
+      console.log(`[Auth] Authenticated as ${state.currentUser.full_name} (${state.currentRole})`);
     }
   } catch (err) {
     console.error('[Auth Error] Backend API offline or unreachable:', err);
   }
+}
+
+// Session Persistence Helper
+function persistSession() {
+  if (state.authToken) localStorage.setItem('pmai_auth_token', state.authToken);
+  if (state.currentUser) localStorage.setItem('pmai_current_user', JSON.stringify(state.currentUser));
+  if (state.activeTab) localStorage.setItem('pmai_active_tab', state.activeTab);
+  if (state.selectedProjectCode) localStorage.setItem('pmai_selected_project', state.selectedProjectCode);
+}
+
+// User Profile Avatar Helper
+function getUserAvatar(user) {
+  if (!user) return 'https://lh3.googleusercontent.com/aida-public/AB6AXuCbcPHmQncMqeCyloxxFVdcQt82FdGRiPqJn4bdegkraWZJLbyoFF3FBb0UDFAHhop6wy41Pe-HfG8kF8D2j-nzH0ujTdtnWG2HSzd8sKaRyOdSdrbFPRT4UMYeELXSrNaljIIOIwk4lMEdu-8ty-JKlxAckqbyQ7zmu-bt-1v9EFRqEiHP2sq9bWYW4kAFAcn8Gm3s3TMyRJNpznTOQc_MauIOb3Epf8NinZ4bbvjZ12R9syMjguMG';
+  
+  const avatars = {
+    'rohit': 'https://lh3.googleusercontent.com/aida-public/AB6AXuCbcPHmQncMqeCyloxxFVdcQt82FdGRiPqJn4bdegkraWZJLbyoFF3FBb0UDFAHhop6wy41Pe-HfG8kF8D2j-nzH0ujTdtnWG2HSzd8sKaRyOdSdrbFPRT4UMYeELXSrNaljIIOIwk4lMEdu-8ty-JKlxAckqbyQ7zmu-bt-1v9EFRqEiHP2sq9bWYW4kAFAcn8Gm3s3TMyRJNpznTOQc_MauIOb3Epf8NinZ4bbvjZ12R9syMjguMG',
+    'amit': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+    'sneha': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80',
+    'admin': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+    'karan': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
+    'priya': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80'
+  };
+
+  return avatars[user.username] || avatars['rohit'];
+}
+
+// Login Form Submit Handler
+async function handleLoginSubmit(event) {
+  if (event) event.preventDefault();
+  const usernameInput = document.getElementById('loginEmail')?.value || 'rohit';
+  const passwordInput = document.getElementById('loginPassword')?.value || 'user123';
+
+  let username = usernameInput.trim();
+  if (username.includes('@')) {
+    username = username.split('@')[0].split('.')[0];
+  }
+
+  console.log(`[Auth] Executing login for username: ${username}`);
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username, password: passwordInput })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      state.authToken = data.access_token;
+      if (data.user) {
+        state.currentUser = data.user;
+        state.currentRole = data.user.role || 'Program Manager';
+      }
+      console.log(`[Auth Success] Logged in as ${state.currentUser.full_name} (${state.currentRole})`);
+      state.activeTab = 'dashboard';
+      persistSession();
+      await refreshWorkspaceData();
+      renderApp();
+      return;
+    }
+  } catch (err) {
+    console.warn('[Auth Warning] Backend API offline, using local user profile mapping:', err);
+  }
+
+  const userMap = {
+    'rohit': { username: 'rohit', full_name: 'Rohit Verma', role: 'Program Manager', email: 'rohit.verma@pmai.com' },
+    'amit': { username: 'amit', full_name: 'Amit Joshi', role: 'Project Manager', email: 'amit.joshi@pmai.com' },
+    'sneha': { username: 'sneha', full_name: 'Sneha Iyer', role: 'Team Lead', email: 'sneha.iyer@pmai.com' },
+    'admin': { username: 'admin', full_name: 'System Administrator', role: 'Admin', email: 'admin@pmai.com' },
+    'karan': { username: 'karan', full_name: 'Karan Patel', role: 'Executive', email: 'karan.patel@pmai.com' },
+    'priya': { username: 'priya', full_name: 'Priya Sharma', role: 'Viewer', email: 'priya.sharma@pmai.com' }
+  };
+
+  const user = userMap[username.toLowerCase()] || {
+    username: username,
+    full_name: username.charAt(0).toUpperCase() + username.slice(1) + ' User',
+    role: 'Program Manager',
+    email: `${username}@pmai.com`
+  };
+
+  state.currentUser = user;
+  state.currentRole = user.role;
+  state.activeTab = 'dashboard';
+  persistSession();
+  await refreshWorkspaceData();
+  renderApp();
+}
+
+// Navigation & Tab Switcher
+function switchTab(tabName) {
+  state.activeTab = tabName;
+  localStorage.setItem('pmai_active_tab', tabName);
+  renderApp();
+}
+
+// Logout Handler
+function logoutUser() {
+  localStorage.removeItem('pmai_auth_token');
+  localStorage.removeItem('pmai_current_user');
+  localStorage.setItem('pmai_active_tab', 'login');
+  state.authToken = null;
+  state.currentUser = null;
+  state.activeTab = 'login';
+  renderApp();
 }
 
 // API Helpers
@@ -319,35 +455,35 @@ function renderApp() {
         </div>
 
         <div class="sidebar-menu">
-          <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="state.activeTab='dashboard'; renderApp();">
+          <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
             <span class="material-symbols-outlined">dashboard</span>
             <span>Dashboard</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="state.activeTab='projects'; renderApp();">
+          <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
             <span class="material-symbols-outlined">assignment</span>
             <span>Projects</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'raid' ? 'active' : ''}" onclick="state.activeTab='raid'; renderApp();">
+          <button class="nav-link ${state.activeTab === 'raid' ? 'active' : ''}" onclick="switchTab('raid')">
             <span class="material-symbols-outlined">warning</span>
             <span>Risk Center</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="state.activeTab='comms'; renderApp();">
+          <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="switchTab('comms')">
             <span class="material-symbols-outlined">chat</span>
             <span>Communication ${pendingEmailCount > 0 ? `(${pendingEmailCount})` : ''}</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="state.activeTab='reports'; renderApp();">
+          <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
             <span class="material-symbols-outlined">assessment</span>
             <span>Reports</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="state.activeTab='chat'; renderApp();">
+          <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
             <span class="material-symbols-outlined">smart_toy</span>
             <span>AI Assistant</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'admin' ? 'active' : ''}" onclick="state.activeTab='admin'; renderApp();">
+          <button class="nav-link ${state.activeTab === 'admin' ? 'active' : ''}" onclick="switchTab('admin')">
             <span class="material-symbols-outlined">settings</span>
             <span>Settings & Admin</span>
           </button>
-          <button class="nav-link" onclick="state.activeTab='login'; renderApp();" style="margin-top:auto">
+          <button class="nav-link" onclick="logoutUser()" style="margin-top:auto">
             <span class="material-symbols-outlined">logout</span>
             <span>Sign Out</span>
           </button>
@@ -385,10 +521,10 @@ function renderApp() {
 
             <!-- User Profile Avatar -->
             <div class="user-profile">
-              <img class="avatar-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbcPHmQncMqeCyloxxFVdcQt82FdGRiPqJn4bdegkraWZJLbyoFF3FBb0UDFAHhop6wy41Pe-HfG8kF8D2j-nzH0ujTdtnWG2HSzd8sKaRyOdSdrbFPRT4UMYeELXSrNaljIIOIwk4lMEdu-8ty-JKlxAckqbyQ7zmu-bt-1v9EFRqEiHP2sq9bWYW4kAFAcn8Gm3s3TMyRJNpznTOQc_MauIOb3Epf8NinZ4bbvjZ12R9syMjguMG" alt="Arjun Mehta" />
+              <img class="avatar-img" src="${getUserAvatar(state.currentUser)}" alt="${state.currentUser ? state.currentUser.full_name : 'User Profile'}" />
               <div>
-                <div class="user-name">Arjun Mehta</div>
-                <div class="user-role">${state.currentRole}</div>
+                <div class="user-name">${state.currentUser ? state.currentUser.full_name : 'Rohit Verma'}</div>
+                <div class="user-role">${state.currentUser ? state.currentUser.role : state.currentRole}</div>
               </div>
             </div>
           </div>
@@ -1155,23 +1291,23 @@ function renderLoginTab() {
             <p style="color:var(--on-surface-variant); font-size:14px">Sign in to continue to your account</p>
           </div>
 
-          <form onsubmit="event.preventDefault(); state.activeTab='dashboard'; renderApp();">
+          <form onsubmit="handleLoginSubmit(event)">
             <div class="form-group">
-              <label for="email">Email Address</label>
+              <label for="loginEmail">Email Address or Username</label>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">mail</span>
-                <input type="email" id="email" placeholder="Enter your email" value="rohit@company.com" required />
+                <input type="text" id="loginEmail" placeholder="Enter your email or username (e.g. rohit, amit, sneha, admin)" value="${state.currentUser ? state.currentUser.username : 'rohit'}" required />
               </div>
             </div>
 
             <div class="form-group">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
-                <label for="password" style="margin-bottom:0">Password</label>
+                <label for="loginPassword" style="margin-bottom:0">Password</label>
                 <a href="#" style="font-size:12px; color:var(--primary-container); text-decoration:none; font-weight:600">Forgot Password?</a>
               </div>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">lock</span>
-                <input type="password" id="password" placeholder="Enter your password" value="••••••••" required />
+                <input type="password" id="loginPassword" placeholder="Enter your password" value="user123" required />
               </div>
             </div>
 
@@ -1187,7 +1323,7 @@ function renderLoginTab() {
               <div style="flex:1; border-top:1px solid var(--outline-variant)"></div>
             </div>
 
-            <button type="button" class="btn-secondary" onclick="state.activeTab='dashboard'; renderApp();" style="width:100%; justify-content:center; padding:12px">
+            <button type="button" class="btn-secondary" onclick="handleLoginSubmit(event)" style="width:100%; justify-content:center; padding:12px">
               <span class="material-symbols-outlined">shield_person</span> Sign in with SSO
             </button>
           </form>
