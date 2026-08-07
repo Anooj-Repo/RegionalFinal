@@ -857,7 +857,7 @@ function renderDashboardTab(currentProject) {
         <p class="page-subtitle">Overview of your program health and key insights</p>
       </div>
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <div class="btn-secondary" style="background:#fff; display:flex; align-items:center; gap:8px; padding:6px 12px; height:38px;">
+        <div class="btn-secondary" style="display:none; background:#fff; align-items:center; gap:8px; padding:6px 12px; height:38px;">
           <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary-container)">calendar_today</span>
           <input type="date" id="dateRangeStart" value="${state.selectedDateRange.start}" onchange="handleDateRangeChange()" style="border:none; background:transparent; font-size:12px; font-weight:600; color:var(--on-surface); outline:none; cursor:pointer" title="Start Date" />
           <span style="color:var(--outline); font-size:12px; font-weight:600">-</span>
