@@ -33,16 +33,16 @@ def get_history():
     if not project_code:
         return jsonify({'error': 'Bad Request', 'message': 'project_code is required'}), 400
 
-    # Fetch latest N rows (DESC) then reverse to restore chronological order (ASC).
-    # ORDER BY ASC + LIMIT would return the OLDEST rows, not the most recent.
+    # Fetch latest N rows by auto-increment ID (DESC) then reverse to restore chronological order (ASC).
+    # ORDER BY ChatHistory.id.desc() guarantees User (lower ID) is retrieved before Assistant (higher ID).
     rows = (
         ChatHistory.query
         .filter_by(user_id=user_id, project_code=project_code)
-        .order_by(ChatHistory.created_at.desc())
+        .order_by(ChatHistory.id.desc())
         .limit(limit)
         .all()
     )
-    rows.reverse()  # Chronological order for LLM prompt
+    rows.reverse()  # Chronological order [User, Assistant] for LLM prompt
 
     return jsonify({
         'status': 'success',
@@ -103,7 +103,7 @@ def save_history():
                 r.id for r in (
                     ChatHistory.query
                     .filter_by(user_id=user_id, project_code=project_code)
-                    .order_by(ChatHistory.created_at.asc())
+                    .order_by(ChatHistory.id.asc())
                     .limit(total - 50)
                     .all()
                 )
