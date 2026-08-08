@@ -192,9 +192,11 @@ class EmailDraft(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
+        p_code = self.project.code if getattr(self, 'project', None) else f"PRJ-00{self.project_id}"
         return {
             'id': self.id,
             'project_id': self.project_id,
+            'project_code': p_code,
             'raid_id': self.raid_id,
             'recipient_role': self.recipient_role,
             'recipient_email': self.recipient_email,
