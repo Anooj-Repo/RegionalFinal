@@ -32,18 +32,32 @@
     "chunk_id": "chk_PRJ-002_raid_3",
     "doc_id": "doc_PRJ-002_raid",
     "source": "RiskRegisterAdapter",
-    "title": "Legacy System Data Compatibility Assumption",
-    "text": "RAID Item [Assumption] Legacy System Data Compatibility Assumption: Assumed legacy Oracle DB tables contain pre-cleansed UTF-8 string entries. (Score: 60, Owner: Sneha Iyer)",
+    "title": "Legacy Oracle Database Schema Encoding Drift",
+    "text": "RAID Item [Risk] Legacy Oracle Database Schema Encoding Drift: Legacy database character encoding mismatches cause ETL pipeline mapping failures. (Score: 80, Owner: Amit Joshi)",
     "metadata": {
       "project_code": "PRJ-002",
       "type": "raid",
-      "category": "Assumption",
-      "risk_score": 60
+      "category": "Risk",
+      "risk_score": 80
     }
   },
   {
     "index_pos": 3,
-    "chunk_id": "chk_PRJ-002_comm_24",
+    "chunk_id": "chk_PRJ-002_raid_4",
+    "doc_id": "doc_PRJ-002_raid",
+    "source": "RiskRegisterAdapter",
+    "title": "ERP Middleware Endpoint Compatibility",
+    "text": "RAID Item [Assumption] ERP Middleware Endpoint Compatibility: Assumed third-party ERP SOAP endpoints match OpenAPI REST specifications. (Score: 65, Owner: Amit Joshi)",
+    "metadata": {
+      "project_code": "PRJ-002",
+      "type": "raid",
+      "category": "Assumption",
+      "risk_score": 65
+    }
+  },
+  {
+    "index_pos": 4,
+    "chunk_id": "chk_PRJ-002_comm_84",
     "doc_id": "doc_PRJ-002_comms",
     "source": "ChatAdapter",
     "title": "Chat from Sneha Iyer",
@@ -53,8 +67,8 @@
     }
   },
   {
-    "index_pos": 4,
-    "chunk_id": "chk_PRJ-002_comm_25",
+    "index_pos": 5,
+    "chunk_id": "chk_PRJ-002_comm_85",
     "doc_id": "doc_PRJ-002_comms",
     "source": "ChatAdapter",
     "title": "Chat from Amit Joshi",

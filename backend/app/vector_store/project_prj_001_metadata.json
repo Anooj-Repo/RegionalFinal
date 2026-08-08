@@ -47,7 +47,7 @@
     "doc_id": "doc_PRJ-001_raid",
     "source": "RiskRegisterAdapter",
     "title": "Third-party API Integration Delay",
-    "text": "RAID Item [Risk] Third-party API Integration Delay: Third-party vendor core API availability is delayed by 3 weeks, impacting frontend integration. (Score: 85, Owner: Amit Joshi)",
+    "text": "RAID Item [Risk] Third-party API Integration Delay: Third-party vendor core API availability is delayed by 3 weeks, impacting frontend integration. (Score: 85, Owner: Rohit Verma)",
     "metadata": {
       "project_code": "PRJ-001",
       "type": "raid",
@@ -71,7 +71,7 @@
   },
   {
     "index_pos": 5,
-    "chunk_id": "chk_PRJ-001_comm_21",
+    "chunk_id": "chk_PRJ-001_comm_81",
     "doc_id": "doc_PRJ-001_comms",
     "source": "ChatAdapter",
     "title": "Chat from Amit Joshi",
@@ -82,7 +82,7 @@
   },
   {
     "index_pos": 6,
-    "chunk_id": "chk_PRJ-001_comm_22",
+    "chunk_id": "chk_PRJ-001_comm_82",
     "doc_id": "doc_PRJ-001_comms",
     "source": "ChatAdapter",
     "title": "Chat from Vendor Support",
@@ -93,7 +93,7 @@
   },
   {
     "index_pos": 7,
-    "chunk_id": "chk_PRJ-001_comm_23",
+    "chunk_id": "chk_PRJ-001_comm_83",
     "doc_id": "doc_PRJ-001_comms",
     "source": "ChatAdapter",
     "title": "Chat from Sneha Iyer",

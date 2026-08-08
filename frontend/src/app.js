@@ -1407,11 +1407,6 @@ function renderChatTab() {
           </div>
         </div>
 
-        <!-- Quick Prompt Chips -->
-        <div class="chat-quick-bar">
-          ${_getQuickChips().map(c => `<button class="chat-quick-chip" onclick="chatQuickSend('${c.prompt}')">${c.label}</button>`).join('')}
-        </div>
-
         <!-- Message Feed -->
         <div class="chat-feed" id="chatFeed">
           ${feedHtml}
@@ -1467,14 +1462,7 @@ function renderChatTab() {
 
 // ─── Chat Helper: Quick Chips Config ────────────────────────────────────────
 function _getQuickChips() {
-  return [
-    { label: '⚡ Critical Path Risks', prompt: `What are the critical path risks for ${state.selectedProjectCode}?` },
-    { label: '🛡️ Add Mitigation', prompt: `Add a mitigation action for the top risk in ${state.selectedProjectCode}` },
-    { label: '📧 Draft Executive Email', prompt: `Draft a stakeholder email for ${state.selectedProjectCode} risk update` },
-    { label: '📊 Run Full Analysis', prompt: `Run full RAID analysis for ${state.selectedProjectCode}` },
-    { label: '📋 RAID Summary', prompt: `Summarize all RAID items for ${state.selectedProjectCode}` },
-    { label: '⏱️ Schedule Risks', prompt: `What schedule risks exist for ${state.selectedProjectCode}?` },
-  ];
+  return [];
 }
 
 // ─── Chat Helper: Render a single message ───────────────────────────────────
@@ -1831,19 +1819,7 @@ function _scrollChatToBottom() {
 }
 
 function _getSuggestedReplies(lastMessage) {
-  const m = lastMessage.toLowerCase();
-  if (m.includes('risk')) return [
-    { label: '🛡️ Add Mitigation', prompt: `Add a mitigation for the top risk in ${state.selectedProjectCode}` },
-    { label: '📧 Escalate to Executive', prompt: `Draft a stakeholder email for ${state.selectedProjectCode}` },
-  ];
-  if (m.includes('email') || m.includes('draft')) return [
-    { label: '✅ View Comm Center', prompt: `Show communication drafts for ${state.selectedProjectCode}` },
-    { label: '⚡ Top Risks', prompt: `What are the critical risks for ${state.selectedProjectCode}?` },
-  ];
-  return [
-    { label: '📊 Full RAID Analysis', prompt: `Run full RAID analysis for ${state.selectedProjectCode}` },
-    { label: '📋 RAID Summary', prompt: `Summarize all RAID items for ${state.selectedProjectCode}` },
-  ];
+  return [];
 }
 
 // ─── Approve / Cancel Action Cards ──────────────────────────────────────────

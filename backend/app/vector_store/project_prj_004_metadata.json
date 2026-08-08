@@ -29,11 +29,11 @@
   },
   {
     "index_pos": 2,
-    "chunk_id": "chk_PRJ-004_raid_5",
+    "chunk_id": "chk_PRJ-004_raid_7",
     "doc_id": "doc_PRJ-004_raid",
     "source": "RiskRegisterAdapter",
-    "title": "Data Migration Validation Failure",
-    "text": "RAID Item [Risk] Data Migration Validation Failure: Potential loss of non-null foreign key references during ETL pipeline run. (Score: 90, Owner: Neha Singh)",
+    "title": "ETL Data Migration Validation & Foreign Key Loss Risk",
+    "text": "RAID Item [Risk] ETL Data Migration Validation & Foreign Key Loss Risk: Potential loss of non-null foreign key references during 10M+ customer record migration. (Score: 90, Owner: Neha Singh)",
     "metadata": {
       "project_code": "PRJ-004",
       "type": "raid",
@@ -43,7 +43,21 @@
   },
   {
     "index_pos": 3,
-    "chunk_id": "chk_PRJ-004_comm_28",
+    "chunk_id": "chk_PRJ-004_raid_8",
+    "doc_id": "doc_PRJ-004_raid",
+    "source": "RiskRegisterAdapter",
+    "title": "Staging Database Storage Disk I/O Bottleneck",
+    "text": "RAID Item [Issue] Staging Database Storage Disk I/O Bottleneck: Heavy ETL validation script run exceeds disk IOPS threshold on staging server. (Score: 82, Owner: Neha Singh)",
+    "metadata": {
+      "project_code": "PRJ-004",
+      "type": "raid",
+      "category": "Issue",
+      "risk_score": 82
+    }
+  },
+  {
+    "index_pos": 4,
+    "chunk_id": "chk_PRJ-004_comm_88",
     "doc_id": "doc_PRJ-004_comms",
     "source": "ChatAdapter",
     "title": "Chat from Neha Singh",
@@ -53,8 +67,8 @@
     }
   },
   {
-    "index_pos": 4,
-    "chunk_id": "chk_PRJ-004_comm_29",
+    "index_pos": 5,
+    "chunk_id": "chk_PRJ-004_comm_89",
     "doc_id": "doc_PRJ-004_comms",
     "source": "ChatAdapter",
     "title": "Chat from Dev Lead",
