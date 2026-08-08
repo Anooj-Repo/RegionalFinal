@@ -1,0 +1,70 @@
+[
+  {
+    "id": 2001,
+    "project_id": 2,
+    "sender": "aisha.kamara@corp.com",
+    "recipients": ["priya.nair@corp.com"],
+    "subject": "URGENT: Critical Data Quality Issue Found in GL_ACCOUNTS \u2014 Migration Design Blocked",
+    "timestamp": "2026-07-28T14:15:00+00:00",
+    "body": "Priya,\n\nI need to flag a critical issue we uncovered this afternoon during the data profiling phase for the GL_ACCOUNTS migration object.\n\nSUMMARY\nDuring automated profiling of the source GL_ACCOUNTS table (legacy ECC schema: FI_COFI.GL_ACCOUNTS), our BODS profiling job has identified 43,847 records — approximately 31% of the total 141,000-record dataset — that contain null values in one or more of the following mandatory SAP S/4HANA fields:\n  - COST_CENTRE (null in 38,211 records)\n  - PROFIT_CENTRE (null in 41,903 records)\n  - ACCOUNT_TYPE (null in 12,540 records)\n\nMany records have nulls in multiple fields simultaneously.\n\nIMPACT\nThis is a blocker for Task 203 (Data Migration Planning and Design). We cannot finalise the source-to-target field mapping or define transformation rules until we know:\n  1. Whether these nulls represent genuine missing data, a legacy system default, or an ECC customisation where those fields were optional.\n  2. What the approved remediation approach is (default value injection, exclusion from migration scope, or manual enrichment by Finance).\n  3. Whether Finance Director sign-off is required on any default value assumptions.\n\nWithout this clarity, any migration design we produce would be built on an incorrect foundation and would risk data corruption in the S/4HANA target.\n\nTIMELINE IMPACT\nTask 203 was due 2026-07-31 — in three days. We will not meet that date. Based on audit complexity, I estimate we need a minimum of 3\u20134 weeks to complete a full record-level audit, agree remediation with Finance, and rebuild the migration design.\n\nThis also pushes Task 205 (ETL Pipeline Development) which depends on 203, and consequently Tasks 206 and 207.\n\nACTION NEEDED\nCan we schedule an emergency call tomorrow morning to agree:\n  - Escalation path to Finance Director\n  - Audit team resourcing\n  - Formal project risk entry\n\nI'm attaching the full BODS profiling report and a data quality summary spreadsheet.\n\nAisha Kamara\nData Migration Lead, ERP Programme\n\nAttachments:\n  - GL_ACCOUNTS_Profiling_Report_2026-07-28.pdf\n  - Data_Quality_Summary_GL_ACCOUNTS.xlsx",
+    "attachments": [
+      "GL_ACCOUNTS_Profiling_Report_2026-07-28.pdf",
+      "Data_Quality_Summary_GL_ACCOUNTS.xlsx"
+    ],
+    "labels": ["urgent", "data-quality", "migration", "blocker"],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2002,
+    "project_id": 2,
+    "sender": "priya.nair@corp.com",
+    "recipients": ["lin.wei@corp.com", "robert.chang@corp.com"],
+    "subject": "Data Migration Risk Escalation \u2014 Immediate Attention Required",
+    "timestamp": "2026-07-29T09:00:00+00:00",
+    "body": "Lin, Robert,\n\nI am writing to formally escalate a critical data quality risk that has emerged in the ERP programme and requires your immediate attention.\n\nISSUE\nOur data migration team, led by Aisha Kamara, completed automated profiling of the legacy GL_ACCOUNTS table yesterday. The findings are serious: 43,847 records (31% of the dataset) have null values in mandatory fields required by SAP S/4HANA \u2014 specifically cost_centre, profit_centre, and account_type.\n\nBUSINESS IMPACT\nThis issue has the following direct consequences:\n\n1. Task 203 (Data Migration Design) is formally BLOCKED. We cannot produce a reliable migration design until the data is audited and a remediation approach is approved.\n\n2. Task 205 (ETL Pipeline Development) cannot start as it depends on Task 203. Combined, these two tasks sit on the programme critical path.\n\n3. Current estimate is a 3\u20134 week delay to the migration design milestone. If the audit takes longer or remediation requires manual Finance enrichment, we could be looking at 6\u20138 weeks, which would put the go-live date at risk.\n\n4. YEAR-END REPORTING RISK: If the programme go-live slips beyond Q3 2026, we may not complete Finance UAT (Task 207, due 2027-01-15) with sufficient buffer before the year-end regulatory reporting cycle. This is the most serious downstream risk and requires your direct input.\n\nACTION REQUESTED\n- Lin: Please advise on the acceptable approach for null field remediation. Do we apply default values (subject to Finance sign-off), exclude records from initial migration scope, or initiate a manual enrichment exercise? We need Finance\u2019s position by end of this week to begin the audit.\n- Robert: Given the potential board-level visibility of a year-end reporting risk, please confirm whether this should be escalated to the Programme Board at the next steering meeting (or sooner).\n\nI have registered this as a HIGH probability / CRITICAL impact risk in the programme risk register.\n\nI will issue a revised programme plan and updated critical path analysis by end of day tomorrow.\n\nPriya Nair\nProgramme Manager, ERP S/4HANA Migration\n\nAttachment: ERP_Programme_Risk_Update_2026-07-29.pdf",
+    "attachments": ["ERP_Programme_Risk_Update_2026-07-29.pdf"],
+    "labels": ["escalation", "risk", "year-end", "exec"],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2003,
+    "project_id": 2,
+    "sender": "lin.wei@corp.com",
+    "recipients": ["priya.nair@corp.com"],
+    "subject": "RE: Data Migration Risk Escalation \u2014 Immediate Attention Required",
+    "timestamp": "2026-07-29T16:30:00+00:00",
+    "body": "Priya,\n\nThank you for the rapid escalation. I have reviewed Aisha\u2019s profiling report in detail.\n\nI want to be direct: year-end reporting continuity is non-negotiable. Our statutory close and regulatory submissions (IFRS consolidation pack, tax computations, and bank covenant reporting) depend on Finance systems being stable and fully operational from 1 November 2026. Any ERP go-live activity that could destabilise this window is not acceptable.\n\nMy position on the data quality issue:\n\n1. I am NOT comfortable approving blanket default value injection for 43,847 records without a record-level review. These are general ledger accounts \u2014 incorrect cost centre or profit centre mapping would corrupt management accounts and could result in mis-stated statutory figures. The audit must be thorough.\n\n2. I am authorising overtime for the Finance Data Team (4 analysts) to support Aisha\u2019s team on the record-level audit, effective immediately. Please coordinate with Emma Trent to get them onboarded to the migration environment by Thursday.\n\n3. I would like weekly briefings directly from Aisha on audit progress, not just programme updates.\n\n4. Regarding remediation options: I am open to Marcus\u2019s proposed \u2018Option B\u2019 (intelligent default value mapping with Finance validation) but only if each default mapping is individually signed off by my team. I will not accept a bulk approval.\n\n5. If there is any realistic risk to the November stability window, I need to know by 8 August at the latest so I can brief the CFO and put manual contingency processes in place.\n\nPlease confirm that the emergency data audit committee is being convened and let me know the first meeting date.\n\nLin Wei\nFinance Director",
+    "attachments": [],
+    "labels": ["finance", "escalation", "year-end", "audit"],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2004,
+    "project_id": 2,
+    "sender": "robert.chang@corp.com",
+    "recipients": ["priya.nair@corp.com"],
+    "subject": "RE: Data Migration Risk Escalation \u2014 Board Visibility",
+    "timestamp": "2026-07-30T08:00:00+00:00",
+    "body": "Priya,\n\nReceived and understood. This is serious and I want to make sure we are handling it with the urgency it demands.\n\nA few points from my side:\n\n1. BOARD VISIBILITY: I will be briefing the CFO and CTO informally before the next board pack is issued. The ERP programme is a board-level strategic initiative and a potential go-live delay needs to be surfaced proactively, not discovered in a status report. Please send me a one-page executive summary I can use by Friday 31 July.\n\n2. WEEKLY UPDATES: Starting immediately, I want weekly written status updates on the data quality workstream specifically. Not just the programme update \u2014 a dedicated data migration risk update, every Monday by 9am.\n\n3. HISTORICAL PRECEDENT: I recall that the 2021 Legacy Payroll migration ran into similar data quality issues and we lost 8 weeks. We cannot repeat that. Please pull the lessons-learned log from that programme and make sure we\u2019re applying everything we know.\n\n4. CONTINGENCY PLANNING: I want to see a revised programme plan that includes a realistic worst-case scenario (e.g., if remediation takes 8 weeks rather than 4). We need to know now whether the year-end go-live date is achievable under the worst case, and if not, what the contingency options are (phased go-live, parallel run extension, etc.).\n\n5. RESOURCING: If additional specialist resources are needed for the data audit or remediation \u2014 external consultants, SAP partner support, additional BODS licences \u2014 I am prepared to approve up-front. Do not let budget be the reason we lose more time.\n\nI have confidence in you and the team, Priya. Let\u2019s get ahead of this.\n\nRobert Chang\nExecutive Sponsor, ERP S/4HANA Migration Programme",
+    "attachments": [],
+    "labels": ["exec", "sponsor", "escalation", "board"],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 2005,
+    "project_id": 2,
+    "sender": "marcus.chen@corp.com",
+    "recipients": ["aisha.kamara@corp.com", "priya.nair@corp.com"],
+    "subject": "Data Remediation Technical Options \u2014 GL_ACCOUNTS Null Field Issue",
+    "timestamp": "2026-08-04T10:30:00+00:00",
+    "body": "Aisha, Priya,\n\nFollowing our emergency committee meeting last week, I\u2019ve documented three technical options for handling the 43,847 GL_ACCOUNTS records with null mandatory fields. Please review before Thursday\u2019s committee session.\n\n---\nOPTION A: Exclusion from Initial Migration Scope\nDescription: Null records are quarantined and excluded from the initial S/4HANA load. They remain in ECC (read-only) and are migrated in a second wave after manual enrichment.\nPros: Zero risk of bad data entering S/4HANA. Clean initial dataset.\nCons: Dual-system operation during wave 2 period (complexity). Finance analysts must work across two systems. Potentially 3\u20136 months of parallel operation. High operational overhead.\nEffort: Low for initial go-live; high for ongoing wave 2 management.\n\n---\nOPTION B: Intelligent Default Value Mapping with Finance Sign-Off (RECOMMENDED)\nDescription: BODS transformation rules apply deterministic default values based on the account\u2019s GL account group, company code, and chart of accounts hierarchy. Each default mapping is presented to Finance for individual validation via a structured sign-off workbook. Only Finance-approved mappings are loaded.\nPros: Keeps full dataset in scope for go-live. Maintains data integrity with Finance oversight. Automatable and auditable.\nCons: Requires Finance resource for sign-off (already committed by Lin Wei). Mapping logic must be peer-reviewed by SAP FI consultant.\nEffort: Medium. Estimated 3\u20134 weeks including Finance review cycle.\n\n---\nOPTION C: Bulk Default Injection with Post-Migration Correction\nDescription: Apply standardised defaults to all 43,847 records without individual Finance review. Produce a correction workbook for Finance to amend records post-go-live.\nPros: Fastest path to migration design completion.\nCons: HIGH RISK. Incorrect cost centre / profit centre will corrupt management accounts from day one. Post-migration correction in a live S/4HANA system is operationally disruptive. Lin Wei has explicitly ruled this out.\nEffort: Low upfront; very high post-go-live.\n\n---\nMY RECOMMENDATION: Option B.\n\nI\u2019ve already drafted the BODS transformation logic for the default mapping rules based on account group hierarchies. I can have a prototype mapping workbook ready for Finance review by 7 August. This is the only option that balances timeline recovery with data integrity.\n\nI\u2019m happy to walk through the technical details at Thursday\u2019s committee. Please let me know if you need anything before then.\n\nMarcus Chen\nSAP Architect, ERP Programme\n\nAttachment: GL_ACCOUNTS_Remediation_Options_v1.0.docx",
+    "attachments": ["GL_ACCOUNTS_Remediation_Options_v1.0.docx"],
+    "labels": ["technical", "data-quality", "remediation", "architecture"],
+    "created_at": null,
+    "updated_at": null
+  }
+]

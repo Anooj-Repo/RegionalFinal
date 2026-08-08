@@ -1,0 +1,99 @@
+[
+  {
+    "id": 5001,
+    "project_name": "CRM Platform Replacement Programme (2023)",
+    "lessons_learned": [
+      "Vendor delivery risk was underestimated at programme initiation. The Salesforce implementation partner missed two successive sprint delivery milestones before the programme manager escalated formally. Earlier escalation and tighter milestone governance would have recovered approximately six weeks of schedule.",
+      "SLA penalty clauses in vendor contracts must be reviewed and pre-positioned for activation before programme start, not discovered under pressure during a crisis. The 2023 CRM programme required a two-week legal review before penalties could be invoked, which delayed response.",
+      "Parallel-track development is an effective mitigation when vendor delay affects infrastructure but not design or documentation. The CRM programme successfully used the delay period to complete data model design, integration specifications, and test case development, which shortened the post-delivery development cycle by four weeks.",
+      "Vendor governance cadence should be weekly from day one for any contract on the critical path — not monthly as was the case in 2023. Weekly touchpoints provide early warning of slippage before it becomes a missed deadline.",
+      "Programme Boards should be briefed promptly on vendor risk rather than waiting for the monthly review cycle. The 2023 CRM programme waited three weeks to brief the Board after the first missed milestone, losing decision-making time.",
+      "Contractual commitment to a single vendor for critical infrastructure creates single-point-of-failure risk. Future programmes should assess multi-vendor or modular procurement strategies for critical path components.",
+      "A formally signed Director-level delivery commitment from the vendor (not just a verbal or email assurance) provides stronger legal standing and tends to focus vendor attention more effectively."
+    ],
+    "historical_risks": [
+      {
+        "title": "Third-Party Implementation Partner Delivery Failure",
+        "probability": "high",
+        "impact": "high",
+        "mitigation": "Invoked SLA penalty clause; moved to weekly delivery governance; secured signed commitment from partner CEO. Parallel design and data migration pre-work commenced during delay period.",
+        "outcome": "Partner delivered six weeks late. Parallel pre-work recovered four weeks of the schedule. Programme delivered eight weeks late overall with a budget overrun of £180,000. Go-live achieved without scope reduction."
+      },
+      {
+        "title": "Data Quality Issues Discovered Late in Migration",
+        "probability": "medium",
+        "impact": "high",
+        "mitigation": "Data profiling and cleansing sprints introduced mid-programme. Additional data quality resource contracted.",
+        "outcome": "Data quality issues resolved prior to go-live but added three weeks to the data migration workstream. No impact to overall go-live date as this was absorbed within existing float at the time."
+      },
+      {
+        "title": "Business Stakeholder Availability for UAT",
+        "probability": "medium",
+        "impact": "medium",
+        "mitigation": "UAT schedule agreed and locked with business units six weeks in advance. Named business testers confirmed with line manager sign-off.",
+        "outcome": "UAT completed on schedule. Named business tester approach was effective and is recommended for future programmes."
+      }
+    ],
+    "successful_mitigations": [
+      "Parallel-track design and documentation work during the vendor delivery delay period recovered approximately four weeks of schedule on the critical path.",
+      "Weekly vendor governance calls, once established, provided early warning of sub-issues and maintained delivery focus from the partner's senior management.",
+      "Pre-contracting with a backup data migration tooling vendor gave the programme team a credible alternative that was used to accelerate data cleansing and ultimately avoided a further schedule slip.",
+      "Named business tester model with line manager sign-off for UAT eliminated the availability risk that had impacted a prior 2021 programme and was adopted as standard practice.",
+      "Director-level signed commitment from the implementation partner CEO, obtained under SLA penalty pressure, resulted in additional partner resources being assigned and accelerated delivery."
+    ],
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 5002,
+    "project_name": "Data Centre Consolidation to AWS (2022)",
+    "lessons_learned": [
+      "Cloud migration programmes require a detailed dependency map before any workload migration begins. In 2022, undocumented application interdependencies caused three unplanned outages during migration waves, each requiring rollback and remediation.",
+      "Network connectivity (VPN / Direct Connect / ExpressRoute) provisioning is consistently on the critical path for cloud migrations and has long lead times. It must be contracted and tracked separately with dedicated milestone governance from programme initiation.",
+      "Cutover planning should begin at programme start, not at the end of build. The 2022 programme only began cutover planning eight weeks before go-live, which was insufficient time to rehearse and validate rollback procedures.",
+      "Infrastructure-as-code (IaC) discipline from the start significantly reduces configuration drift and security misconfiguration risk. Teams that adopted Terraform from day one experienced 70% fewer environment inconsistency incidents than those who provisioned manually.",
+      "Cloud cost management must be governed as actively as delivery scope and schedule. The 2022 programme experienced a 40% cost overrun in its first three months due to uncontrolled sandbox environment sprawl and oversized initial instance selections.",
+      "A formal hypercare period of at least four weeks post-cutover should be resourced and funded. Attempting to transition to BAU operations too quickly after go-live led to unresolved performance issues remaining open for months in the 2022 programme.",
+      "Business continuity and disaster recovery (BCDR) testing must be completed before go-live, not deferred to post-production. The 2022 programme deferred BCDR validation and subsequently discovered a critical backup configuration gap six months after go-live."
+    ],
+    "historical_risks": [
+      {
+        "title": "Network Connectivity Provisioning Delay",
+        "probability": "high",
+        "impact": "critical",
+        "mitigation": "AWS Direct Connect ordered 16 weeks before required date. Dedicated network workstream established with weekly milestone tracking. Fallback VPN connectivity provisioned as interim measure.",
+        "outcome": "Direct Connect delivered on schedule. Fallback VPN was used for two weeks during testing and provided valuable resilience data. This risk was successfully managed and is a model for future programmes."
+      },
+      {
+        "title": "Undocumented Application Interdependencies",
+        "probability": "high",
+        "impact": "high",
+        "mitigation": "Application dependency mapping exercise commissioned using automated discovery tooling (CloudSphere DependencyMapper). Three migration waves paused pending dependency validation.",
+        "outcome": "Dependency mapping uncovered 47 previously undocumented application interdependencies. Three migration waves required re-sequencing. Overall programme delayed by five weeks as a result. Lesson: dependency mapping must be completed before migration waves commence, not in parallel."
+      },
+      {
+        "title": "Cloud Cost Overrun",
+        "probability": "medium",
+        "impact": "medium",
+        "mitigation": "AWS Cost Explorer dashboards implemented with budget alerting. FinOps review introduced as a standing agenda item at monthly programme reviews. Right-sizing exercise conducted in Month 4.",
+        "outcome": "Cost overrun of £220,000 in first quarter recovered through right-sizing and environment cleanup in Months 4-5. Total programme delivered within 8% of budget by end."
+      },
+      {
+        "title": "Post-Cutover Performance Degradation",
+        "probability": "medium",
+        "impact": "high",
+        "mitigation": "Performance testing conducted pre-cutover. Hypercare period of four weeks resourced with on-call infrastructure team. Rollback plan rehearsed twice before go-live.",
+        "outcome": "Minor performance degradation experienced in first 72 hours post-cutover, resolved within hypercare period. No business impact. Rollback was not required. Four-week hypercare model confirmed as best practice."
+      }
+    ],
+    "successful_mitigations": [
+      "Ordering network connectivity (AWS Direct Connect) 16 weeks ahead of requirement, with fallback VPN as interim, ensured no network-related programme delays — a lesson directly applicable to any cloud migration programme.",
+      "Infrastructure-as-code (Terraform) adoption from programme initiation reduced environment inconsistency incidents by 70% compared to manual provisioning workstreams and should be mandated on all future cloud programmes.",
+      "Automated application dependency discovery tooling, while it revealed scope underestimation, ultimately prevented what could have been critical production outages had the undocumented dependencies been discovered post-migration.",
+      "A fully rehearsed rollback plan and four-week funded hypercare period provided the safety net that allowed the team to cut over with confidence and resolve post-cutover issues without business disruption.",
+      "FinOps governance introduced mid-programme recovered a Q1 cost overrun and delivered the programme within 8% of budget, demonstrating the value of active cloud cost management as a programme discipline."
+    ],
+    "created_at": null,
+    "updated_at": null
+  }
+]

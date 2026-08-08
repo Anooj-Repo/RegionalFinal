@@ -1,0 +1,98 @@
+[
+  {
+    "id": 30001,
+    "project_id": 3,
+    "channel": "#cybersec-overhaul",
+    "sender": "carlos.rivera@corp.com",
+    "timestamp": "2026-08-05T09:15:00+00:00",
+    "message": "Morning all. Readiness report for the SecureCheck pen test is done — technically we are 100% ready to go. Test accounts provisioned, jump host live, cloud access sorted. James Okafor at SecureCheck confirmed they can mobilise within 24h of contract signature. All we need is the signed contract. @helen.watts any update from Procurement?",
+    "thread_id": null,
+    "reactions": {"👍": 3, "🔒": 2},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 30002,
+    "project_id": 3,
+    "channel": "#cybersec-overhaul",
+    "sender": "helen.watts@corp.com",
+    "timestamp": "2026-08-05T09:28:00+00:00",
+    "message": "Thanks Carlos, great work getting everything ready. Still no word from Marcus on the contract. I've pinged his PA again. Will escalate formally if nothing by Monday. Can you write up the readiness assessment as a formal doc? I want to attach it to the escalation note.",
+    "thread_id": null,
+    "reactions": {"👍": 2},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 30003,
+    "project_id": 3,
+    "channel": "#cybersec-overhaul",
+    "sender": "fatima.al-hassan@corp.com",
+    "timestamp": "2026-08-05T10:02:00+00:00",
+    "message": "Jumping in here — I've been tracking the GDPR deadline in my head and just ran the numbers properly. If the contract isn't signed by this Friday (8th) we're cutting it very fine. Pen test is 3 weeks minimum. Report takes a week. We need to submit by 5 Sept for the ICO to process in time. That's 4 weeks total and we have 6 weeks. So we have a 2-week buffer but only if the contract drops THIS WEEK. Every day we slip is a day of buffer gone.",
+    "thread_id": null,
+    "reactions": {"😬": 4, "📅": 2, "🔴": 3},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 30004,
+    "project_id": 3,
+    "channel": "#cybersec-overhaul",
+    "sender": "carlos.rivera@corp.com",
+    "timestamp": "2026-08-05T10:18:00+00:00",
+    "message": "Fatima is right. And James at SecureCheck told me they can only hold our slot until 15 August. If we miss that, their next availability is October. That's game over for the GDPR cert. Helen — this needs to go to CEO level if Marcus doesn't respond today. This isn't a minor admin delay anymore.",
+    "thread_id": null,
+    "reactions": {"💯": 3, "🚨": 2},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 30005,
+    "project_id": 3,
+    "channel": "#compliance-risk",
+    "sender": "helen.watts@corp.com",
+    "timestamp": "2026-08-07T09:05:00+00:00",
+    "message": "Update for the compliance risk channel: I've sent formal written escalation to Marcus (CPO) and to David Thornton (CEO) this morning regarding the SecureCheck contract delay. Marcus responded at 14:00 acknowledging the issue — legal review of liability cap clauses has been the hold-up. He's committed to signing by 12 August. I've countered that we need it by 11 August given CEO directive. Awaiting David's response. Will update this channel as events develop. Risk 6001 and 6002 remain RED.",
+    "thread_id": null,
+    "reactions": {"👀": 5, "🔴": 4},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 30006,
+    "project_id": 3,
+    "channel": "#compliance-risk",
+    "sender": "fatima.al-hassan@corp.com",
+    "timestamp": "2026-08-07T09:20:00+00:00",
+    "message": "Helen — does this affect the SIEM handover planning? I've got Tier-1 runbooks drafted and was planning the SOC acceptance review for the week of 18 Aug. If the pen test slips, does that push us? Task 307 depends on both 304 and 305.",
+    "thread_id": null,
+    "reactions": {"❓": 2},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 30007,
+    "project_id": 3,
+    "channel": "#compliance-risk",
+    "sender": "helen.watts@corp.com",
+    "timestamp": "2026-08-07T09:35:00+00:00",
+    "message": "@fatima.al-hassan Yes — if the pen test slips, Task 307 (SOC Handover) slips too. Keep your runbook work going as planned, that's not blocked. But formal SOC acceptance cannot happen until we have a clean pen test report. Best case scenario: contract signed 11 Aug, test 11 Aug–1 Sept, report delivered 8 Sept, SOC handover 15–19 Sept. Tight but doable. Worst case: contract signed after 14 Aug = GDPR cert missed = regulatory incident.",
+    "thread_id": null,
+    "reactions": {"😓": 3, "📋": 2},
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 30008,
+    "project_id": 3,
+    "channel": "#compliance-risk",
+    "sender": "carlos.rivera@corp.com",
+    "timestamp": "2026-08-07T16:15:00+00:00",
+    "message": "CEO directive just came through — David Thornton has mandated the contract is signed by 11 August or he's calling a Board Risk Committee emergency session and considering proactive ICO disclosure. Marcus has 4 days. I've also just called James Okafor at SecureCheck — they're aware of the situation and have confirmed they'll extend the booking hold to 12 August as a gesture of goodwill given the circumstances. We are on a knife edge here. I'll be in early Monday.",
+    "thread_id": null,
+    "reactions": {"😤": 2, "🤞": 5, "🔔": 3},
+    "created_at": null,
+    "updated_at": null
+  }
+]

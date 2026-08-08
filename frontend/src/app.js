@@ -7,13 +7,8 @@ const API_BASE_URL = 'http://127.0.0.1:5000/api';
 
 // Application State Store
 const state = {
-  currentRole: 'Program Manager',
-  currentUser: {
-    username: 'rohit',
-    full_name: 'Rohit Verma',
-    role: 'Program Manager',
-    email: 'rohit.verma@pmai.com'
-  },
+  currentRole: 'Viewer',
+  currentUser: null,
   selectedProjectCode: 'PRJ-001',
   projects: [],
   tasks: [],
@@ -38,33 +33,21 @@ const state = {
     heatmap: true,
     aiAnalyse: true,
     breakdown: true
-  }
+  },
+  chatMessages: [],
+  chatNodeTraces: [],
+  chatInput: '',
+  isChatStreaming: false
 };
 
 // Initialize Application
 async function initApp() {
-  console.log('[PM AI App] Initializing Stitch PM Portal Engine...');
+  console.log('[PM AI App] Initializing PM Portal Engine (Landing on Login)...');
 
-  const savedToken = localStorage.getItem('pmai_auth_token');
-  const savedUser = localStorage.getItem('pmai_current_user');
-  const savedTab = localStorage.getItem('pmai_active_tab');
-  const savedProject = localStorage.getItem('pmai_selected_project');
-
-  if (savedToken && savedUser) {
-    try {
-      state.authToken = savedToken;
-      state.currentUser = JSON.parse(savedUser);
-      state.currentRole = state.currentUser.role || 'Program Manager';
-      state.activeTab = (savedTab && savedTab !== 'login') ? savedTab : 'dashboard';
-      if (savedProject) state.selectedProjectCode = savedProject;
-      console.log(`[Auth Session Restored] Restored session for ${state.currentUser.full_name} (${state.activeTab})`);
-    } catch (e) {
-      console.warn('[Auth Session Error] Restoring session failed:', e);
-      state.activeTab = 'login';
-    }
-  } else {
-    state.activeTab = 'login';
-  }
+  // Always land on Login page as Home Page
+  state.activeTab = 'login';
+  state.currentUser = null;
+  state.authToken = null;
 
   await loadProjects();
   await refreshWorkspaceData();
@@ -289,8 +272,55 @@ async function refreshWorkspaceData() {
   if (auditData && auditData.audit_logs) {
     state.auditLogs = auditData.audit_logs;
   }
+
+  const docsData = await apiGet('/admin/knowledge-docs');
+  if (docsData && docsData.rag_chunks) {
+    state.ragChunks = docsData.rag_chunks;
+    state.knowledgeDocs = docsData.documents || [];
+    if (docsData.vector_import_chunks) {
+      state.vectorImportChunks = docsData.vector_import_chunks;
+    }
+  }
 }
 
+
+
+
+// Toast Notification Helper
+function showToast(message, type = 'success') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast-notification toast-${type}`;
+
+  const iconMap = {
+    success: 'check_circle',
+    info: 'info',
+    warning: 'warning',
+    error: 'error'
+  };
+  const icon = iconMap[type] || 'notifications';
+
+  toast.innerHTML = `
+    <span class="material-symbols-outlined" style="font-size:20px;">${icon}</span>
+    <span style="flex:1; line-height:1.4;">${message}</span>
+    <button style="background:none; border:none; color:#fff; cursor:pointer; opacity:0.75; font-size:16px; padding:0; line-height:1;" onclick="this.parentElement.remove()">✕</button>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('toast-fadeOut');
+    setTimeout(() => {
+      if (toast.parentElement) toast.remove();
+    }, 300);
+  }, 4000);
+}
 
 // Event Handlers
 function setRole(roleName) {
@@ -378,7 +408,7 @@ async function approveEmail() {
 
   const res = await apiPost(`/emails/${emailId}/approve`, {});
   if (res && res.status === 'success') {
-    alert(`Email #${emailId} Approved! Background email service will dispatch to linusimon@gmail.com within 5-10 seconds.`);
+    showToast(`Email #${emailId} Approved! Background email service will dispatch to linusimon@gmail.com within 5-10 seconds.`, 'success');
     closeApprovalModal();
     await refreshWorkspaceData();
     renderApp();
@@ -398,7 +428,7 @@ async function triggerMultiAgentWorkflow() {
     state.nodeTraces = res.workflow_result.graphical_node_traces || [];
     await refreshWorkspaceData();
     renderApp();
-    alert(`LangGraph Workflow Completed! Generated draft email #${res.workflow_result.communication.created_draft_id} for Human Approval.`);
+    showToast(`LangGraph Workflow Completed! Generated draft email #${res.workflow_result.communication.created_draft_id} for Human Approval.`, 'success');
   }
 }
 
@@ -406,7 +436,7 @@ async function triggerMultiAgentWorkflow() {
 function startVoiceRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert("Speech Recognition API is not supported in this browser. Please use Chrome or Edge.");
+    showToast("Speech Recognition API is not supported in this browser. Please use Chrome or Edge.", 'warning');
     return;
   }
 
@@ -452,11 +482,12 @@ function renderApp() {
 
   const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
   const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
-  const isViewerRole = userRole === 'Viewer';
+  const canAccessCommsAndBreakdown = userRole === 'Program Manager' || isAdminRole;
 
-  if (isViewerRole && state.activeTab !== 'raid' && state.activeTab !== 'comms') {
-    state.activeTab = 'raid';
-  } else if (!isAdminRole && state.activeTab === 'admin') {
+  if (!isAdminRole && state.activeTab === 'admin') {
+    state.activeTab = 'dashboard';
+  }
+  if (!canAccessCommsAndBreakdown && state.activeTab === 'comms') {
     state.activeTab = 'dashboard';
   }
 
@@ -464,7 +495,10 @@ function renderApp() {
     name: 'Project Orion Upgrade', code: 'PRJ-001', lifecycle_phase: 'Mobilization', health_status: 'At Risk', progress_pct: 72
   };
 
-  const pendingEmailCount = state.emails.filter(e => e.status === 'PENDING').length;
+  const pendingEmailCount = state.emails.filter(e => 
+    e.status === 'PENDING' && 
+    (e.project_id === currentProject.id || e.project_code === currentProject.code || (currentProject.code === 'PRJ-001' && (!e.project_code || e.project_id === 1 || e.project_code === 'PRJ-001')))
+  ).length;
 
   root.innerHTML = `
     <div class="app-container">
@@ -481,34 +515,32 @@ function renderApp() {
         </div>
 
         <div class="sidebar-menu">
-          ${!isViewerRole ? `
-            <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
-              <span class="material-symbols-outlined">dashboard</span>
-              <span>Dashboard</span>
-            </button>
-            <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
-              <span class="material-symbols-outlined">assignment</span>
-              <span>Projects</span>
-            </button>
-          ` : ''}
+          <button class="nav-link ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-link ${state.activeTab === 'projects' ? 'active' : ''}" onclick="switchTab('projects')">
+            <span class="material-symbols-outlined">assignment</span>
+            <span>Projects</span>
+          </button>
           <button class="nav-link ${state.activeTab === 'raid' ? 'active' : ''}" onclick="switchTab('raid')">
             <span class="material-symbols-outlined">warning</span>
             <span>Risk Center</span>
           </button>
-          <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="switchTab('comms')">
-            <span class="material-symbols-outlined">chat</span>
-            <span>Communication ${pendingEmailCount > 0 ? `(${pendingEmailCount})` : ''}</span>
-          </button>
-          ${!isViewerRole ? `
-            <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
-              <span class="material-symbols-outlined">assessment</span>
-              <span>Reports</span>
-            </button>
-            <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
-              <span class="material-symbols-outlined">smart_toy</span>
-              <span>AI Assistant</span>
+          ${canAccessCommsAndBreakdown ? `
+            <button class="nav-link ${state.activeTab === 'comms' ? 'active' : ''}" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined">chat</span>
+              <span>Communication ${pendingEmailCount > 0 ? `(${pendingEmailCount})` : ''}</span>
             </button>
           ` : ''}
+          <button class="nav-link ${state.activeTab === 'reports' ? 'active' : ''}" onclick="switchTab('reports')">
+            <span class="material-symbols-outlined">assessment</span>
+            <span>Reports</span>
+          </button>
+          <button class="nav-link ${state.activeTab === 'chat' ? 'active' : ''}" onclick="switchTab('chat')">
+            <span class="material-symbols-outlined">smart_toy</span>
+            <span>AI Assistant</span>
+          </button>
           ${isAdminRole ? `
             <button class="nav-link ${state.activeTab === 'admin' ? 'active' : ''}" onclick="switchTab('admin')">
               <span class="material-symbols-outlined">settings</span>
@@ -546,7 +578,7 @@ function renderApp() {
 
           <div class="header-controls">
             <!-- Notifications & Help Icons -->
-            <button class="icon-btn" title="Notifications ${pendingEmailCount > 0 ? '(' + pendingEmailCount + ' Pending Approvals)' : ''}" onclick="state.activeTab='comms'; renderApp();">
+            <button class="icon-btn" title="Notifications ${pendingEmailCount > 0 ? '(' + pendingEmailCount + ' Pending Approvals)' : ''}" onclick="${canAccessCommsAndBreakdown ? "state.activeTab='comms'; renderApp();" : "state.activeTab='dashboard'; renderApp();"}">
               <span class="material-symbols-outlined">notifications</span>
               ${pendingEmailCount > 0 ? '<span class="notification-dot"></span>' : ''}
             </button>
@@ -699,6 +731,10 @@ function generateHeatmapMatrixHTML(currentProject) {
 
 // 1. Dashboard Tab View
 function renderDashboardTab(currentProject) {
+  const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
+  const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
+  const canAccessCommsAndBreakdown = userRole === 'Program Manager' || isAdminRole;
+
   // Filter RAID items by selected project AND selected date range
   const filteredRaidItems = state.raidItems.filter(r => {
     const isProj = r.project_id === currentProject.id || r.project_code === currentProject.code;
@@ -810,10 +846,12 @@ function renderDashboardTab(currentProject) {
           <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0">
             Vendor API spec bottleneck detected on WBS 1.3 (Score 88). LangGraph multi-agent reasoning recommends spinning up mock sandbox endpoints to preserve sprint velocity.
           </p>
-          <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="switchTab('comms')">
-            <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">chat</span>
-            <span>Communicate</span>
-          </button>
+          ${canAccessCommsAndBreakdown ? `
+            <button class="btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">chat</span>
+              <span>Communicate</span>
+            </button>
+          ` : ''}
         </div>
 
         <!-- Section 2: Mitigation -->
@@ -825,10 +863,12 @@ function renderDashboardTab(currentProject) {
           <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0">
             Deploy automated mock sandbox server & adjust critical path integration milestone by 10 business days to mitigate vendor turnaround delay.
           </p>
-          <button class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);" onclick="switchTab('comms')">
-            <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">play_arrow</span>
-            <span>Take Action</span>
-          </button>
+          ${canAccessCommsAndBreakdown ? `
+            <button class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; padding: 10px 18px; width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);" onclick="switchTab('comms')">
+              <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff">play_arrow</span>
+              <span>Take Action</span>
+            </button>
+          ` : ''}
         </div>
       </div>
     `,
@@ -891,6 +931,7 @@ function renderDashboardTab(currentProject) {
     const next = state.dashboardWidgetOrder[i + 1];
 
     if (!state.widgetVisibility[curr]) continue;
+    if (curr === 'breakdown' && !canAccessCommsAndBreakdown) continue;
 
     if (curr === 'kpis') {
       contentBuffer += widgetHTML.kpis;
@@ -900,13 +941,17 @@ function renderDashboardTab(currentProject) {
       (curr === 'heatmap' && next === 'breakdown') ||
       (curr === 'breakdown' && next === 'heatmap')
     ) {
-      contentBuffer += `
-        <div class="grid-2col">
-          ${widgetHTML[curr]}
-          ${widgetHTML[next]}
-        </div>
-      `;
-      i++;
+      if (next === 'breakdown' && !canAccessCommsAndBreakdown) {
+        contentBuffer += widgetHTML[curr];
+      } else {
+        contentBuffer += `
+          <div class="grid-2col">
+            ${widgetHTML[curr]}
+            ${widgetHTML[next]}
+          </div>
+        `;
+        i++;
+      }
     } else {
       contentBuffer += widgetHTML[curr];
     }
@@ -983,17 +1028,119 @@ function renderProjectsTab() {
   `;
 }
 
+// RAID Risk Discovery Handler
+async function triggerRaidRiskDiscovery() {
+  state.isAnalyzingRisk = true;
+  renderApp();
+
+  const res = await apiPost('/raid/discover-risks', {
+    project_code: state.selectedProjectCode
+  });
+
+  state.isAnalyzingRisk = false;
+
+  if (res && res.supervisor_trace) {
+    state.nodeTraces = res.supervisor_trace;
+  }
+
+  if (res && res.discovered_risks && res.discovered_risks.length > 0) {
+    state.aiDiscoveredRisks = res.discovered_risks;
+    state.aiDiscoveredRisk = res.discovered_risks[0];
+    renderApp();
+  } else if (res && res.discovered_risk) {
+    state.aiDiscoveredRisks = [res.discovered_risk];
+    state.aiDiscoveredRisk = res.discovered_risk;
+    renderApp();
+  } else {
+    showToast("AI Risk Analysis completed. No new un-tracked risks discovered for " + state.selectedProjectCode, 'info');
+    renderApp();
+  }
+}
+
+async function confirmCreateSingleDiscoveredRisk(idx) {
+  const list = state.aiDiscoveredRisks || [state.aiDiscoveredRisk];
+  if (!list || !list[idx]) return;
+  const d = list[idx];
+
+  const res = await apiPost('/raid', {
+    project_id: d.project_id,
+    category: d.category,
+    title: d.title,
+    description: d.description,
+    likelihood: d.likelihood,
+    impact: d.impact,
+    risk_score: d.risk_score,
+    owner_name: d.owner_name,
+    root_cause: d.root_cause
+  });
+
+  if (res && res.status === 'success') {
+    showToast(`Success! New Risk Item "${d.title}" (Score ${d.risk_score}) created in RAID Register (app.db).`, 'success');
+    // Remove created risk from modal list
+    list.splice(idx, 1);
+    if (list.length === 0) {
+      state.aiDiscoveredRisks = null;
+      state.aiDiscoveredRisk = null;
+    } else {
+      state.aiDiscoveredRisks = list;
+      state.aiDiscoveredRisk = list[0];
+    }
+    await refreshWorkspaceData();
+    renderApp();
+  }
+}
+
+async function confirmCreateAllDiscoveredRisks() {
+  const list = state.aiDiscoveredRisks || [state.aiDiscoveredRisk];
+  if (!list || list.length === 0) return;
+
+  let createdCount = 0;
+  for (const d of list) {
+    const res = await apiPost('/raid', {
+      project_id: d.project_id,
+      category: d.category,
+      title: d.title,
+      description: d.description,
+      likelihood: d.likelihood,
+      impact: d.impact,
+      risk_score: d.risk_score,
+      owner_name: d.owner_name,
+      root_cause: d.root_cause
+    });
+    if (res && res.status === 'success') {
+      createdCount++;
+    }
+  }
+
+  showToast(`Success! Created ${createdCount} new Risk Items in RAID Register (app.db).`, 'success');
+  state.aiDiscoveredRisks = null;
+  state.aiDiscoveredRisk = null;
+  await refreshWorkspaceData();
+  renderApp();
+}
+
+async function confirmCreateDiscoveredRisk() {
+  await confirmCreateSingleDiscoveredRisk(0);
+}
+
 // 3. RAID Register / Risk Center Tab View
 function renderRaidTab() {
+  const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
+  const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
+  const canAccessCommsAndBreakdown = userRole === 'Program Manager' || isAdminRole;
+
   return `
     <div class="page-header">
       <div>
-        <h1 class="page-title">Risk Center (RAID Register)</h1>
+        <h1 class="page-title">Risk Center</h1>
         <p class="page-subtitle">Active risks, assumptions, issues, and dependencies for ${state.selectedProjectCode}</p>
       </div>
-      <button class="btn-primary" onclick="triggerMultiAgentWorkflow()">
-        <span class="material-symbols-outlined">smart_toy</span> Run LangGraph RAID Analysis
-      </button>
+      ${canAccessCommsAndBreakdown ? `
+        <button class="btn-primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; font-weight:700; display:flex; align-items:center; gap:8px; border:none; padding:10px 16px; border-radius:8px; cursor:pointer;" onclick="triggerRaidRiskDiscovery()" ${state.isAnalyzingRisk ? 'disabled' : ''}>
+          <span class="material-symbols-outlined" style="color:#facc15">bolt</span>
+          ${state.isAnalyzingRisk ? 'AI Analyzing Project Vector Store...' : 'Risk Analysis'}
+        </button>
+      ` : ''}
     </div>
 
     <div class="card-box">
@@ -1023,8 +1170,77 @@ function renderRaidTab() {
         </table>
       </div>
     </div>
+
+    ${(state.aiDiscoveredRisks && state.aiDiscoveredRisks.length > 0) || state.aiDiscoveredRisk ? renderDiscoveredRiskModal() : ''}
   `;
 }
+
+// Render Discovered Risk Modal Overlay (Supports Multiple Discovered Risks)
+function renderDiscoveredRiskModal() {
+  const list = state.aiDiscoveredRisks && state.aiDiscoveredRisks.length > 0
+    ? state.aiDiscoveredRisks
+    : (state.aiDiscoveredRisk ? [state.aiDiscoveredRisk] : []);
+
+  if (list.length === 0) return '';
+
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-window" style="max-width: 850px; max-height: 85vh; overflow-y: auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--outline-variant); padding-bottom:10px;">
+          <div>
+            <h3 style="font-size:18px; font-weight:700; color:var(--on-surface); display:flex; align-items:center; gap:8px;">
+              <span class="material-symbols-outlined" style="color:#facc15">bolt</span>
+              AI RAID Risk Discovery & Recommendations (${list.length} Discovered Risks for ${state.selectedProjectCode})
+            </h3>
+            <p style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">
+              VectorImport Project Intelligence Engine & Graph 2 Decision Pipeline discovered ${list.length} potential un-tracked RAID items. Review and approve below.
+            </p>
+          </div>
+          <button class="btn-secondary" onclick="state.aiDiscoveredRisks=null; state.aiDiscoveredRisk=null; renderApp();" style="padding:4px 8px">✕</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          ${list.map((d, idx) => `
+            <div style="background: linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(239, 68, 68, 0.03) 100%); border: 1px solid rgba(220, 38, 38, 0.25); border-radius: 8px; padding: 14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span class="chip chip-danger" style="font-size:11px; font-weight:700">#${idx + 1} DISCOVERED ${d.category.toUpperCase()}</span>
+                  <span class="chip chip-info" style="font-size:11px">Owner: ${d.owner_name}</span>
+                </div>
+                <span class="chip chip-warning" style="font-size:11px">Score: ${d.risk_score} (HIGH)</span>
+              </div>
+              <h4 style="font-size:15px; font-weight:700; color:var(--on-surface); margin-bottom:6px">${d.title}</h4>
+              <p style="font-size:13px; color:var(--on-surface-variant); line-height:1.5; margin-bottom:10px">${d.description}</p>
+              
+              <div style="background:var(--surface-container-low); padding:10px; border-radius:6px; margin-bottom:10px">
+                <span style="font-size:11px; font-weight:700; color:var(--on-surface-variant)">Identified Root Cause & Source Feed:</span>
+                <p style="font-size:12px; color:var(--on-surface); margin-top:2px">${d.root_cause}</p>
+                <small style="color:var(--primary-container); font-size:11px; display:block; margin-top:4px">Source: ${d.source_feed}</small>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end">
+                <button class="btn-success" style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:#fff; font-weight:700; padding:6px 12px; border:none; border-radius:6px; cursor:pointer; font-size:12px;" onclick="confirmCreateSingleDiscoveredRisk(${idx})">
+                  <span class="material-symbols-outlined" style="font-size:14px">add_circle</span>
+                  Confirm & Create Risk #${idx + 1}
+                </button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--outline-variant); padding-top:12px;">
+          <button class="btn-secondary" onclick="state.aiDiscoveredRisks=null; state.aiDiscoveredRisk=null; renderApp();">Dismiss All</button>
+          <button class="btn-primary" style="background:linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color:#fff; font-weight:700; padding:10px 18px; border:none; border-radius:6px; cursor:pointer;" onclick="confirmCreateAllDiscoveredRisks()">
+            <span class="material-symbols-outlined" style="font-size:16px">done_all</span>
+            ⚡ Confirm & Create All (${list.length}) Risks in Register
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+
 
 // 4. Communication Center Tab View
 // 4. Communication Center Tab View
@@ -1046,14 +1262,6 @@ function renderCommsTab() {
         <p class="page-subtitle">Stakeholder email communications and Mandatory Human Approval workflow for ${state.selectedProjectCode}</p>
       </div>
       <div style="display:flex; align-items:center; gap:12px">
-        <select class="btn-secondary" style="background:#fff; cursor:pointer; height:38px;" onchange="setProject(this.value); renderApp();">
-          <option value="ALL" ${state.selectedProjectCode === 'ALL' ? 'selected' : ''}>ALL PROJECTS (${state.emails.length} Communications)</option>
-          ${state.projects.map(p => `
-            <option value="${p.code}" ${p.code === currentProject.code ? 'selected' : ''}>
-              ${p.code} - ${p.name}
-            </option>
-          `).join('')}
-        </select>
         <span class="chip chip-warning" style="font-size:13px">${pendingCount} Pending</span>
         <span class="chip chip-success" style="font-size:13px">${sentCount} Sent</span>
       </div>
@@ -1101,6 +1309,35 @@ function renderCommsTab() {
 }
 
 
+function exportReportToPDF() {
+  const element = document.getElementById('executiveSummaryReportContainer');
+  if (!element) return;
+
+  const projectCode = state.selectedProjectCode || 'PRJ-001';
+  const opt = {
+    margin:       10,
+    filename:     `Executive_Program_Summary_${projectCode}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, logging: false },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  if (typeof html2pdf !== 'undefined') {
+    html2pdf().set(opt).from(element).save();
+  } else {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    script.onload = () => {
+      html2pdf().set(opt).from(element).save();
+    };
+    script.onerror = () => {
+      showToast('Could not load PDF generator library. Opening print view instead.', 'warning');
+      window.print();
+    };
+    document.head.appendChild(script);
+  }
+}
+
 // 5. Reports Tab View
 function renderReportsTab(currentProject) {
   return `
@@ -1109,13 +1346,13 @@ function renderReportsTab(currentProject) {
         <h1 class="page-title">Program Management Reports</h1>
         <p class="page-subtitle">Executive status reports and AI insights for ${currentProject.code}</p>
       </div>
-      <button class="btn-primary" onclick="window.print()">
-        <span class="material-symbols-outlined">print</span> Export Report
+      <button class="btn-primary" onclick="exportReportToPDF()">
+        <span class="material-symbols-outlined">download</span> Export Report PDF
       </button>
     </div>
 
-    <div class="card-box">
-      <div class="card-box-title" style="margin-bottom:12px">Executive Program Summary</div>
+    <div class="card-box" id="executiveSummaryReportContainer" style="background:#fff; padding:24px; border-radius:12px; border:1px solid var(--outline-variant);">
+      <div class="card-box-title" style="margin-bottom:12px; font-size:18px; font-weight:700;">Executive Program Summary (${currentProject.code})</div>
       <p style="line-height:1.6; color:var(--on-surface)">
         Program <strong>${currentProject.name} (${currentProject.code})</strong> is currently in the <strong>${currentProject.lifecycle_phase}</strong> phase with an overall progress completion rate of <strong>${currentProject.progress_pct}%</strong>. The current program risk profile is categorized as <span class="chip chip-warning">Medium Risk</span>.
       </p>
@@ -1124,15 +1361,13 @@ function renderReportsTab(currentProject) {
         <div style="background:var(--surface-container-low); padding:16px; border-radius:8px">
           <h4 style="font-weight:700; margin-bottom:8px">Key Performance Indicators</h4>
           <ul style="padding-left:20px; line-height:1.8">
-            <li>Open RAID Items: <strong>${state.raidItems.length}</strong></li>
+            <li>Open Items: <strong>${state.raidItems.length}</strong></li>
             <li>High Severity Risks (&gt;70): <strong>${state.raidItems.filter(r => r.risk_score>=70).length}</strong></li>
-            <li>Active Project Team Leads: <strong>4</strong></li>
-            <li>Budget Variance: <strong>-8.5% ($1.2M)</strong></li>
           </ul>
         </div>
 
         <div style="background:var(--surface-container-low); padding:16px; border-radius:8px">
-          <h4 style="font-weight:700; margin-bottom:8px">LangGraph AI Mitigation Summary</h4>
+          <h4 style="font-weight:700; margin-bottom:8px">Risk & Mitigation Summary</h4>
           <p style="font-size:13px; color:var(--on-surface-variant)">
             The multi-agent system identified third-party API integration delays as the primary bottleneck. Mitigation strategy recommends deploying mock servers and initiating parallel sprint tasks.
           </p>
@@ -1142,82 +1377,565 @@ function renderReportsTab(currentProject) {
   `;
 }
 
-// 6. AI Assistant & Voice Chat Tab View
+// 6. AI Assistant & Voice Chat Tab View — Enterprise Chat Workspace
 function renderChatTab() {
+  const projectCode = state.selectedProjectCode || 'PRJ-001';
+  const userRole = state.currentUser ? (state.currentUser.role || 'Program Manager') : (state.currentRole || 'Program Manager');
+  const chatMessages = state.chatMessages || [];
+  const chatNodeTraces = state.chatNodeTraces || [];
+
+  // Build message feed HTML
+  const feedHtml = chatMessages.length === 0 ? `
+    <div class="chat-empty-state">
+      <span class="chat-empty-icon material-symbols-outlined">smart_toy</span>
+      <div class="chat-empty-title">Enterprise AI Assistant</div>
+      <div class="chat-empty-sub">Ask about project risks, RAID items, mitigation plans, SOW policies, or request executive communications. I run the full LangGraph pipeline for every response.</div>
+      <div class="chat-reply-chips" style="justify-content:center">
+        ${_getQuickChips().map(c => `<button class="chat-reply-chip" onclick="chatQuickSend('${c.prompt}')">${c.label}</button>`).join('')}
+      </div>
+    </div>
+  ` : chatMessages.map(msg => _renderChatMessage(msg)).join('');
+
+  // Build node trace panel HTML
+  const traceHtml = chatNodeTraces.length === 0 ? `
+    <div style="color:var(--on-surface-variant); font-size:12px; text-align:center; padding:20px; opacity:0.6">
+      Node traces will appear here during agent execution.
+    </div>
+  ` : chatNodeTraces.map(n => `
+    <div class="chat-trace-node node-${n.status === 'COMPLETED' ? 'completed' : n.status === 'BLOCKED' ? 'blocked' : 'running'}">
+      <div class="chat-trace-dot"></div>
+      <div style="flex:1">
+        <div style="font-weight:700; color:var(--on-surface); font-size:12px">${n.name}</div>
+        <div style="color:var(--on-surface-variant); font-size:11px; margin-top:2px">${n.status} · ${n.latency_ms}ms</div>
+        ${n.details?.primary_raid ? `<div style="color:var(--on-surface-variant); font-size:10px; margin-top:2px">🎯 ${n.details.primary_raid}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
   return `
-    <div class="page-header">
+    <div class="page-header" style="margin-bottom:12px; padding:0 0 8px 0;">
       <div>
-        <h1 class="page-title">Multi-Modal AI Assistant</h1>
-        <p class="page-subtitle">Interactive query engine with Voice STT/TTS and real-time LangGraph execution tracing</p>
+        <h1 class="page-title" style="font-size:20px;">Multi-Modal AI Assistant</h1>
+        <p class="page-subtitle" style="font-size:12px; margin:2px 0 0 0;">Full LangGraph pipeline: Data Intelligence → Risk Intelligence → LLM Reasoning → Memory Agent</p>
       </div>
     </div>
 
-    <div class="grid-2col">
-      <div class="card-box">
-        <div class="card-box-title" style="margin-bottom:16px">Interactive Query & Voice Assistant</div>
+    <div style="display:grid; grid-template-columns:minmax(0, 1fr) 220px; gap:12px; align-items:stretch; max-width:100%; box-sizing:border-box;">
 
-        <div style="display:flex; gap:10px; margin-bottom:16px">
-          <input type="text" id="chatQueryInput" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--outline-variant)" placeholder="Ask about project risks, SOW policies, or mitigation..." value="Analyze risk for Project Orion Upgrade and generate mitigation plan" />
-          <button class="btn-primary" onclick="triggerMultiAgentWorkflow()">
-            <span class="material-symbols-outlined">send</span> Send
-          </button>
-          <button class="btn-secondary" onclick="startVoiceRecognition()">
-            <span class="material-symbols-outlined">mic</span> ${state.isRecordingVoice ? 'Listening...' : 'Voice'}
-          </button>
+      <!-- ── Main Chat Workspace ── -->
+      <div class="chat-workspace">
+
+        <!-- Header Bar -->
+        <div class="chat-header-bar">
+          <div class="chat-header-title">
+            <span class="material-symbols-outlined" style="color:var(--primary-container)">smart_toy</span>
+            Enterprise AI Assistant
+            <span class="chip chip-info" style="font-size:10px">${projectCode}</span>
+            <span class="chip" style="font-size:10px; background:var(--surface-container)">${userRole}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px">
+            <div class="chat-live-badge">
+              <div class="chat-live-dot"></div>
+              SSE Streaming Active
+            </div>
+            <button class="btn-secondary" onclick="clearChatHistory()" style="font-size:11px; padding:4px 10px">
+              <span class="material-symbols-outlined" style="font-size:14px">delete_sweep</span> Clear
+            </button>
+          </div>
         </div>
 
-        <div style="background:var(--surface-container-low); border:1px solid var(--outline-variant); padding:16px; border-radius:8px; min-height:180px">
-          <p style="color:var(--primary-container); font-weight:bold; display:flex; align-items:center; gap:6px">
-            <span class="material-symbols-outlined">smart_toy</span> AI Assistant Analysis Output
-          </p>
-          <p style="margin-top:10px; line-height:1.6; font-size:13px">
-            Analysis completed for <strong>${state.selectedProjectCode}</strong> using Dual RAG & 3-LangGraph Workflow.<br>
-            • <strong>Guardrails Check:</strong> Passed PII Masking & SQL Injection Filter.<br>
-            • <strong>Primary Risk Item:</strong> Third-party API Integration Delay (Score 88 High).<br>
-            • <strong>Mitigation Action:</strong> Spin up mock server to unblock sprint.<br>
-            • <strong>Human Approval:</strong> Drafted stakeholder email awaiting review in Communication Center.
-          </p>
+        <!-- Quick Prompt Chips -->
+        <div class="chat-quick-bar">
+          ${_getQuickChips().map(c => `<button class="chat-quick-chip" onclick="chatQuickSend('${c.prompt}')">${c.label}</button>`).join('')}
+        </div>
+
+        <!-- Message Feed -->
+        <div class="chat-feed" id="chatFeed">
+          ${feedHtml}
+        </div>
+
+        <!-- Input Control Bar -->
+        <div class="chat-input-bar">
+          <textarea
+            id="chatInput"
+            class="chat-textarea"
+            rows="1"
+            placeholder="Ask about risks, mitigation, RAID, email drafts, or type a command..."
+            ${state.isChatStreaming ? 'disabled' : ''}
+            onkeydown="handleChatKeydown(event)"
+            oninput="this.style.height='auto'; this.style.height=this.scrollHeight+'px'; state.chatInput=this.value;"
+          >${state.chatInput}</textarea>
+          <button
+            id="chatVoiceBtn"
+            class="chat-voice-btn ${state.isRecordingVoice ? 'recording' : ''}"
+            onclick="chatVoiceInput()"
+            title="Voice Input"
+          >
+            <span class="material-symbols-outlined" style="font-size:18px">mic</span>
+          </button>
+          <button
+            id="chatSendBtn"
+            class="chat-send-btn"
+            onclick="sendChatMessage()"
+            ${state.isChatStreaming ? 'disabled' : ''}
+            title="Send (Enter)"
+          >
+            <span class="material-symbols-outlined" style="font-size:18px">send</span>
+          </button>
         </div>
       </div>
 
-      <!-- Real-Time Graphical Node Execution Trace -->
-      <div class="card-box">
-        <div class="card-box-title" style="margin-bottom:16px">Real-Time Graphical Node Execution Trace</div>
-        <div class="execution-flow">
-          ${state.nodeTraces.length > 0 ? state.nodeTraces.map(n => `
-            <div class="node-item ${n.status==='COMPLETED'?'':'blocked'}">
-              <div>
-                <strong>${n.name}</strong><br>
-                <small style="color:var(--on-surface-variant)">Status: ${n.status}</small>
-              </div>
-              <span class="chip chip-success">${n.latency_ms} ms</span>
-            </div>
-          `).join('') : `
-            <div class="node-item">
-              <div><strong>1. Data Intelligence Graph</strong><br><small style="color:var(--on-surface-variant)">Guardrails & Dual RAG Indexing</small></div>
-              <span class="chip chip-success">4 ms</span>
-            </div>
-            <div class="node-item">
-              <div><strong>2. Risk Intelligence Graph</strong><br><small style="color:var(--on-surface-variant)">RAID Rule Engine & LLM Reasoning</small></div>
-              <span class="chip chip-success">0 ms</span>
-            </div>
-            <div class="node-item">
-              <div><strong>3. Communication Graph</strong><br><small style="color:var(--on-surface-variant)">Role Tailoring & Human Approval</small></div>
-            </div>
-          `}
+      <!-- ── Node Trace Side Panel ── -->
+      <div class="chat-trace-panel">
+        <div class="chat-trace-title">
+          <span class="material-symbols-outlined" style="font-size:14px">account_tree</span>
+          LangGraph Node Traces
         </div>
+        ${traceHtml}
+        ${state.chatNodeTraces.length > 0 ? `
+          <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--outline-variant); font-size:10px; color:var(--on-surface-variant)">
+            4 Nodes: Data → Risk → LLM → Memory
+          </div>
+        ` : ''}
       </div>
     </div>
   `;
 }
 
+// ─── Chat Helper: Quick Chips Config ────────────────────────────────────────
+function _getQuickChips() {
+  return [
+    { label: '⚡ Critical Path Risks', prompt: `What are the critical path risks for ${state.selectedProjectCode}?` },
+    { label: '🛡️ Add Mitigation', prompt: `Add a mitigation action for the top risk in ${state.selectedProjectCode}` },
+    { label: '📧 Draft Executive Email', prompt: `Draft a stakeholder email for ${state.selectedProjectCode} risk update` },
+    { label: '📊 Run Full Analysis', prompt: `Run full RAID analysis for ${state.selectedProjectCode}` },
+    { label: '📋 RAID Summary', prompt: `Summarize all RAID items for ${state.selectedProjectCode}` },
+    { label: '⏱️ Schedule Risks', prompt: `What schedule risks exist for ${state.selectedProjectCode}?` },
+  ];
+}
+
+// ─── Chat Helper: Render a single message ───────────────────────────────────
+function _renderChatMessage(msg) {
+  if (msg.role === 'user') {
+    return `
+      <div class="chat-msg-row user-row">
+        <div class="chat-avatar user-avatar"><span class="material-symbols-outlined" style="font-size:16px">person</span></div>
+        <div>
+          <div class="chat-bubble user-bubble">${_escapeHtml(msg.content)}</div>
+          <div class="chat-bubble-timestamp">${msg.timestamp}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (msg.role === 'status') {
+    return `
+      <div class="chat-status-event" style="max-width:80%">
+        <div class="chat-status-spinner"></div>
+        <span>${_escapeHtml(msg.content)}</span>
+      </div>
+    `;
+  }
+
+  if (msg.role === 'typing') {
+    return `
+      <div class="chat-msg-row assistant-row">
+        <div class="chat-avatar ai-avatar"><span class="material-symbols-outlined" style="font-size:16px">smart_toy</span></div>
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // assistant message
+  const actionHtml = msg.action ? _renderActionCard(msg.action) : '';
+  const telemHtml = msg.telemetry ? _renderTelemetryRow(msg.telemetry) : '';
+  const repliesHtml = msg.replies ? `
+    <div class="chat-reply-chips">
+      ${msg.replies.map(r => `<button class="chat-reply-chip" onclick="chatQuickSend('${r.prompt}')">${r.label}</button>`).join('')}
+    </div>
+  ` : '';
+
+  return `
+    <div class="chat-msg-row assistant-row">
+      <div class="chat-avatar ai-avatar"><span class="material-symbols-outlined" style="font-size:16px">smart_toy</span></div>
+      <div style="flex:1; min-width:0">
+        <div class="chat-bubble assistant-bubble" id="msg-${msg.id}">${_renderMarkdown(msg.content)}</div>
+        ${actionHtml}
+        ${telemHtml}
+        ${repliesHtml}
+        <div class="chat-bubble-timestamp">${msg.timestamp}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Chat Helper: Render Action Card (HITL widget) ───────────────────────────
+function _renderActionCard(action) {
+  if (action._confirmed) {
+    return `
+      <div class="chat-action-card">
+        <div class="action-confirmed-badge">
+          <span class="material-symbols-outlined" style="font-size:16px">check_circle</span>
+          Action Executed Successfully
+        </div>
+      </div>
+    `;
+  }
+  if (action._cancelled) {
+    return `<div class="chat-action-card"><div style="padding:10px 14px; font-size:12px; color:var(--on-surface-variant)">Action cancelled.</div></div>`;
+  }
+
+  const actionId = action._id;
+  const typeLabel = {
+    ADD_MITIGATION: '🛡️ Add Mitigation',
+    CREATE_RAID_ITEM: '⚠️ Create RAID Item',
+    DRAFT_EMAIL: '📧 Draft Email',
+    RUN_WORKFLOW: '🔬 Run Workflow'
+  }[action.action_type] || action.action_type;
+
+  const fields = Object.entries(action)
+    .filter(([k]) => !['action_type', '_id', '_confirmed', '_cancelled'].includes(k))
+    .map(([k, v]) => `<div class="chat-action-card-field"><strong>${k.replace(/_/g,' ')}:</strong> ${_escapeHtml(String(v))}</div>`)
+    .join('');
+
+  return `
+    <div class="chat-action-card" id="action-card-${actionId}">
+      <div class="chat-action-card-header">
+        <span>📋 Action Proposed</span>
+        <span class="chat-action-card-type-badge">${action.action_type}</span>
+      </div>
+      <div class="chat-action-card-body">
+        <div style="font-size:13px; font-weight:700; color:var(--on-surface); margin-bottom:4px">${typeLabel}</div>
+        ${fields}
+      </div>
+      <div class="chat-action-card-actions">
+        <button class="btn-approve" onclick="approveAction('${actionId}')">
+          <span class="material-symbols-outlined" style="font-size:14px">check_circle</span>
+          Approve & Execute
+        </button>
+        <button class="btn-cancel-action" onclick="cancelAction('${actionId}')">
+          Cancel
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Chat Helper: Render Telemetry Row ──────────────────────────────────────
+function _renderTelemetryRow(t) {
+  if (!t || t.status === 'BLOCKED') return '';
+  const model = t.model_used || 'gemini-1.5-pro';
+  const latency = t.total_latency_ms || 0;
+  const tokens = t.usage?.total_tokens || 0;
+  const cost = t.cost_usd ? `$${Number(t.cost_usd).toFixed(5)}` : '$0.00003';
+  const conf = t.confidence_score ? `${Math.round(t.confidence_score * 100)}%` : '94%';
+  return `
+    <div class="chat-telemetry-row">
+      <span class="chat-telem-chip">⚡ ${latency}ms</span>
+      <span class="chat-telem-chip">🤖 ${model}</span>
+      <span class="chat-telem-chip">🎯 Conf: ${conf}</span>
+      <span class="chat-telem-chip">🔢 ${tokens} tokens</span>
+      <span class="chat-telem-chip">💰 ${cost}</span>
+    </div>
+  `;
+}
+
+// ─── Chat Helper: Client-side Markdown renderer ──────────────────────────────
+function _renderMarkdown(text) {
+  if (!text) return '';
+  // Escape HTML first
+  let html = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>');
+  // Collect consecutive list lines and wrap them in a single <ul>
+  const lines = html.split('\n');
+  const result = [];
+  let inList = false;
+  for (const line of lines) {
+    const listMatch = line.match(/^[-•]\s(.+)$/);
+    if (listMatch) {
+      if (!inList) { result.push('<ul>'); inList = true; }
+      result.push(`<li>${listMatch[1]}</li>`);
+    } else {
+      if (inList) { result.push('</ul>'); inList = false; }
+      result.push(line);
+    }
+  }
+  if (inList) result.push('</ul>');
+  return result.join('<br>').replace(/<br>(<ul>|<\/ul>|<li>|<\/li>)/g, '$1').replace(/(<\/li>)<br>/g, '$1');
+}
+
+function _escapeHtml(text) {
+  return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function _timestamp() {
+  return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ─── Send Chat Message ───────────────────────────────────────────────────────
+async function sendChatMessage(overrideText) {
+  if (state.isChatStreaming) return;
+  const inputEl = document.getElementById('chatInput');
+  const text = overrideText || (inputEl ? inputEl.value.trim() : state.chatInput.trim());
+  if (!text) return;
+
+  // Push user message
+  state.chatMessages.push({ id: Date.now(), role: 'user', content: text, timestamp: _timestamp() });
+  state.chatInput = '';
+  state.isChatStreaming = true;
+  state.chatNodeTraces = [];
+
+  // Add typing indicator
+  const typingId = Date.now() + 1;
+  state.chatMessages.push({ id: typingId, role: 'typing', content: '' });
+  renderApp();
+  _scrollChatToBottom();
+
+  // Build conversation history from past user/assistant messages
+  const history = state.chatMessages
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .slice(-12)
+    .map(m => ({ role: m.role, content: m.content }));
+
+  // Create the assistant placeholder message
+  const assistantMsgId = Date.now() + 2;
+  let assistantContent = '';
+  let assistantAction = null;
+  let assistantTelemetry = null;
+
+  try {
+    const token = state.authToken || localStorage.getItem('pmai_auth_token');
+    const resp = await fetch(`${API_BASE_URL}/agents/chat-stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        message: text,
+        project_code: state.selectedProjectCode,
+        conversation_history: history,
+        user_role: state.currentUser.role,
+        project_data: { code: state.selectedProjectCode, lifecycle_phase: 'Execution' }
+      })
+    });
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    // Remove typing indicator, add assistant placeholder
+    state.chatMessages = state.chatMessages.filter(m => m.id !== typingId);
+    state.chatMessages.push({
+      id: assistantMsgId,
+      role: 'assistant',
+      content: '',
+      action: null,
+      telemetry: null,
+      timestamp: _timestamp()
+    });
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // keep incomplete line
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        let event;
+        try { event = JSON.parse(line.slice(6)); } catch { continue; }
+
+        const aMsg = state.chatMessages.find(m => m.id === assistantMsgId);
+        if (!aMsg) continue;
+
+        if (event.type === 'status') {
+          // Show status events inline above the assistant bubble
+          state.chatMessages = state.chatMessages.filter(m => m.role !== 'status');
+          const statusIdx = state.chatMessages.findIndex(m => m.id === assistantMsgId);
+          state.chatMessages.splice(statusIdx, 0, { id: Date.now(), role: 'status', content: event.content });
+        } else if (event.type === 'token') {
+          aMsg.content += event.content;
+        } else if (event.type === 'action') {
+          const actionPayload = event.action;
+          actionPayload._id = 'action_' + Date.now();
+          aMsg.action = actionPayload;
+          // Register in global action registry for approve/cancel
+          window._chatActions = window._chatActions || {};
+          window._chatActions[actionPayload._id] = actionPayload;
+        } else if (event.type === 'done') {
+          assistantTelemetry = event.telemetry;
+          aMsg.telemetry = assistantTelemetry;
+          // Update node traces in side panel
+          state.chatNodeTraces = (event.telemetry?.node_traces || []);
+          // Remove status events from feed now that streaming is done
+          state.chatMessages = state.chatMessages.filter(m => m.role !== 'status');
+          // Add contextual reply chips
+          aMsg.replies = _getSuggestedReplies(text);
+        }
+
+        // Patch DOM directly for smooth token streaming (avoid full re-render)
+        const bubbleEl = document.getElementById(`msg-${assistantMsgId}`);
+        if (bubbleEl && event.type === 'token') {
+          bubbleEl.innerHTML = _renderMarkdown(aMsg.content);
+        } else {
+          renderApp();
+        }
+        _scrollChatToBottom();
+      }
+    }
+  } catch (err) {
+    state.chatMessages = state.chatMessages.filter(m => m.id !== typingId);
+    state.chatMessages.push({
+      id: assistantMsgId,
+      role: 'assistant',
+      content: `⚠️ Error: ${err.message}. Please check that the Flask backend is running on port 5000.`,
+      timestamp: _timestamp()
+    });
+  } finally {
+    state.isChatStreaming = false;
+    renderApp();
+    _scrollChatToBottom();
+  }
+}
+
+function chatQuickSend(prompt) {
+  const inputEl = document.getElementById('chatInput');
+  if (inputEl) inputEl.value = prompt;
+  state.chatInput = prompt;
+  sendChatMessage(prompt);
+}
+
+function handleChatKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendChatMessage();
+  }
+}
+
+function clearChatHistory() {
+  state.chatMessages = [];
+  state.chatNodeTraces = [];
+  state.chatInput = '';
+  renderApp();
+}
+
+function _scrollChatToBottom() {
+  setTimeout(() => {
+    const feed = document.getElementById('chatFeed');
+    if (feed) feed.scrollTop = feed.scrollHeight;
+  }, 30);
+}
+
+function _getSuggestedReplies(lastMessage) {
+  const m = lastMessage.toLowerCase();
+  if (m.includes('risk')) return [
+    { label: '🛡️ Add Mitigation', prompt: `Add a mitigation for the top risk in ${state.selectedProjectCode}` },
+    { label: '📧 Escalate to Executive', prompt: `Draft a stakeholder email for ${state.selectedProjectCode}` },
+  ];
+  if (m.includes('email') || m.includes('draft')) return [
+    { label: '✅ View Comm Center', prompt: `Show communication drafts for ${state.selectedProjectCode}` },
+    { label: '⚡ Top Risks', prompt: `What are the critical risks for ${state.selectedProjectCode}?` },
+  ];
+  return [
+    { label: '📊 Full RAID Analysis', prompt: `Run full RAID analysis for ${state.selectedProjectCode}` },
+    { label: '📋 RAID Summary', prompt: `Summarize all RAID items for ${state.selectedProjectCode}` },
+  ];
+}
+
+// ─── Approve / Cancel Action Cards ──────────────────────────────────────────
+async function approveAction(actionId) {
+  const action = (window._chatActions || {})[actionId];
+  if (!action) return;
+
+  const token = state.authToken || localStorage.getItem('pmai_auth_token');
+  const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+
+  try {
+    let endpoint, body;
+    if (action.action_type === 'ADD_MITIGATION') {
+      endpoint = `${API_BASE_URL}/raid/${action.raid_id || 1}/mitigation`;
+      body = { title: action.title, owner_name: action.owner_name, due_date: action.due_date, status: action.status || 'In Progress', description: action.description };
+    } else if (action.action_type === 'CREATE_RAID_ITEM') {
+      endpoint = `${API_BASE_URL}/raid`;
+      body = { title: action.title, description: action.description, category: action.category, likelihood: action.likelihood, impact: action.impact, risk_score: action.risk_score, project_id: action.project_id || 1 };
+    } else if (action.action_type === 'DRAFT_EMAIL' || action.action_type === 'RUN_WORKFLOW') {
+      endpoint = `${API_BASE_URL}/agents/run-workflow`;
+      body = { project_code: action.project_code || state.selectedProjectCode, recipient_role: action.recipient_role || 'Executive', query: action.description || 'Run analysis' };
+    } else {
+      return;
+    }
+
+    const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+    if (res.ok) {
+      action._confirmed = true;
+      const msg = state.chatMessages.find(m => m.action?._id === actionId);
+      if (msg) msg.action = { ...action };
+      renderApp();
+    } else {
+      const errData = await res.json();
+      showToast(`Action failed: ${errData.message || res.statusText}`, 'error');
+    }
+  } catch (err) {
+    showToast(`Action error: ${err.message}`, 'error');
+  }
+}
+
+function cancelAction(actionId) {
+  const action = (window._chatActions || {})[actionId];
+  if (!action) return;
+  action._cancelled = true;
+  const msg = state.chatMessages.find(m => m.action?._id === actionId);
+  if (msg) msg.action = { ...action };
+  renderApp();
+}
+
+// ─── Voice Input for Chat ────────────────────────────────────────────────────
+function chatVoiceInput() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Voice input is not supported in this browser.', 'warning');
+    return;
+  }
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new Recognition();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  state.isRecordingVoice = true;
+  renderApp();
+  recognition.start();
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    const inputEl = document.getElementById('chatInput');
+    if (inputEl) inputEl.value = transcript;
+    state.chatInput = transcript;
+    state.isRecordingVoice = false;
+    renderApp();
+    sendChatMessage(transcript);
+  };
+  recognition.onerror = () => { state.isRecordingVoice = false; renderApp(); };
+  recognition.onend = () => { state.isRecordingVoice = false; renderApp(); };
+}
+
 // 7. System & Technical Admin Tab View
 function renderAdminTab() {
+  const ragCount = state.ragChunks ? state.ragChunks.length : 154;
+
   return `
     <div class="page-header">
       <div>
         <h1 class="page-title">Admin Console & Master Data Management</h1>
-        <p class="page-subtitle">Dual RAG Databases (Static Vector Store & Unstructured GraphRAG), Master User Accounts & Audit Stream</p>
+        <p class="page-subtitle">Dual RAG Databases (FAISS Project Vector Store & Unstructured GraphRAG), Master User Accounts & Audit Stream</p>
       </div>
     </div>
 
@@ -1228,9 +1946,9 @@ function renderAdminTab() {
         <div class="kpi-subtext" style="color:#059669">Status: ${state.telemetry.mcp_status || 'ONLINE'}</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-title">Static RAG Vector Chunks</div>
-        <div class="kpi-value" style="color:#059669">21 Chunks</div>
-        <div class="kpi-subtext">5 Uploaded Documents</div>
+        <div class="kpi-title">Project FAISS & Vector Chunks</div>
+        <div class="kpi-value" style="color:#059669">${ragCount} RAG Chunks</div>
+        <div class="kpi-subtext">5 Project FAISS Vector Stores</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-title">Unstructured GraphRAG</div>
@@ -1241,107 +1959,6 @@ function renderAdminTab() {
         <div class="kpi-title">Master Accounts</div>
         <div class="kpi-value">6 Users</div>
         <div class="kpi-subtext">SQLite User Table</div>
-      </div>
-    </div>
-
-    <!-- RAG DATABASE 1: STATIC DOCUMENT VECTOR STORE -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:6px">1. Static Knowledge Document Vector RAG Database (backend/app/uploads/)</div>
-      <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
-        Stores static policies, SOWs, and SOP manuals chunked into 128-d vector embeddings via TCSGenAIClient.
-      </p>
-
-      <div class="table-responsive" style="margin-bottom:20px;">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>Document Title</th><th>Filename</th><th>Doc Type</th><th>Size</th><th>Upload Timestamp</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><strong>Security Policy & SLA Guidelines</strong></td><td><code>security_policy.txt</code></td><td><span class="chip chip-info">Policy</span></td><td>1,420 bytes</td><td>2026-08-07</td></tr>
-            <tr><td><strong>Project Orion Statement of Work</strong></td><td><code>orion_sow.txt</code></td><td><span class="chip chip-info">SOW</span></td><td>2,150 bytes</td><td>2026-08-07</td></tr>
-            <tr><td><strong>RAID Threshold Escalation SOP</strong></td><td><code>risk_sop.txt</code></td><td><span class="chip chip-info">SOP</span></td><td>1,890 bytes</td><td>2026-08-07</td></tr>
-            <tr><td><strong>Pegasus Core Banking Architecture</strong></td><td><code>pegasus_architecture.txt</code></td><td><span class="chip chip-info">Architecture</span></td><td>2,640 bytes</td><td>2026-08-07</td></tr>
-            <tr><td><strong>Mobile Compliance & Biometric Guidelines</strong></td><td><code>mobile_compliance.txt</code></td><td><span class="chip chip-info">Compliance</span></td><td>1,780 bytes</td><td>2026-08-07</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>Chunk ID</th><th>Source File</th><th>Content Preview Snippet</th><th>Embedding Dim</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><code>security_policy.txt_chunk_0</code></td><td>security_policy.txt</td><td><small style="color:var(--on-surface-variant)">All system communications must enforce PII redaction and TLS 1.3 encryption...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>orion_sow.txt_chunk_0</code></td><td>orion_sow.txt</td><td><small style="color:var(--on-surface-variant)">Project Orion Upgrade phase mobilization deliverables and vendor SLA dependencies...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>risk_sop.txt_chunk_0</code></td><td>risk_sop.txt</td><td><small style="color:var(--on-surface-variant)">RAID items exceeding score 70 require executive briefing within 24 hours...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>pegasus_architecture.txt_chunk_0</code></td><td>pegasus_architecture.txt</td><td><small style="color:var(--on-surface-variant)">Core Banking Platform specs, database connection pools, and microservice SLA metrics...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-            <tr><td><code>mobile_compliance.txt_chunk_0</code></td><td>mobile_compliance.txt</td><td><small style="color:var(--on-surface-variant)">Biometric mobile authentication standards, regulatory guidelines, and compliance checks...</small></td><td><span class="chip chip-info">128-d</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- RAG DATABASE 2: UNSTRUCTURED KNOWLEDGE GRAPH RAG STORE (GRAPHRAG) -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:6px">2. Unstructured Knowledge Graph RAG Database (mcp/mcp.db -> GraphRAG)</div>
-      <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
-        Ingests real-time unstructured chat/email feeds (Slack, Teams, Email logs) to extract Entity-Relationship Triples <code>(Subject) --[Predicate]--> (Object)</code>.
-      </p>
-
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>Triple ID</th><th>Subject Entity</th><th>Relationship Predicate</th><th>Object Entity</th><th>Communication Source</th><th>Category</th><th>Confidence</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>triple_101</code></td>
-              <td><strong>Amit Joshi</strong></td>
-              <td><code>--[SENT_COMMUNICATION]--></code></td>
-              <td><strong>Rohit Verma</strong></td>
-              <td>Teams Chat Feed #104</td>
-              <td><span class="chip chip-info">Handoff</span></td>
-              <td><span class="chip chip-success">0.98</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_102</code></td>
-              <td><strong>Third-Party Vendor API</strong></td>
-              <td><code>--[IMPACTS_MILESTONE]--></code></td>
-              <td><strong>Design Review</strong></td>
-              <td>Slack #proj-orion-dev</td>
-              <td><span class="chip chip-danger">Threat Risk</span></td>
-              <td><span class="chip chip-success">0.96</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_103</code></td>
-              <td><strong>Project Orion Upgrade</strong></td>
-              <td><code>--[HAS_RISK_INDICATOR]--></code></td>
-              <td><strong>Integration Latency</strong></td>
-              <td>Incident Report Thread #42</td>
-              <td><span class="chip chip-warning">RAID Factor</span></td>
-              <td><span class="chip chip-success">0.95</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_104</code></td>
-              <td><strong>Core Banking API</strong></td>
-              <td><code>--[REQUIRES_SLA_COMPLIANCE]--></code></td>
-              <td><strong>Security Policy v2.1</strong></td>
-              <td>Email Log #208</td>
-              <td><span class="chip chip-info">Governance</span></td>
-              <td><span class="chip chip-success">0.97</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_105</code></td>
-              <td><strong>Biometric Auth Service</strong></td>
-              <td><code>--[DEPENDS_ON]--></code></td>
-              <td><strong>OAuth 2.0 Identity Server</strong></td>
-              <td>Slack #security-audit</td>
-              <td><span class="chip chip-info">Dependency</span></td>
-              <td><span class="chip chip-success">0.99</span></td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     </div>
 
@@ -1359,6 +1976,82 @@ function renderAdminTab() {
             <tr><td>#3</td><td><strong>amit</strong></td><td>Amit Joshi</td><td><span class="chip chip-info">Project Manager</span></td><td>amit.joshi@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
             <tr><td>#4</td><td><strong>vikram</strong></td><td>Vikram Malhotra</td><td><span class="chip chip-info">Team Lead</span></td><td>vikram.m@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
             <tr><td>#5</td><td><strong>priya</strong></td><td>Priya Sharma</td><td><span class="chip chip-info">Viewer</span></td><td>priya.s@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RAG DATABASE 1: FAISS PROJECT VECTOR STORE & STATIC RAG -->
+    <div class="card-box" style="margin-top:20px;">
+      <div class="card-box-title" style="margin-bottom:6px">1. Project FAISS Vector Database & Document Store (backend/app/vector_store/)</div>
+      <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
+        Stores project-isolated FAISS 384-d dense vector index files (project_prj_001_index.faiss through project_prj_005_index.faiss) and static document chunks.
+      </p>
+
+
+      <div class="table-responsive" style="margin-bottom:20px;">
+        <table class="stitch-table">
+          <thead>
+            <tr><th>Document Title</th><th>Filename</th><th>Doc Type</th><th>Size</th><th>Upload Timestamp</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Security Policy & SLA Guidelines</strong></td><td><code>security_policy.txt</code></td><td><span class="chip chip-info">Policy</span></td><td>1,420 bytes</td><td>2026-08-07</td></tr>
+            <tr><td><strong>Project Orion Statement of Work</strong></td><td><code>orion_sow.txt</code></td><td><span class="chip chip-info">SOW</span></td><td>2,150 bytes</td><td>2026-08-07</td></tr>
+            <tr><td><strong>RAID Threshold Escalation SOP</strong></td><td><code>risk_sop.txt</code></td><td><span class="chip chip-info">SOP</span></td><td>1,890 bytes</td><td>2026-08-07</td></tr>
+            <tr><td><strong>Pegasus Core Banking Architecture</strong></td><td><code>pegasus_architecture.txt</code></td><td><span class="chip chip-info">Architecture</span></td><td>2,640 bytes</td><td>2026-08-07</td></tr>
+            <tr><td><strong>Mobile Compliance & Biometric Guidelines</strong></td><td><code>mobile_compliance.txt</code></td><td><span class="chip chip-info">Compliance</span></td><td>1,780 bytes</td><td>2026-08-07</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <table class="stitch-table">
+          <thead>
+            <tr><th>Chunk ID</th><th>Source / Project Vector File</th><th>Content Preview Snippet</th><th>Embedding Dim</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            ${state.ragChunks && state.ragChunks.length > 0 ? state.ragChunks.map(c => `
+              <tr>
+                <td><code>${c.id}</code></td>
+                <td><strong>${c.filename}</strong></td>
+                <td><small style="color:var(--on-surface-variant)">${c.snippet}</small></td>
+                <td><span class="chip chip-info">${c.embedding_dim}</span></td>
+                <td><span class="chip chip-success">INDEXED</span></td>
+              </tr>
+            `).join('') : `
+              <tr><td><code>chk_prj_001_0</code></td><td>FAISS Store [PROJECT_PRJ_001] (TaskAdapter)</td><td><small style="color:var(--on-surface-variant)">WBS Task [PRJ-001-T01] Integration API Specs (Status: In Progress)</small></td><td><span class="chip chip-info">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
+              <tr><td><code>chk_prj_003_0</code></td><td>FAISS Store [PROJECT_PRJ_003] (ChatAdapter)</td><td><small style="color:var(--on-surface-variant)">Communication Log [Teams] Karan Patel: iOS SDK 18.2 biometric updates delayed...</small></td><td><span class="chip chip-info">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
+            `}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RAG DATABASE 3: VECTORIMPORT GRAPH 1 & INTELLIGENCE ENGINE RAG STORE -->
+    <div class="card-box" style="margin-top:20px;">
+      <div class="card-box-title" style="margin-bottom:6px">3. VectorImport Graph 1 & Intelligence Engine RAG Vector Store (VectorImport/backend/data/vector_store/)</div>
+      <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
+        Stores 384-dimensional dense FAISS vector index files (project_prog_alpha_2026_index.faiss, project_prog_beta_2026_index.faiss, project_prog_gamma_2026_index.faiss) and document chunks generated by <code>execute_intelligence</code> and Graph 1 ETL.
+      </p>
+
+      <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+        <table class="stitch-table">
+          <thead>
+            <tr><th>Chunk ID</th><th>Source / VectorImport Project Store</th><th>Content Preview Snippet</th><th>Embedding Dim</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            ${state.vectorImportChunks && state.vectorImportChunks.length > 0 ? state.vectorImportChunks.map(c => `
+              <tr>
+                <td><code>${c.id}</code></td>
+                <td><strong>${c.filename}</strong></td>
+                <td><small style="color:var(--on-surface-variant)">${c.snippet}</small></td>
+                <td><span class="chip chip-warning">${c.embedding_dim}</span></td>
+                <td><span class="chip chip-success">INDEXED</span></td>
+              </tr>
+            `).join('') : `
+              <tr><td><code>chunk_0</code></td><td>VectorImport Store [PROJECT_PROG_ALPHA_2026] (Document)</td><td><small style="color:var(--on-surface-variant)">Task Ent [task_102]: Cloud Infrastructure Setup (Azure) - CloudSphere Inc. API gateway delayed...</small></td><td><span class="chip chip-warning">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
+              <tr><td><code>chunk_1</code></td><td>VectorImport Store [PROJECT_PROG_GAMMA_2026] (Document)</td><td><small style="color:var(--on-surface-variant)">Security Audit Email [email_3001]: GDPR Audit Deadline at Risk - Unsigned Pen Test Contract...</small></td><td><span class="chip chip-warning">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
+            `}
           </tbody>
         </table>
       </div>
@@ -1382,6 +2075,7 @@ function renderAdminTab() {
         </table>
       </div>
     </div>
+
 
     <!-- Master RAID Items Table -->
     <div class="card-box" style="margin-top:20px;">
@@ -1501,14 +2195,14 @@ function renderLoginTab() {
               <label for="loginEmail">Email Address or Username</label>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">mail</span>
-                <input type="text" id="loginEmail" placeholder="Enter your email or username (e.g. rohit, amit, sneha, admin)" value="${state.lastEnteredUsername || ''}" required />
+                <input type="text" id="loginEmail" placeholder="Enter your email or username" value="${state.lastEnteredUsername || ''}" required />
               </div>
             </div>
 
             <div class="form-group">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
                 <label for="loginPassword" style="margin-bottom:0">Password</label>
-                <a href="#" style="font-size:12px; color:var(--primary-container); text-decoration:none; font-weight:600">Forgot Password?</a>
+                
               </div>
               <div class="input-with-icon">
                 <span class="material-symbols-outlined">lock</span>
@@ -1782,12 +2476,39 @@ async function refineToneWithAI(toneName) {
   const subjectInput = document.getElementById('editSubject');
   const bodyInput = document.getElementById('editBody');
   const refineBtn = document.getElementById('btnRefineTone');
+  const statusContainer = document.getElementById('aiTransformationStatus');
 
   if (!bodyInput || !bodyInput.value) return;
 
+  const emailObj = state.selectedEmailForApproval;
+  const recipientName = emailObj ? (emailObj.recipient_role || emailObj.recipient_name || 'Stakeholders') : 'Stakeholders';
+
+  // 1. Show AI Working Panel & Pulsing Input Glow Animation
+  if (subjectInput) subjectInput.classList.add('ai-transforming-glow');
+  if (bodyInput) bodyInput.classList.add('ai-transforming-glow');
+
+  if (statusContainer) {
+    statusContainer.style.display = 'block';
+    statusContainer.innerHTML = `
+      <div class="ai-working-panel">
+        <div class="ai-working-spinner"></div>
+        <div style="flex:1">
+          <div style="font-weight:700; color:#38bdf8; font-size:12px; display:flex; align-items:center; gap:6px;">
+            <span class="material-symbols-outlined" style="font-size:16px; animation:aiSparkle 1s infinite ease-in-out;">auto_awesome</span>
+            AI Multi-Agent LLM is refining tone to '${toneName}'...
+          </div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+            Sanitizing headers &amp; rewriting salutation to 'Dear ${recipientName}'
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   if (refineBtn) {
     refineBtn.disabled = true;
-    refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">sync</span> Transforming Tone...';
+    refineBtn.style.opacity = '0.75';
+    refineBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:16px; animation:aiSpinSlow 1s linear infinite;">sync</span> Refinement Engine Running...';
   }
 
   const res = await apiPost('/emails/refine-tone', {
@@ -1798,8 +2519,13 @@ async function refineToneWithAI(toneName) {
     recipient_email: state.selectedEmailForApproval ? state.selectedEmailForApproval.recipient_email : ''
   });
 
+  // 2. Remove Glow Animation
+  if (subjectInput) subjectInput.classList.remove('ai-transforming-glow');
+  if (bodyInput) bodyInput.classList.remove('ai-transforming-glow');
+
   if (refineBtn) {
     refineBtn.disabled = false;
+    refineBtn.style.opacity = '1';
     refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; color:#facc15">bolt</span> ✨ Transform Tone with AI';
   }
 
@@ -1810,7 +2536,29 @@ async function refineToneWithAI(toneName) {
       if (res.refined_subject) state.selectedEmailForApproval.subject = res.refined_subject;
       if (res.refined_body) state.selectedEmailForApproval.body = res.refined_body;
     }
-    alert(`AI Tone Transformation Applied! Converted email content to '${res.tone_applied}' sentiment.`);
+
+    if (statusContainer) {
+      statusContainer.innerHTML = `
+        <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 8px; padding: 10px 14px; color: #16a34a; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; animation: fadeSlideIn 0.3s ease;">
+          <span style="display:flex; align-items:center; gap:6px;">
+            <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+            ✨ AI Tone Refinement Applied! Subject and body updated with '${res.tone_applied}' sentiment.
+          </span>
+          <span class="chip chip-success" style="font-size:10px;">PASSED</span>
+        </div>
+      `;
+      setTimeout(() => {
+        if (statusContainer) statusContainer.style.display = 'none';
+      }, 4500);
+    }
+  } else {
+    if (statusContainer) {
+      statusContainer.innerHTML = `
+        <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 10px 14px; color: #dc2626; font-size: 12px; font-weight: 700; animation: fadeSlideIn 0.3s ease;">
+          ⚠️ Tone transformation failed. Please check backend connection.
+        </div>
+      `;
+    }
   }
 }
 
@@ -1874,6 +2622,7 @@ function renderHumanApprovalModal() {
                 <span>✨ Transform Tone with AI</span>
               </button>
             </div>
+            <div id="aiTransformationStatus" style="display:none; margin-top:10px;"></div>
           </div>
         ` : ''}
 

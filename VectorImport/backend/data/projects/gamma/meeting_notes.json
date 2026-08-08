@@ -1,0 +1,179 @@
+[
+  {
+    "id": 4001,
+    "project_id": 3,
+    "meeting_title": "Cybersecurity Programme Weekly - Week 31",
+    "attendees": [
+      "Helen Watts (CISO / Programme Manager)",
+      "Carlos Rivera (Lead Security Architect)",
+      "Fatima Al-Hassan (SOC Lead)",
+      "Priya Nair (Programme Management Office)"
+    ],
+    "decisions": [
+      "Programme RAG status confirmed as AMBER overall: Tasks 303 and 304 progressing on plan; Task 305 (Pen Test) flagged as emerging risk due to pending contract sign-off with SecureCheck Ltd.",
+      "Carlos Rivera to submit the SecureCheck engagement contract to Procurement (Marcus Reid) by end of week for formal approval.",
+      "Agreed that if contract approval is not received within 10 business days of submission, Helen Watts will escalate to CPO directly.",
+      "SIEM SOAR playbooks to be prioritised for completion ahead of pen test start date to ensure SOC monitoring capability is in place during test window.",
+      "Risk 6002 (Procurement Delay Blocking Pen Test) added to the risk register as LOW probability at this stage, with a review trigger set for 28 days post-contract submission."
+    ],
+    "action_items": [
+      {
+        "description": "Submit SecureCheck Ltd. engagement contract (v3) to Procurement (Marcus Reid) for approval signature.",
+        "owner": "Carlos Rivera",
+        "due_date": "2026-07-10",
+        "done": true
+      },
+      {
+        "description": "Update risk register to add Risk 6002 (Procurement Delay Blocking Pen Test) at LOW probability.",
+        "owner": "Helen Watts",
+        "due_date": "2026-07-31",
+        "done": true
+      },
+      {
+        "description": "Complete SIEM SOAR Tier-1 playbooks for top 10 detection use-cases.",
+        "owner": "Fatima Al-Hassan",
+        "due_date": "2026-08-01",
+        "done": false
+      },
+      {
+        "description": "Complete legacy manufacturing VLAN micro-segmentation (3 remaining VLANs).",
+        "owner": "Carlos Rivera",
+        "due_date": "2026-07-31",
+        "done": false
+      }
+    ],
+    "transcript": "Helen Watts: Good morning everyone. Let's run through programme status. Carlos, you're up first — architecture and network workstreams.\n\nCarlos Rivera: Thanks Helen. Task 301 and 302 are done and dusted — architecture design signed off in March, IAM fully deployed by end of May, 2,400 accounts migrated, MFA enforced, PIM live. Task 303, network segmentation, is at 80%. We've completed 18 of 21 VLAN segments. The three remaining are the legacy manufacturing floor VLANs — they're running older switch firmware that's complicating the policy push. I expect to have those done by the end of this month.\n\nHelen Watts: Good. Any risk of the 31 July deadline slipping on 303?\n\nCarlos Rivera: It's tight. I'd say amber rather than green. If the firmware update on VLAN-MFG-03 doesn't go smoothly we could slip to the first week of August. I'll flag immediately if that happens. On the pen test — I've submitted the SecureCheck contract to Procurement today. That's v3 of the contract, post our internal legal review. Standard CREST engagement terms.\n\nHelen Watts: Good. Marcus Reid in Procurement has it. I'll chase if we don't hear back within two weeks. Fatima — SIEM?\n\nFatima Al-Hassan: Task 304 is at 65%. All major log sources are ingesting. We've got good coverage on cloud and identity. The gap is the custom detection rules and SOAR automation — that's where the remaining 35% sits. I've got two analysts on it. Target is to have the top ten playbooks done by 1 August so they're live and tested before the pen test starts.\n\nHelen Watts: Perfect — I want the SOC to be fully observing during the pen test. No blocking of SecureCheck IP ranges during the test window. Let's make sure that's documented in the test rules of engagement. Priya, any PMO items?\n\nPriya Nair: Just flagging the GDPR deadline — 18 September. That's the hard date for ICO submission. Working backwards, pen test needs to complete by 28 August to leave time for report delivery and finding remediation before the 5 September submission target. So SecureCheck need to start no later than 28 July — which means contract needs to be signed very soon.\n\nHelen Watts: Noted. Carlos submitted today. We'll monitor. I'll add a risk to the register at low probability for now but with a short review trigger. Anything else? Good. Thanks all, see you next week.",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 4002,
+    "project_id": 3,
+    "meeting_title": "GDPR Compliance Risk Committee - Emergency Session",
+    "attendees": [
+      "Helen Watts (CISO / Programme Manager - Chair)",
+      "Carlos Rivera (Lead Security Architect)",
+      "Fatima Al-Hassan (SOC Lead)",
+      "Annette Booth (General Counsel)",
+      "Priya Nair (Programme Management Office)",
+      "David Thornton (CEO - joined at 10:30)"
+    ],
+    "decisions": [
+      "Risk 6001 (Regulatory Non-Compliance - GDPR Certification Miss) escalated from HIGH probability/CRITICAL impact to formally RED status on the programme dashboard. Full board notification required.",
+      "Risk 6002 (Procurement Delay Blocking Pen Test) escalated from MEDIUM to HIGH probability. Owner confirmed as Marcus Reid (CPO).",
+      "Helen Watts authorised to send formal written escalation directly to CPO (Marcus Reid) and CEO (David Thornton) immediately following this meeting.",
+      "Legal team (Annette Booth) to prepare a regulatory exposure briefing note quantifying the £2.3M fine risk and reputational impact for inclusion in board pack.",
+      "Contingency option identified: Emergency Procurement Waiver process (referenced in Procurement Policy Schedule 4, Clause 7) to be investigated as a fallback if contract cannot be executed through normal channels by 11 August. General Counsel to confirm eligibility criteria.",
+      "CEO (joining at 10:30) directed that contract must be signed by 11 August and committed to personal intervention with CPO. Board Risk Committee to be convened if deadline is missed.",
+      "No alternative pen testing firms to be approached at this stage — SecureCheck have held the slot and switching firms would take at minimum 2 weeks for re-scoping, which would guarantee a deadline miss.",
+      "Programme status to be updated to ON_HOLD pending resolution of the contract blocker."
+    ],
+    "action_items": [
+      {
+        "description": "Send formal written escalation to Marcus Reid (CPO) and David Thornton (CEO) regarding SecureCheck contract delay and GDPR compliance deadline risk.",
+        "owner": "Helen Watts",
+        "due_date": "2026-08-07",
+        "done": true
+      },
+      {
+        "description": "Prepare regulatory exposure briefing note (£2.3M fine risk, ICO enforcement process, reputational and contractual impact) for Board Risk Committee pack.",
+        "owner": "Annette Booth",
+        "due_date": "2026-08-08",
+        "done": false
+      },
+      {
+        "description": "Investigate Emergency Procurement Waiver eligibility under Procurement Policy Schedule 4, Clause 7 and confirm process timeline.",
+        "owner": "Annette Booth",
+        "due_date": "2026-08-08",
+        "done": false
+      },
+      {
+        "description": "Update programme status to ON_HOLD in project tracking system and notify stakeholders.",
+        "owner": "Priya Nair",
+        "due_date": "2026-08-07",
+        "done": true
+      },
+      {
+        "description": "Confirm with James Okafor (SecureCheck Ltd.) that their booking hold remains valid through at least 12 August.",
+        "owner": "Carlos Rivera",
+        "due_date": "2026-08-07",
+        "done": true
+      },
+      {
+        "description": "Brief Board Risk Committee on compliance status ahead of scheduled board meeting on 10 August.",
+        "owner": "Helen Watts",
+        "due_date": "2026-08-09",
+        "done": false
+      }
+    ],
+    "transcript": "Helen Watts: Thank you all for joining at short notice. I've called this emergency session because the programme is now facing a critical compliance risk that has moved beyond programme-level management authority. Let me set out the situation.\n\nThe SecureCheck Ltd. penetration test engagement contract was submitted to Procurement on 10 July — 28 days ago. It has not been signed. Carlos confirmed on Tuesday that the systems are technically ready for testing. SecureCheck has confirmed they can mobilise within 24 hours of contract signature. The only blocker is procurement approval.\n\nPriya Nair: The timeline arithmetic is very uncomfortable. The pen test requires 4 weeks minimum from contract execution. We need to submit the GDPR certification to the ICO by 5 September to meet the 18 September deadline. That means the contract must be signed by 8 August at the very latest — tomorrow — to preserve any buffer. If it slips past 14 August, meeting the GDPR deadline becomes mathematically impossible.\n\nAnnette Booth: From a legal standpoint, I want to be clear about the exposure. UK GDPR Article 32 requires demonstration of appropriate technical security measures. The ICO's current enforcement posture — particularly following the cases we've seen this year — treats a missed certification submission as evidence of non-compliance. The fine calculation for our revenue profile gives us an exposure of approximately £2.3 million at the upper enforcement band. Beyond the fine, we have four client contracts with MoD and NHS Trusts that contain data security certification warranty clauses. Missing this deadline could trigger breach notices in those contracts.\n\nHelen Watts: Understood. I've also confirmed with Carlos that switching to an alternative pen testing firm is not viable in this timeframe — re-scoping alone would take two weeks. We're committed to SecureCheck.\n\nCarlos Rivera: And SecureCheck's next available slot after their current hold window is October. So it's this engagement, this month, or we miss the deadline.\n\nHelen Watts: I'm proposing we take the following decisions today... [decisions recorded above]. \n\n[David Thornton joins at 10:30]\n\nDavid Thornton: Helen, brief me in sixty seconds.\n\nHelen Watts: Pen test contract stuck in procurement for 28 days. We need it signed by tomorrow to preserve a buffer. 14 August is the hard deadline. Miss that, GDPR cert is impossible. £2.3M fine exposure. Legal is quantifying.\n\nDavid Thornton: I'm calling Marcus after this meeting. The contract will be signed. What do you need from me formally?\n\nHelen Watts: A CEO directive mandating sign-off by 11 August, copied to Marcus and to this committee. And your authority to convene the Board Risk Committee if it's missed.\n\nDavid Thornton: Done. You'll have it by 16:00 today. And if it's not signed by 11 August I'm calling an emergency board session and we're considering proactive ICO disclosure. I'm not having the regulator find out about this after the fact.\n\nHelen Watts: Thank you David. I'll also need Legal to prepare the board briefing note.\n\nAnnette Booth: I'll have a draft by tomorrow morning.\n\nHelen Watts: Good. That covers our decisions. Priya — please update the programme status to ON_HOLD in the system today. Thank you all.",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 4003,
+    "project_id": 3,
+    "meeting_title": "Board Risk Review - Cybersecurity and Compliance (Emergency Session)",
+    "attendees": [
+      "Sir Geoffrey Holt (Non-Executive Chairman)",
+      "David Thornton (CEO)",
+      "Marcus Reid (CPO)",
+      "Helen Watts (CISO / Programme Manager)",
+      "Annette Booth (General Counsel)",
+      "Rosemary Chukwu (Non-Executive Director, Risk Committee Chair)",
+      "Dr. Patrick Forde (Non-Executive Director)",
+      "Miriam Sandler (Chief Financial Officer)"
+    ],
+    "decisions": [
+      "Board noted with concern the 28-day procurement delay in signing the SecureCheck Ltd. engagement contract and the resulting risk to GDPR compliance certification.",
+      "Board formally approved the activation of the Emergency Procurement Waiver process (Procurement Policy Schedule 4, Clause 7), authorising the CEO to direct immediate contract execution without standard procurement committee sign-off, given the regulatory emergency.",
+      "Board accepted the legal exposure briefing prepared by General Counsel: maximum fine exposure quantified at £2.3M under UK GDPR, plus potential contractual breach triggers in NHS and MoD client agreements.",
+      "Board directed CPO (Marcus Reid) to execute the SecureCheck Ltd. contract by close of business 11 August 2026 under the Emergency Waiver authority, and to confirm execution in writing to the Chairman and CEO.",
+      "Board approved a formal post-incident review of procurement governance processes to be completed within 60 days, led by the Risk Committee (Chair: Rosemary Chukwu), with recommendations brought to the next scheduled board meeting.",
+      "Board agreed that if the contract is not executed by 11 August, the General Counsel and CFO will jointly assess whether proactive voluntary disclosure to the ICO is in the organisation's best interests, and bring a recommendation to the CEO within 24 hours.",
+      "Board noted that the programme (PROG-GAMMA-2026) is otherwise well-advanced and that resolving the procurement blocker should allow the GDPR certification timeline to be met with a narrow margin.",
+      "CFO (Miriam Sandler) directed to set aside a £2.3M contingency provision in the Q3 accounts as a precautionary measure pending confirmation of successful certification, to be released upon ICO confirmation of submission receipt."
+    ],
+    "action_items": [
+      {
+        "description": "Execute SecureCheck Ltd. engagement contract under Emergency Procurement Waiver authority by close of business 11 August 2026.",
+        "owner": "Marcus Reid",
+        "due_date": "2026-08-11",
+        "done": false
+      },
+      {
+        "description": "Confirm contract execution in writing to Sir Geoffrey Holt (Chairman) and David Thornton (CEO) by 17:00 on 11 August.",
+        "owner": "Marcus Reid",
+        "due_date": "2026-08-11",
+        "done": false
+      },
+      {
+        "description": "Set aside £2.3M contingency provision in Q3 financial accounts as precautionary regulatory fine reserve.",
+        "owner": "Miriam Sandler",
+        "due_date": "2026-08-12",
+        "done": false
+      },
+      {
+        "description": "Commission and lead post-incident governance review of procurement approval processes for programme-critical vendor contracts.",
+        "owner": "Rosemary Chukwu",
+        "due_date": "2026-10-09",
+        "done": false
+      },
+      {
+        "description": "Prepare ICO voluntary disclosure recommendation if contract is not signed by 11 August (conditional action — trigger: missed sign-off deadline).",
+        "owner": "Annette Booth",
+        "due_date": "2026-08-12",
+        "done": false
+      },
+      {
+        "description": "Provide weekly written programme status update to Board Risk Committee through to GDPR certification submission.",
+        "owner": "Helen Watts",
+        "due_date": "2026-09-05",
+        "done": false
+      }
+    ],
+    "transcript": "Sir Geoffrey Holt (Chairman): I want to understand clearly how a programme of this strategic importance arrived at a position where a single unsigned procurement contract is threatening a £2.3 million regulatory fine. Helen, please take us through it.\n\nHelen Watts: Thank you, Geoffrey. The Zero-Trust programme itself is in strong shape — architecture complete, IAM deployed across 2,400 users, network segmentation 80% complete. The single critical path item remaining before GDPR certification is the external penetration test. Our chosen firm, SecureCheck Ltd., is CREST-accredited, fully scoped, and technically ready to begin. The engagement contract was submitted to Procurement on 10 July. It was not signed. Twenty-eight days later, we are here.\n\nAnnette Booth: The legal exposure is as set out in the briefing note circulated this morning. Maximum fine exposure: £2.3M. Secondary risk: potential breach of data security certification warranty clauses in our NHS and MoD client contracts, which could expose us to termination rights.\n\nRosemary Chukwu (Risk Committee Chair): Marcus — what happened?\n\nMarcus Reid: The contract was escalated to external legal for review of liability cap provisions on 16 July. That review took longer than anticipated. I did not escalate the delay proactively, which was an error of judgement on my part. I accept full responsibility for that failure. The revised contract terms are agreed and the document is ready for signature today.\n\nSir Geoffrey Holt: Then sign it today.\n\nMarcus Reid: I will.\n\nDavid Thornton: The Board should also note that we have activated the Emergency Procurement Waiver as a formal safeguard, and I am directing Marcus under that authority to have the contract executed by close of business on Monday regardless of any further process.\n\nMiriam Sandler: On the financial provisions — I propose we set aside £2.3M in Q3 as a precautionary reserve. It sends the right signal to auditors and it's prudent given the current position. We release it once we have ICO confirmation of submission receipt.\n\nSir Geoffrey Holt: Agreed. Helen — assuming the contract is signed Monday, are we confident we can still meet the ICO deadline?\n\nHelen Watts: It is very tight but achievable. Test execution 11 August to 1 September, report by 8 September, submission 12 September — six days before the ICO deadline. No margin for finding remediation issues, which is the remaining risk. I would assess it as AMBER rather than GREEN, but it is achievable.\n\nRosemary Chukwu: I want a governance review of how procurement approval SLAs work for programme-critical contracts. This cannot happen again. I'll chair it. Sixty-day timeline, recommendations to the next board meeting.\n\nSir Geoffrey Holt: Agreed. Let's close with this: Marcus, you will execute the contract by 17:00 on Monday and you will confirm to me and to David in writing. Helen, you will provide weekly written updates to the Risk Committee through to certification submission. Annette, if the contract is not signed by Monday, you will bring a voluntary disclosure recommendation to David within 24 hours. Is that understood by all parties?\n\nAll: Agreed.",
+    "created_at": null,
+    "updated_at": null
+  }
+]

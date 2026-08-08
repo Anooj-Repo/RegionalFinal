@@ -1,0 +1,17 @@
+# Git ignore file for the backend
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+*.db
+*.sqlite3
+logs/
+data/vector_store/
+.pytest_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+instance/
+migrations/

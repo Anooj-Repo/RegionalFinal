@@ -1,0 +1,52 @@
+[
+  {
+    "id": 101,
+    "project_id": 1,
+    "name": "Sarah Mitchell",
+    "role": "Programme Sponsor",
+    "department": "Executive Leadership",
+    "communication_preference": "email",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 102,
+    "project_id": 1,
+    "name": "James Okonkwo",
+    "role": "Program Manager",
+    "department": "PMO",
+    "communication_preference": "email",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 103,
+    "project_id": 1,
+    "name": "Carlos Rivera",
+    "role": "Lead Security Architect",
+    "department": "Enterprise Architecture",
+    "communication_preference": "chat",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 104,
+    "project_id": 1,
+    "name": "Aisha Kamara",
+    "role": "Data Integration Lead",
+    "department": "Data Engineering",
+    "communication_preference": "chat",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 105,
+    "project_id": 1,
+    "name": "Tom Bradley",
+    "role": "UAT Lead",
+    "department": "Quality Assurance",
+    "communication_preference": "meeting",
+    "created_at": null,
+    "updated_at": null
+  }
+]

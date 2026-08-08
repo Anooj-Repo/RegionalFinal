@@ -1,0 +1,52 @@
+[
+  {
+    "id": 201,
+    "project_id": 2,
+    "name": "Robert Chang",
+    "role": "Executive Sponsor",
+    "department": "Executive Committee",
+    "communication_preference": "email",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 202,
+    "project_id": 2,
+    "name": "Priya Nair",
+    "role": "Program Manager",
+    "department": "PMO",
+    "communication_preference": "email",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 203,
+    "project_id": 2,
+    "name": "Marcus Chen",
+    "role": "SAP Solution Architect",
+    "department": "Enterprise Solutions",
+    "communication_preference": "chat",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 204,
+    "project_id": 2,
+    "name": "Aisha Kamara",
+    "role": "Data Migration Lead",
+    "department": "Data Engineering",
+    "communication_preference": "meeting",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 205,
+    "project_id": 2,
+    "name": "Lin Wei",
+    "role": "Finance Director",
+    "department": "Finance",
+    "communication_preference": "meeting",
+    "created_at": null,
+    "updated_at": null
+  }
+]

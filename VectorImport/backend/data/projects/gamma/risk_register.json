@@ -1,0 +1,62 @@
+[
+  {
+    "id": 6001,
+    "project_id": 3,
+    "title": "Regulatory Non-Compliance (GDPR Certification Miss)",
+    "probability": "high",
+    "impact": "critical",
+    "owner": "Helen Watts",
+    "mitigation": "The organisation faces a regulatory fine of up to £2.3 million under UK GDPR enforcement guidelines if the Article 32 compliance certification application is not submitted to the Information Commissioner's Office (ICO) by the programme deadline of 18 September 2026. Secondary exposure includes reputational damage and potential breach of data security certification warranty clauses in NHS Trust and MoD client contracts. Mitigation strategy: (1) CEO directive issued mandating execution of SecureCheck Ltd. penetration test contract by 11 August 2026; (2) Board Emergency Procurement Waiver approved to bypass standard approval process if required; (3) £2.3M contingency provision set aside in Q3 accounts; (4) General Counsel preparing voluntary ICO disclosure recommendation as contingency if deadline cannot be met; (5) GDPR certification submission pack being prepared in parallel for all non-pen-test sections to maximise time available post-report receipt.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 6002,
+    "project_id": 3,
+    "title": "Procurement Delay Blocking Pen Test",
+    "probability": "high",
+    "impact": "critical",
+    "owner": "Marcus Reid",
+    "mitigation": "The engagement contract with SecureCheck Ltd. (CREST-accredited penetration testing firm) was submitted to Procurement for approval on 10 July 2026. As of 7 August 2026 (28 days later), the contract had not been signed, due to an extended external legal review of liability cap provisions in Clause 12.3. Mitigation actions taken: (1) Formal written escalation from CISO to CPO on 7 August; (2) CEO directive issued mandating sign-off by 11 August 2026; (3) Board Emergency Procurement Waiver approved, authorising CEO to direct contract execution outside standard committee approval process; (4) CPO (Marcus Reid) has given written commitment to sign by 12 August following CEO directive; (5) SecureCheck Ltd. engagement manager has extended provisional booking hold to 12 August as goodwill gesture. Risk will be closed upon confirmed execution of the signed contract.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 6003,
+    "project_id": 3,
+    "title": "Post-Go-Live Security Breach (Pre-Pen Test)",
+    "probability": "low",
+    "impact": "critical",
+    "owner": "Carlos Rivera",
+    "mitigation": "If the programme timeline slips severely and business pressure is applied to proceed to production go-live before the penetration test is completed, the organisation would be operating a Zero-Trust environment with unvalidated security controls. Undetected vulnerabilities in the new architecture — particularly in areas such as Conditional Access policy gaps, micro-segmentation misconfigurations, or SIEM detection blind spots — could be exploited by a threat actor before the formal security assurance is completed. Mitigation: A formal go-live gate control has been implemented requiring (a) completed pen test final report, (b) remediation of all Critical and High severity findings, and (c) CISO sign-off. This gate is documented in the programme governance charter and cannot be waived without Board Risk Committee approval. The programme sponsor (CEO David Thornton) has confirmed the gate will not be waived.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 6004,
+    "project_id": 3,
+    "title": "SIEM Alert Fatigue in SOC",
+    "probability": "medium",
+    "impact": "medium",
+    "owner": "Fatima Al-Hassan",
+    "mitigation": "During the initial SIEM onboarding phase, Microsoft Sentinel generated a high volume of low-fidelity alerts as baseline detection rules were tuned. The SOC team reported a 40% false positive rate in the first two weeks of operation. This created a risk of alert fatigue — where analysts become desensitised to alerts and genuine threats are missed among the noise. Mitigation accepted: (1) Detection rule tuning sprint conducted, reducing false positive rate to approximately 12%; (2) Tier-1 SOAR automation playbooks being built to auto-close definitively benign alert classes; (3) Agreed threshold: SOC will escalate alert fatigue risk back to programme if false positive rate exceeds 20% for two consecutive weeks. Risk accepted at current residual level as SIEM tuning is an expected and normal part of the deployment lifecycle.",
+    "status": "accepted",
+    "created_at": null,
+    "updated_at": null
+  },
+  {
+    "id": 6005,
+    "project_id": 3,
+    "title": "Third-Party Vendor Access Misconfiguration",
+    "probability": "medium",
+    "impact": "high",
+    "owner": "Carlos Rivera",
+    "mitigation": "A review of third-party vendor VPN access configurations conducted during the network micro-segmentation workstream identified 12 vendor accounts with overly broad network access scopes, inherited from the legacy pre-segmentation architecture. These accounts have access to network segments beyond the minimum required for their contracted service delivery, creating a lateral movement risk if any vendor account is compromised. Mitigation in progress: (1) All 12 accounts identified and access scope review completed; (2) 7 of 12 accounts remediated as of 7 August 2026 — access scopes reduced to least-privilege; (3) Remaining 5 accounts require vendor coordination before access can be modified (risk of service disruption if modified without vendor agreement); (4) Letters sent to 5 affected vendors requesting access review meetings — responses awaited; (5) Target: all 12 accounts remediated by 15 August 2026. Risk remains OPEN until all 12 remediations are confirmed.",
+    "status": "open",
+    "created_at": null,
+    "updated_at": null
+  }
+]
