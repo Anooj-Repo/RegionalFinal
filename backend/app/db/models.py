@@ -81,13 +81,22 @@ class Task(db.Model):
     due_date = db.Column(db.String(20), nullable=True)
     progress_pct = db.Column(db.Integer, default=0)
     effort_sp = db.Column(db.Integer, default=1)
-    depends_on = db.Column(db.String(100), nullable=True) # Task IDs comma separated
+    depends_on = db.Column(db.String(100), nullable=True)
+    raid_item_id = db.Column(db.Integer, db.ForeignKey('raid_items.id'), nullable=True)
+    comments_json = db.Column(db.Text, nullable=True, default='[]')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+
     def to_dict(self):
+        try:
+            comments = json.loads(self.comments_json) if self.comments_json else []
+        except Exception:
+            comments = []
+
         return {
             'id': self.id,
             'project_id': self.project_id,
+            'raid_item_id': self.raid_item_id,
             'wbs_code': self.wbs_code,
             'title': self.title,
             'status': self.status,
@@ -97,8 +106,10 @@ class Task(db.Model):
             'progress_pct': self.progress_pct,
             'effort_sp': self.effort_sp,
             'depends_on': self.depends_on,
+            'comments': comments,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
 
 class RAIDItem(db.Model):
     __tablename__ = 'raid_items'

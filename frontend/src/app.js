@@ -632,7 +632,10 @@ function renderCurrentTabContent(currentProject) {
     return renderProjectsTab();
   } else if (state.activeTab === 'raid') {
     return renderRaidTab();
+  } else if (state.activeTab === 'risk_action') {
+    return renderRiskActionPage();
   } else if (state.activeTab === 'comms') {
+
     return renderCommsTab();
   } else if (state.activeTab === 'reports') {
     return renderReportsTab(currentProject);
@@ -1123,8 +1126,266 @@ async function confirmCreateDiscoveredRisk() {
   await confirmCreateSingleDiscoveredRisk(0);
 }
 
+// ----------------------------------------------------
+// Risk Center Action Handlers & Risk Action Page View
+// ----------------------------------------------------
+function navigateToCommunicateForRisk(raidId) {
+  const item = state.raidItems ? state.raidItems.find(r => r.id === raidId) : null;
+  if (item) {
+    state.draftEmailSubject = `[ACTION REQUIRED] Risk Alert: ${item.title}`;
+    state.draftEmailBody = `Dear Team,\n\nPlease review and take immediate action on the following risk item:\n\nTitle: ${item.title}\nCategory: ${item.category}\nLikelihood / Impact: ${item.likelihood} / ${item.impact}\nRisk Score: ${item.risk_score}/100\nRoot Cause: ${item.root_cause || 'Under Investigation'}\nAssigned Owner: ${item.owner_name}\n\nBest regards,\nProject Management Office`;
+    state.draftEmailRecipientRole = 'Project Manager';
+    state.draftEmailRecipient = 'linusimon@gmail.com';
+  }
+  state.activeTab = 'comms';
+  renderApp();
+}
+
+async function navigateToRiskActionPage(raidId) {
+  state.selectedRaidIdForAction = raidId;
+  state.isLoadingActionPlan = true;
+  state.activeTab = 'risk_action';
+  renderApp();
+
+  const data = await apiGet(`/raid/${raidId}/action-plan`);
+  state.isLoadingActionPlan = false;
+  if (data && data.status === 'success') {
+    state.riskActionPlan = data;
+  } else {
+    alert("Could not fetch action plan for Risk #" + raidId);
+  }
+  renderApp();
+}
+
+async function createTasksFromRecommendations(raidId) {
+  const plan = state.riskActionPlan;
+  const recs = plan ? plan.ai_recommendations : [];
+
+  const res = await apiPost(`/raid/${raidId}/generate-tasks`, { tasks: recs });
+  if (res && res.status === 'success') {
+    alert(`Success! Created ${res.created_tasks.length} action tasks linked to Risk #${raidId}.`);
+    await navigateToRiskActionPage(raidId);
+  } else {
+    alert("Failed to create action tasks: " + (res?.message || "Error"));
+  }
+}
+
+async function addCommentToTask(taskId) {
+  const text = prompt("Enter your comment for Task #" + taskId + ":");
+  if (!text || !text.trim()) return;
+
+  const raidId = state.selectedRaidIdForAction;
+  const userRole = state.currentUser ? state.currentUser.full_name : state.currentRole;
+  const res = await apiPost(`/raid/tasks/${taskId}/comments`, {
+    comment: text,
+    author_name: userRole || 'Project Lead'
+  });
+
+  if (res && res.status === 'success') {
+    await navigateToRiskActionPage(raidId);
+  } else {
+    alert("Failed to add comment: " + (res?.message || "Error"));
+  }
+}
+
+async function markTaskCompleted(taskId) {
+  const raidId = state.selectedRaidIdForAction;
+  const res = await apiPut(`/raid/tasks/${taskId}/status`, { status: 'Completed' });
+  if (res && res.status === 'success') {
+    await navigateToRiskActionPage(raidId);
+  } else {
+    alert("Failed to update task status: " + (res?.message || "Error"));
+  }
+}
+
+async function closeRiskItem(raidId) {
+  const res = await apiPut(`/raid/${raidId}/status`, { status: 'Closed' });
+  if (res && res.status === 'success') {
+    alert(`Risk Item #${raidId} has been successfully Closed!`);
+    await refreshWorkspaceData();
+    state.activeTab = 'raid';
+    renderApp();
+  } else {
+    alert(res?.message || "Cannot close risk item!");
+  }
+}
+
+function renderRiskActionPage() {
+  if (state.isLoadingActionPlan) {
+    return `
+      <div class="card-box" style="text-align:center; padding:40px;">
+        <span class="material-symbols-outlined spinning" style="font-size:36px; color:var(--primary-container)">progress_activity</span>
+        <h3 style="margin-top:12px; font-weight:700;">Loading AI Mitigation Plan & Task Dependencies...</h3>
+      </div>
+    `;
+  }
+
+  const plan = state.riskActionPlan;
+  if (!plan || !plan.raid_item) {
+    return `
+      <div class="card-box" style="padding:20px;">
+        <h3>Risk Action Plan Not Found</h3>
+        <button class="btn-secondary" style="margin-top:10px;" onclick="state.activeTab='raid'; renderApp();">Back to Risk Center</button>
+      </div>
+    `;
+  }
+
+  const r = plan.raid_item;
+  const recs = plan.ai_recommendations || [];
+  const linkedTasks = plan.linked_tasks || [];
+  const pendingTasksCount = plan.pending_tasks_count || 0;
+  const canCloseRisk = plan.can_close_risk;
+
+  return `
+    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <button class="btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="state.activeTab='raid'; renderApp();">← Back to Risk Center</button>
+          <span class="chip ${r.category==='Risk'?'chip-danger':r.category==='Issue'?'chip-warning':'chip-info'}">${r.category} #${r.id}</span>
+          <span class="chip chip-info">${r.status}</span>
+        </div>
+        <h1 class="page-title">${r.title}</h1>
+        <p class="page-subtitle">Risk Action & AI Mitigation Plan Execution Center</p>
+      </div>
+      <div>
+        <button class="btn-secondary" style="margin-right:8px;" onclick="navigateToCommunicateForRisk(${r.id})">
+          💬 Communicate
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. Risk Overview Metrics -->
+    <div class="grid-3col" style="margin-bottom:20px;">
+      <div class="card-box">
+        <div style="font-size:12px; color:var(--on-surface-variant);">Calculated Risk Score</div>
+        <div style="font-size:24px; font-weight:800; color:${r.risk_score>=70?'#dc2626':'#d97706'}; margin-top:4px;">${r.risk_score}/100</div>
+        <small style="color:var(--on-surface-variant)">Likelihood: ${r.likelihood} | Impact: ${r.impact}</small>
+      </div>
+      <div class="card-box">
+        <div style="font-size:12px; color:var(--on-surface-variant)">Assigned Risk Owner</div>
+        <div style="font-size:18px; font-weight:700; color:var(--on-surface); margin-top:4px;">${r.owner_name || 'Unassigned'}</div>
+        <small style="color:var(--on-surface-variant)">Project: ${state.selectedProjectCode}</small>
+      </div>
+      <div class="card-box">
+        <div style="font-size:12px; color:var(--on-surface-variant)">Linked WBS Action Tasks</div>
+        <div style="font-size:24px; font-weight:800; color:${pendingTasksCount>0?'#d97706':'#16a34a'}; margin-top:4px;">${linkedTasks.length - pendingTasksCount} / ${linkedTasks.length} Completed</div>
+        <small style="color:${pendingTasksCount>0?'#dc2626':'#16a34a'}; font-weight:700;">${pendingTasksCount} Pending Tasks Remaining</small>
+      </div>
+    </div>
+
+    <!-- 2. AI Solution Recommendation Box -->
+    <div class="card-box" style="margin-bottom:20px; background:linear-gradient(135deg, rgba(2, 132, 199, 0.05) 0%, rgba(3, 105, 161, 0.02) 100%); border:1px solid rgba(2, 132, 199, 0.2);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="material-symbols-outlined" style="color:#facc15;">smart_toy</span>
+          <h3 style="font-size:16px; font-weight:700;">AI Recommended Solution & Mitigation Plan</h3>
+        </div>
+        <button class="btn-primary" style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:#fff; font-weight:700; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;" onclick="createTasksFromRecommendations(${r.id})">
+          <span class="material-symbols-outlined" style="font-size:16px;">add_task</span>
+          ➕ Create WBS Tasks from Recommendations
+        </button>
+      </div>
+
+      <p style="font-size:13px; color:var(--on-surface-variant); margin-bottom:14px;">
+        <strong>Root Cause Identified:</strong> ${r.root_cause || 'Vendor API dependency and scheduling bottleneck.'}
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        ${recs.map((rec, idx) => `
+          <div style="background:var(--surface-container-low); padding:12px; border-radius:6px; border-left:4px solid #0284c7;">
+            <div style="font-weight:700; font-size:14px; color:var(--on-surface);">Step ${idx+1}: ${rec.title}</div>
+            <p style="font-size:12px; color:var(--on-surface-variant); margin-top:4px;">${rec.description}</p>
+            <div style="display:flex; gap:12px; margin-top:6px; font-size:11px; color:var(--primary-container);">
+              <span>Owner: <strong>${rec.suggested_owner}</strong></span>
+              <span>Priority: <strong>${rec.suggested_priority}</strong></span>
+              <span>Estimated SP: <strong>${rec.estimated_sp} SP</strong></span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- 3. Linked Action Tasks & Comments -->
+    <div class="card-box" style="margin-bottom:20px;">
+      <div class="card-box-title" style="margin-bottom:12px;">Linked Action Tasks (${linkedTasks.length} Tasks)</div>
+      
+      ${linkedTasks.length > 0 ? `
+        <div class="table-responsive">
+          <table class="stitch-table">
+            <thead>
+              <tr><th>WBS Code</th><th>Task Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Comments</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              ${linkedTasks.map(t => `
+                <tr>
+                  <td><code>${t.wbs_code}</code></td>
+                  <td>
+                    <strong>${t.title}</strong><br>
+                    <small style="color:var(--on-surface-variant)">Progress: ${t.progress_pct}%</small>
+                  </td>
+                  <td>${t.assignee_name || 'Unassigned'}</td>
+                  <td><span class="chip chip-warning">${t.priority}</span></td>
+                  <td>
+                    <span class="chip ${t.status==='Completed'?'chip-success':t.status==='Blocked'?'chip-danger':'chip-info'}">${t.status}</span>
+                  </td>
+                  <td style="max-width:250px;">
+                    ${t.comments && t.comments.length > 0 ? t.comments.map(c => `
+                      <div style="font-size:11px; background:var(--surface-container-low); padding:4px 6px; border-radius:4px; margin-bottom:4px;">
+                        <strong>${c.author}:</strong> ${c.text}
+                      </div>
+                    `).join('') : '<small style="color:var(--on-surface-variant)">No comments yet</small>'}
+                  </td>
+                  <td style="white-space:nowrap;">
+                    <button class="btn-secondary" style="padding:4px 8px; font-size:11px; margin-right:4px;" onclick="addCommentToTask(${t.id})">
+                      💬 Add Comment
+                    </button>
+                    ${t.status !== 'Completed' ? `
+                      <button class="btn-success" style="padding:4px 8px; font-size:11px; background:#16a34a; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="markTaskCompleted(${t.id})">
+                        ✅ Complete
+                      </button>
+                    ` : '<span class="chip chip-success">Completed</span>'}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : `
+        <p style="font-size:13px; color:var(--on-surface-variant);">No action tasks created yet for this risk item. Click <strong>"➕ Create WBS Tasks from Recommendations"</strong> above to generate tasks.</p>
+      `}
+    </div>
+
+    <!-- 4. Risk Closure Footer & Strict Guardrail -->
+    <div class="card-box" style="border:1px solid ${canCloseRisk ? '#16a34a' : '#eab308'};">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h4 style="font-weight:700; font-size:16px;">Risk Item Lifecycle Closure</h4>
+          <p style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">
+            Enforced Guardrail: Risk can only be closed once all linked action tasks are marked Completed.
+          </p>
+        </div>
+        <div>
+          ${!canCloseRisk ? `
+            <div style="text-align:right;">
+              <span class="chip chip-warning" style="margin-bottom:6px; display:inline-block;">⚠ ${pendingTasksCount} Pending Task(s) Remaining</span><br>
+              <button class="btn-secondary" disabled style="opacity:0.5; cursor:not-allowed; padding:10px 16px;">
+                🔒 Close Risk Item (Blocked)
+              </button>
+            </div>
+          ` : `
+            <button class="btn-success" style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:#fff; font-weight:700; padding:10px 18px; border:none; border-radius:6px; cursor:pointer;" onclick="closeRiskItem(${r.id})">
+              🔒 Close Risk Item (All Tasks Completed)
+            </button>
+          `}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // 3. RAID Register / Risk Center Tab View
 function renderRaidTab() {
+
   const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
   const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
   const canAccessCommsAndBreakdown = userRole === 'Program Manager' || isAdminRole;
@@ -1147,7 +1408,7 @@ function renderRaidTab() {
       <div class="table-responsive">
         <table class="stitch-table">
           <thead>
-            <tr><th>Category</th><th>Title & Description</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Status</th><th>Owner</th></tr>
+            <tr><th>Category</th><th>Title & Description</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Status</th><th>Owner</th><th>Actions</th></tr>
           </thead>
           <tbody>
             ${state.raidItems.map(r => `
@@ -1164,12 +1425,21 @@ function renderRaidTab() {
                 <td><strong style="color:${r.risk_score>=70?'#dc2626':'#d97706'}">${r.risk_score}</strong></td>
                 <td><span class="chip chip-info">${r.status}</span></td>
                 <td>${r.owner_name}</td>
+                <td style="white-space:nowrap;">
+                  <button class="btn-secondary" style="padding:4px 8px; font-size:11px; margin-right:4px;" onclick="navigateToCommunicateForRisk(${r.id})">
+                    💬 Communicate
+                  </button>
+                  <button class="btn-primary" style="padding:4px 10px; font-size:11px; background:linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color:#fff; font-weight:700; border:none; border-radius:6px; cursor:pointer;" onclick="navigateToRiskActionPage(${r.id})">
+                    ⚡ Take Action
+                  </button>
+                </td>
               </tr>
             `).join('')}
           </tbody>
         </table>
       </div>
     </div>
+
 
     ${(state.aiDiscoveredRisks && state.aiDiscoveredRisks.length > 0) || state.aiDiscoveredRisk ? renderDiscoveredRiskModal() : ''}
   `;
