@@ -286,6 +286,42 @@ async function refreshWorkspaceData() {
 
 
 
+// Toast Notification Helper
+function showToast(message, type = 'success') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast-notification toast-${type}`;
+
+  const iconMap = {
+    success: 'check_circle',
+    info: 'info',
+    warning: 'warning',
+    error: 'error'
+  };
+  const icon = iconMap[type] || 'notifications';
+
+  toast.innerHTML = `
+    <span class="material-symbols-outlined" style="font-size:20px;">${icon}</span>
+    <span style="flex:1; line-height:1.4;">${message}</span>
+    <button style="background:none; border:none; color:#fff; cursor:pointer; opacity:0.75; font-size:16px; padding:0; line-height:1;" onclick="this.parentElement.remove()">✕</button>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('toast-fadeOut');
+    setTimeout(() => {
+      if (toast.parentElement) toast.remove();
+    }, 300);
+  }, 4000);
+}
+
 // Event Handlers
 function setRole(roleName) {
   state.currentRole = roleName;
@@ -372,7 +408,7 @@ async function approveEmail() {
 
   const res = await apiPost(`/emails/${emailId}/approve`, {});
   if (res && res.status === 'success') {
-    alert(`Email #${emailId} Approved! Background email service will dispatch to linusimon@gmail.com within 5-10 seconds.`);
+    showToast(`Email #${emailId} Approved! Background email service will dispatch to linusimon@gmail.com within 5-10 seconds.`, 'success');
     closeApprovalModal();
     await refreshWorkspaceData();
     renderApp();
@@ -392,7 +428,7 @@ async function triggerMultiAgentWorkflow() {
     state.nodeTraces = res.workflow_result.graphical_node_traces || [];
     await refreshWorkspaceData();
     renderApp();
-    alert(`LangGraph Workflow Completed! Generated draft email #${res.workflow_result.communication.created_draft_id} for Human Approval.`);
+    showToast(`LangGraph Workflow Completed! Generated draft email #${res.workflow_result.communication.created_draft_id} for Human Approval.`, 'success');
   }
 }
 
@@ -400,7 +436,7 @@ async function triggerMultiAgentWorkflow() {
 function startVoiceRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert("Speech Recognition API is not supported in this browser. Please use Chrome or Edge.");
+    showToast("Speech Recognition API is not supported in this browser. Please use Chrome or Edge.", 'warning');
     return;
   }
 
@@ -459,7 +495,10 @@ function renderApp() {
     name: 'Project Orion Upgrade', code: 'PRJ-001', lifecycle_phase: 'Mobilization', health_status: 'At Risk', progress_pct: 72
   };
 
-  const pendingEmailCount = state.emails.filter(e => e.status === 'PENDING').length;
+  const pendingEmailCount = state.emails.filter(e => 
+    e.status === 'PENDING' && 
+    (e.project_id === currentProject.id || e.project_code === currentProject.code || (currentProject.code === 'PRJ-001' && (!e.project_code || e.project_id === 1 || e.project_code === 'PRJ-001')))
+  ).length;
 
   root.innerHTML = `
     <div class="app-container">
@@ -593,7 +632,10 @@ function renderCurrentTabContent(currentProject) {
     return renderProjectsTab();
   } else if (state.activeTab === 'raid') {
     return renderRaidTab();
+  } else if (state.activeTab === 'risk_action') {
+    return renderRiskActionPage();
   } else if (state.activeTab === 'comms') {
+
     return renderCommsTab();
   } else if (state.activeTab === 'reports') {
     return renderReportsTab(currentProject);
@@ -1013,7 +1055,7 @@ async function triggerRaidRiskDiscovery() {
     state.aiDiscoveredRisk = res.discovered_risk;
     renderApp();
   } else {
-    alert("AI Risk Analysis completed. No new un-tracked risks discovered for " + state.selectedProjectCode);
+    showToast("AI Risk Analysis completed. No new un-tracked risks discovered for " + state.selectedProjectCode, 'info');
     renderApp();
   }
 }
@@ -1036,7 +1078,7 @@ async function confirmCreateSingleDiscoveredRisk(idx) {
   });
 
   if (res && res.status === 'success') {
-    alert(`Success! New Risk Item "${d.title}" (Score ${d.risk_score}) created in RAID Register (app.db).`);
+    showToast(`Success! New Risk Item "${d.title}" (Score ${d.risk_score}) created in RAID Register (app.db).`, 'success');
     // Remove created risk from modal list
     list.splice(idx, 1);
     if (list.length === 0) {
@@ -1073,7 +1115,7 @@ async function confirmCreateAllDiscoveredRisks() {
     }
   }
 
-  alert(`Success! Created ${createdCount} new Risk Items in RAID Register (app.db).`);
+  showToast(`Success! Created ${createdCount} new Risk Items in RAID Register (app.db).`, 'success');
   state.aiDiscoveredRisks = null;
   state.aiDiscoveredRisk = null;
   await refreshWorkspaceData();
@@ -1084,8 +1126,266 @@ async function confirmCreateDiscoveredRisk() {
   await confirmCreateSingleDiscoveredRisk(0);
 }
 
+// ----------------------------------------------------
+// Risk Center Action Handlers & Risk Action Page View
+// ----------------------------------------------------
+function navigateToCommunicateForRisk(raidId) {
+  const item = state.raidItems ? state.raidItems.find(r => r.id === raidId) : null;
+  if (item) {
+    state.draftEmailSubject = `[ACTION REQUIRED] Risk Alert: ${item.title}`;
+    state.draftEmailBody = `Dear Team,\n\nPlease review and take immediate action on the following risk item:\n\nTitle: ${item.title}\nCategory: ${item.category}\nLikelihood / Impact: ${item.likelihood} / ${item.impact}\nRisk Score: ${item.risk_score}/100\nRoot Cause: ${item.root_cause || 'Under Investigation'}\nAssigned Owner: ${item.owner_name}\n\nBest regards,\nProject Management Office`;
+    state.draftEmailRecipientRole = 'Project Manager';
+    state.draftEmailRecipient = 'linusimon@gmail.com';
+  }
+  state.activeTab = 'comms';
+  renderApp();
+}
+
+async function navigateToRiskActionPage(raidId) {
+  state.selectedRaidIdForAction = raidId;
+  state.isLoadingActionPlan = true;
+  state.activeTab = 'risk_action';
+  renderApp();
+
+  const data = await apiGet(`/raid/${raidId}/action-plan`);
+  state.isLoadingActionPlan = false;
+  if (data && data.status === 'success') {
+    state.riskActionPlan = data;
+  } else {
+    alert("Could not fetch action plan for Risk #" + raidId);
+  }
+  renderApp();
+}
+
+async function createTasksFromRecommendations(raidId) {
+  const plan = state.riskActionPlan;
+  const recs = plan ? plan.ai_recommendations : [];
+
+  const res = await apiPost(`/raid/${raidId}/generate-tasks`, { tasks: recs });
+  if (res && res.status === 'success') {
+    alert(`Success! Created ${res.created_tasks.length} action tasks linked to Risk #${raidId}.`);
+    await navigateToRiskActionPage(raidId);
+  } else {
+    alert("Failed to create action tasks: " + (res?.message || "Error"));
+  }
+}
+
+async function addCommentToTask(taskId) {
+  const text = prompt("Enter your comment for Task #" + taskId + ":");
+  if (!text || !text.trim()) return;
+
+  const raidId = state.selectedRaidIdForAction;
+  const userRole = state.currentUser ? state.currentUser.full_name : state.currentRole;
+  const res = await apiPost(`/raid/tasks/${taskId}/comments`, {
+    comment: text,
+    author_name: userRole || 'Project Lead'
+  });
+
+  if (res && res.status === 'success') {
+    await navigateToRiskActionPage(raidId);
+  } else {
+    alert("Failed to add comment: " + (res?.message || "Error"));
+  }
+}
+
+async function markTaskCompleted(taskId) {
+  const raidId = state.selectedRaidIdForAction;
+  const res = await apiPut(`/raid/tasks/${taskId}/status`, { status: 'Completed' });
+  if (res && res.status === 'success') {
+    await navigateToRiskActionPage(raidId);
+  } else {
+    alert("Failed to update task status: " + (res?.message || "Error"));
+  }
+}
+
+async function closeRiskItem(raidId) {
+  const res = await apiPut(`/raid/${raidId}/status`, { status: 'Closed' });
+  if (res && res.status === 'success') {
+    alert(`Risk Item #${raidId} has been successfully Closed!`);
+    await refreshWorkspaceData();
+    state.activeTab = 'raid';
+    renderApp();
+  } else {
+    alert(res?.message || "Cannot close risk item!");
+  }
+}
+
+function renderRiskActionPage() {
+  if (state.isLoadingActionPlan) {
+    return `
+      <div class="card-box" style="text-align:center; padding:40px;">
+        <span class="material-symbols-outlined spinning" style="font-size:36px; color:var(--primary-container)">progress_activity</span>
+        <h3 style="margin-top:12px; font-weight:700;">Loading AI Mitigation Plan & Task Dependencies...</h3>
+      </div>
+    `;
+  }
+
+  const plan = state.riskActionPlan;
+  if (!plan || !plan.raid_item) {
+    return `
+      <div class="card-box" style="padding:20px;">
+        <h3>Risk Action Plan Not Found</h3>
+        <button class="btn-secondary" style="margin-top:10px;" onclick="state.activeTab='raid'; renderApp();">Back to Risk Center</button>
+      </div>
+    `;
+  }
+
+  const r = plan.raid_item;
+  const recs = plan.ai_recommendations || [];
+  const linkedTasks = plan.linked_tasks || [];
+  const pendingTasksCount = plan.pending_tasks_count || 0;
+  const canCloseRisk = plan.can_close_risk;
+
+  return `
+    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <button class="btn-secondary" style="padding:4px 8px; font-size:12px;" onclick="state.activeTab='raid'; renderApp();">← Back to Risk Center</button>
+          <span class="chip ${r.category==='Risk'?'chip-danger':r.category==='Issue'?'chip-warning':'chip-info'}">${r.category} #${r.id}</span>
+          <span class="chip chip-info">${r.status}</span>
+        </div>
+        <h1 class="page-title">${r.title}</h1>
+        <p class="page-subtitle">Risk Action & AI Mitigation Plan Execution Center</p>
+      </div>
+      <div>
+        <button class="btn-secondary" style="margin-right:8px;" onclick="navigateToCommunicateForRisk(${r.id})">
+          💬 Communicate
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. Risk Overview Metrics -->
+    <div class="grid-3col" style="margin-bottom:20px;">
+      <div class="card-box">
+        <div style="font-size:12px; color:var(--on-surface-variant);">Calculated Risk Score</div>
+        <div style="font-size:24px; font-weight:800; color:${r.risk_score>=70?'#dc2626':'#d97706'}; margin-top:4px;">${r.risk_score}/100</div>
+        <small style="color:var(--on-surface-variant)">Likelihood: ${r.likelihood} | Impact: ${r.impact}</small>
+      </div>
+      <div class="card-box">
+        <div style="font-size:12px; color:var(--on-surface-variant)">Assigned Risk Owner</div>
+        <div style="font-size:18px; font-weight:700; color:var(--on-surface); margin-top:4px;">${r.owner_name || 'Unassigned'}</div>
+        <small style="color:var(--on-surface-variant)">Project: ${state.selectedProjectCode}</small>
+      </div>
+      <div class="card-box">
+        <div style="font-size:12px; color:var(--on-surface-variant)">Linked WBS Action Tasks</div>
+        <div style="font-size:24px; font-weight:800; color:${pendingTasksCount>0?'#d97706':'#16a34a'}; margin-top:4px;">${linkedTasks.length - pendingTasksCount} / ${linkedTasks.length} Completed</div>
+        <small style="color:${pendingTasksCount>0?'#dc2626':'#16a34a'}; font-weight:700;">${pendingTasksCount} Pending Tasks Remaining</small>
+      </div>
+    </div>
+
+    <!-- 2. AI Solution Recommendation Box -->
+    <div class="card-box" style="margin-bottom:20px; background:linear-gradient(135deg, rgba(2, 132, 199, 0.05) 0%, rgba(3, 105, 161, 0.02) 100%); border:1px solid rgba(2, 132, 199, 0.2);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="material-symbols-outlined" style="color:#facc15;">smart_toy</span>
+          <h3 style="font-size:16px; font-weight:700;">AI Recommended Solution & Mitigation Plan</h3>
+        </div>
+        <button class="btn-primary" style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:#fff; font-weight:700; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;" onclick="createTasksFromRecommendations(${r.id})">
+          <span class="material-symbols-outlined" style="font-size:16px;">add_task</span>
+          ➕ Create WBS Tasks from Recommendations
+        </button>
+      </div>
+
+      <p style="font-size:13px; color:var(--on-surface-variant); margin-bottom:14px;">
+        <strong>Root Cause Identified:</strong> ${r.root_cause || 'Vendor API dependency and scheduling bottleneck.'}
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        ${recs.map((rec, idx) => `
+          <div style="background:var(--surface-container-low); padding:12px; border-radius:6px; border-left:4px solid #0284c7;">
+            <div style="font-weight:700; font-size:14px; color:var(--on-surface);">Step ${idx+1}: ${rec.title}</div>
+            <p style="font-size:12px; color:var(--on-surface-variant); margin-top:4px;">${rec.description}</p>
+            <div style="display:flex; gap:12px; margin-top:6px; font-size:11px; color:var(--primary-container);">
+              <span>Owner: <strong>${rec.suggested_owner}</strong></span>
+              <span>Priority: <strong>${rec.suggested_priority}</strong></span>
+              <span>Estimated SP: <strong>${rec.estimated_sp} SP</strong></span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- 3. Linked Action Tasks & Comments -->
+    <div class="card-box" style="margin-bottom:20px;">
+      <div class="card-box-title" style="margin-bottom:12px;">Linked Action Tasks (${linkedTasks.length} Tasks)</div>
+      
+      ${linkedTasks.length > 0 ? `
+        <div class="table-responsive">
+          <table class="stitch-table">
+            <thead>
+              <tr><th>WBS Code</th><th>Task Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Comments</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              ${linkedTasks.map(t => `
+                <tr>
+                  <td><code>${t.wbs_code}</code></td>
+                  <td>
+                    <strong>${t.title}</strong><br>
+                    <small style="color:var(--on-surface-variant)">Progress: ${t.progress_pct}%</small>
+                  </td>
+                  <td>${t.assignee_name || 'Unassigned'}</td>
+                  <td><span class="chip chip-warning">${t.priority}</span></td>
+                  <td>
+                    <span class="chip ${t.status==='Completed'?'chip-success':t.status==='Blocked'?'chip-danger':'chip-info'}">${t.status}</span>
+                  </td>
+                  <td style="max-width:250px;">
+                    ${t.comments && t.comments.length > 0 ? t.comments.map(c => `
+                      <div style="font-size:11px; background:var(--surface-container-low); padding:4px 6px; border-radius:4px; margin-bottom:4px;">
+                        <strong>${c.author}:</strong> ${c.text}
+                      </div>
+                    `).join('') : '<small style="color:var(--on-surface-variant)">No comments yet</small>'}
+                  </td>
+                  <td style="white-space:nowrap;">
+                    <button class="btn-secondary" style="padding:4px 8px; font-size:11px; margin-right:4px;" onclick="addCommentToTask(${t.id})">
+                      💬 Add Comment
+                    </button>
+                    ${t.status !== 'Completed' ? `
+                      <button class="btn-success" style="padding:4px 8px; font-size:11px; background:#16a34a; color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="markTaskCompleted(${t.id})">
+                        ✅ Complete
+                      </button>
+                    ` : '<span class="chip chip-success">Completed</span>'}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : `
+        <p style="font-size:13px; color:var(--on-surface-variant);">No action tasks created yet for this risk item. Click <strong>"➕ Create WBS Tasks from Recommendations"</strong> above to generate tasks.</p>
+      `}
+    </div>
+
+    <!-- 4. Risk Closure Footer & Strict Guardrail -->
+    <div class="card-box" style="border:1px solid ${canCloseRisk ? '#16a34a' : '#eab308'};">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h4 style="font-weight:700; font-size:16px;">Risk Item Lifecycle Closure</h4>
+          <p style="font-size:12px; color:var(--on-surface-variant); margin-top:2px;">
+            Enforced Guardrail: Risk can only be closed once all linked action tasks are marked Completed.
+          </p>
+        </div>
+        <div>
+          ${!canCloseRisk ? `
+            <div style="text-align:right;">
+              <span class="chip chip-warning" style="margin-bottom:6px; display:inline-block;">⚠ ${pendingTasksCount} Pending Task(s) Remaining</span><br>
+              <button class="btn-secondary" disabled style="opacity:0.5; cursor:not-allowed; padding:10px 16px;">
+                🔒 Close Risk Item (Blocked)
+              </button>
+            </div>
+          ` : `
+            <button class="btn-success" style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:#fff; font-weight:700; padding:10px 18px; border:none; border-radius:6px; cursor:pointer;" onclick="closeRiskItem(${r.id})">
+              🔒 Close Risk Item (All Tasks Completed)
+            </button>
+          `}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // 3. RAID Register / Risk Center Tab View
 function renderRaidTab() {
+
   const userRole = state.currentUser ? state.currentUser.role : state.currentRole;
   const isAdminRole = userRole === 'Admin' || userRole === 'System Admin' || userRole === 'System Administrator' || userRole === 'Super Admin';
   const canAccessCommsAndBreakdown = userRole === 'Program Manager' || isAdminRole;
@@ -1093,13 +1393,13 @@ function renderRaidTab() {
   return `
     <div class="page-header">
       <div>
-        <h1 class="page-title">Risk Center (RAID Register)</h1>
+        <h1 class="page-title">Risk Center</h1>
         <p class="page-subtitle">Active risks, assumptions, issues, and dependencies for ${state.selectedProjectCode}</p>
       </div>
       ${canAccessCommsAndBreakdown ? `
         <button class="btn-primary" style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; font-weight:700; display:flex; align-items:center; gap:8px; border:none; padding:10px 16px; border-radius:8px; cursor:pointer;" onclick="triggerRaidRiskDiscovery()" ${state.isAnalyzingRisk ? 'disabled' : ''}>
           <span class="material-symbols-outlined" style="color:#facc15">bolt</span>
-          ${state.isAnalyzingRisk ? 'AI Analyzing Project Vector Store...' : 'Run LangGraph RAID Analysis'}
+          ${state.isAnalyzingRisk ? 'AI Analyzing Project Vector Store...' : 'Risk Analysis'}
         </button>
       ` : ''}
     </div>
@@ -1108,7 +1408,7 @@ function renderRaidTab() {
       <div class="table-responsive">
         <table class="stitch-table">
           <thead>
-            <tr><th>Category</th><th>Title & Description</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Status</th><th>Owner</th></tr>
+            <tr><th>Category</th><th>Title & Description</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Status</th><th>Owner</th><th>Actions</th></tr>
           </thead>
           <tbody>
             ${state.raidItems.map(r => `
@@ -1125,12 +1425,21 @@ function renderRaidTab() {
                 <td><strong style="color:${r.risk_score>=70?'#dc2626':'#d97706'}">${r.risk_score}</strong></td>
                 <td><span class="chip chip-info">${r.status}</span></td>
                 <td>${r.owner_name}</td>
+                <td style="white-space:nowrap;">
+                  <button class="btn-secondary" style="padding:4px 8px; font-size:11px; margin-right:4px;" onclick="navigateToCommunicateForRisk(${r.id})">
+                    💬 Communicate
+                  </button>
+                  <button class="btn-primary" style="padding:4px 10px; font-size:11px; background:linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color:#fff; font-weight:700; border:none; border-radius:6px; cursor:pointer;" onclick="navigateToRiskActionPage(${r.id})">
+                    ⚡ Take Action
+                  </button>
+                </td>
               </tr>
             `).join('')}
           </tbody>
         </table>
       </div>
     </div>
+
 
     ${(state.aiDiscoveredRisks && state.aiDiscoveredRisks.length > 0) || state.aiDiscoveredRisk ? renderDiscoveredRiskModal() : ''}
   `;
@@ -1292,7 +1601,7 @@ function exportReportToPDF() {
       html2pdf().set(opt).from(element).save();
     };
     script.onerror = () => {
-      alert('Could not load PDF generator library. Opening print view instead.');
+      showToast('Could not load PDF generator library. Opening print view instead.', 'warning');
       window.print();
     };
     document.head.appendChild(script);
@@ -1322,15 +1631,13 @@ function renderReportsTab(currentProject) {
         <div style="background:var(--surface-container-low); padding:16px; border-radius:8px">
           <h4 style="font-weight:700; margin-bottom:8px">Key Performance Indicators</h4>
           <ul style="padding-left:20px; line-height:1.8">
-            <li>Open RAID Items: <strong>${state.raidItems.length}</strong></li>
+            <li>Open Items: <strong>${state.raidItems.length}</strong></li>
             <li>High Severity Risks (&gt;70): <strong>${state.raidItems.filter(r => r.risk_score>=70).length}</strong></li>
-            <li>Active Project Team Leads: <strong>4</strong></li>
-            <li>Budget Variance: <strong>-8.5% ($1.2M)</strong></li>
           </ul>
         </div>
 
         <div style="background:var(--surface-container-low); padding:16px; border-radius:8px">
-          <h4 style="font-weight:700; margin-bottom:8px">LangGraph AI Mitigation Summary</h4>
+          <h4 style="font-weight:700; margin-bottom:8px">Risk & Mitigation Summary</h4>
           <p style="font-size:13px; color:var(--on-surface-variant)">
             The multi-agent system identified third-party API integration delays as the primary bottleneck. Mitigation strategy recommends deploying mock servers and initiating parallel sprint tasks.
           </p>
@@ -1853,10 +2160,10 @@ async function approveAction(actionId) {
       renderApp();
     } else {
       const errData = await res.json();
-      alert(`Action failed: ${errData.message || res.statusText}`);
+      showToast(`Action failed: ${errData.message || res.statusText}`, 'error');
     }
   } catch (err) {
-    alert(`Action error: ${err.message}`);
+    showToast(`Action error: ${err.message}`, 'error');
   }
 }
 
@@ -1872,7 +2179,7 @@ function cancelAction(actionId) {
 // ─── Voice Input for Chat ────────────────────────────────────────────────────
 function chatVoiceInput() {
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    alert('Voice input is not supported in this browser.');
+    showToast('Voice input is not supported in this browser.', 'warning');
     return;
   }
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1930,6 +2237,25 @@ function renderAdminTab() {
       </div>
     </div>
 
+    <!-- Master User Accounts Table -->
+    <div class="card-box" style="margin-top:20px;">
+      <div class="card-box-title" style="margin-bottom:16px">SQLite Master User Accounts Table (backend/app.db -> User)</div>
+      <div class="table-responsive">
+        <table class="stitch-table">
+          <thead>
+            <tr><th>User ID</th><th>Username</th><th>Full Name</th><th>Role</th><th>Email Address</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>#1</td><td><strong>rohit</strong></td><td>Rohit Verma</td><td><span class="chip chip-warning">Program Manager</span></td><td>rohit.verma@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
+            <tr><td>#2</td><td><strong>admin</strong></td><td>Admin User</td><td><span class="chip chip-danger">Admin</span></td><td>admin@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
+            <tr><td>#3</td><td><strong>amit</strong></td><td>Amit Joshi</td><td><span class="chip chip-info">Project Manager</span></td><td>amit.joshi@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
+            <tr><td>#4</td><td><strong>vikram</strong></td><td>Vikram Malhotra</td><td><span class="chip chip-info">Team Lead</span></td><td>vikram.m@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
+            <tr><td>#5</td><td><strong>priya</strong></td><td>Priya Sharma</td><td><span class="chip chip-info">Viewer</span></td><td>priya.s@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- RAG DATABASE 1: FAISS PROJECT VECTOR STORE & STATIC RAG -->
     <div class="card-box" style="margin-top:20px;">
       <div class="card-box-title" style="margin-bottom:6px">1. Project FAISS Vector Database & Document Store (backend/app/vector_store/)</div>
@@ -1973,108 +2299,6 @@ function renderAdminTab() {
             `}
           </tbody>
         </table>
-    </div>
-
-    <!-- RAG DATABASE 2: UNSTRUCTURED KNOWLEDGE GRAPH RAG STORE (GRAPHRAG) -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:6px">2. Unstructured Knowledge Graph RAG Database (mcp/mcp.db -> GraphRAG)</div>
-      <p style="color:var(--on-surface-variant); font-size:12px; margin-bottom:16px;">
-        Ingests real-time unstructured chat/email feeds (Slack, Teams, Email logs) to extract Entity-Relationship Triples <code>(Subject) --[Predicate]--> (Object)</code>.
-      </p>
-
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>Triple ID</th><th>Subject Entity</th><th>Relationship Predicate</th><th>Object Entity</th><th>Communication Source</th><th>Category</th><th>Confidence</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>triple_101</code></td>
-              <td><strong>Amit Joshi</strong></td>
-              <td><code>--[SENT_COMMUNICATION]--></code></td>
-              <td><strong>Rohit Verma</strong></td>
-              <td>Teams Chat Feed #104</td>
-              <td><span class="chip chip-info">Handoff</span></td>
-              <td><span class="chip chip-success">0.98</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_102</code></td>
-              <td><strong>Third-Party Vendor API</strong></td>
-              <td><code>--[IMPACTS_MILESTONE]--></code></td>
-              <td><strong>Design Review</strong></td>
-              <td>Slack #proj-orion-dev</td>
-              <td><span class="chip chip-danger">Threat Risk</span></td>
-              <td><span class="chip chip-success">0.96</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_103</code></td>
-              <td><strong>Project Orion Upgrade</strong></td>
-              <td><code>--[HAS_RISK_INDICATOR]--></code></td>
-              <td><strong>Integration Latency</strong></td>
-              <td>Incident Report Thread #42</td>
-              <td><span class="chip chip-warning">RAID Factor</span></td>
-              <td><span class="chip chip-success">0.95</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_104</code></td>
-              <td><strong>Core Banking API</strong></td>
-              <td><code>--[REQUIRES_SLA_COMPLIANCE]--></code></td>
-              <td><strong>Security Policy v2.1</strong></td>
-              <td>Email Log #208</td>
-              <td><span class="chip chip-info">Governance</span></td>
-              <td><span class="chip chip-success">0.97</span></td>
-            </tr>
-            <tr>
-              <td><code>triple_105</code></td>
-              <td><strong>Biometric Auth Service</strong></td>
-              <td><code>--[DEPENDS_ON]--></code></td>
-              <td><strong>OAuth 2.0 Identity Server</strong></td>
-              <td>Slack #security-audit</td>
-              <td><span class="chip chip-info">Dependency</span></td>
-              <td><span class="chip chip-success">0.99</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Master User Accounts Table -->
-
-
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Master User Accounts Table (backend/app.db -> User)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>User ID</th><th>Username</th><th>Full Name</th><th>Role</th><th>Email Address</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#1</td><td><strong>rohit</strong></td><td>Rohit Verma</td><td><span class="chip chip-warning">Program Manager</span></td><td>rohit.verma@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
-            <tr><td>#2</td><td><strong>admin</strong></td><td>Admin User</td><td><span class="chip chip-danger">Admin</span></td><td>admin@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
-            <tr><td>#3</td><td><strong>amit</strong></td><td>Amit Joshi</td><td><span class="chip chip-info">Project Manager</span></td><td>amit.joshi@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
-            <tr><td>#4</td><td><strong>vikram</strong></td><td>Vikram Malhotra</td><td><span class="chip chip-info">Team Lead</span></td><td>vikram.m@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
-            <tr><td>#5</td><td><strong>priya</strong></td><td>Priya Sharma</td><td><span class="chip chip-info">Viewer</span></td><td>priya.s@company.com</td><td><span class="chip chip-success">ACTIVE</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Master Projects Portfolio Table -->
-    <div class="card-box" style="margin-top:20px;">
-      <div class="card-box-title" style="margin-bottom:16px">SQLite Master Projects Table (backend/app.db -> Project)</div>
-      <div class="table-responsive">
-        <table class="stitch-table">
-          <thead>
-            <tr><th>ID</th><th>Code</th><th>Project Name</th><th>Lifecycle Phase</th><th>Health Status</th><th>Budget</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>#1</td><td><code>PRJ-001</code></td><td><strong>Project Orion Upgrade</strong></td><td><span class="chip chip-info">Mobilization</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$2.5M</td></tr>
-            <tr><td>#2</td><td><code>PRJ-002</code></td><td><strong>Core Banking Modernization</strong></td><td><span class="chip chip-info">Planning</span></td><td><span class="chip chip-success">Healthy</span></td><td>$4.2M</td></tr>
-            <tr><td>#3</td><td><code>PRJ-003</code></td><td><strong>Digital Identity Platform</strong></td><td><span class="chip chip-info">Design</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$1.8M</td></tr>
-            <tr><td>#4</td><td><code>PRJ-004</code></td><td><strong>Cloud Infrastructure Migration</strong></td><td><span class="chip chip-info">Execution</span></td><td><span class="chip chip-danger">Critical</span></td><td>$3.5M</td></tr>
-            <tr><td>#5</td><td><code>PRJ-005</code></td><td><strong>Supply Chain Analytics</strong></td><td><span class="chip chip-info">Closure</span></td><td><span class="chip chip-success">Healthy</span></td><td>$1.2M</td></tr>
-          </tbody>
-        </table>
       </div>
     </div>
 
@@ -2103,6 +2327,25 @@ function renderAdminTab() {
               <tr><td><code>chunk_0</code></td><td>VectorImport Store [PROJECT_PROG_ALPHA_2026] (Document)</td><td><small style="color:var(--on-surface-variant)">Task Ent [task_102]: Cloud Infrastructure Setup (Azure) - CloudSphere Inc. API gateway delayed...</small></td><td><span class="chip chip-warning">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
               <tr><td><code>chunk_1</code></td><td>VectorImport Store [PROJECT_PROG_GAMMA_2026] (Document)</td><td><small style="color:var(--on-surface-variant)">Security Audit Email [email_3001]: GDPR Audit Deadline at Risk - Unsigned Pen Test Contract...</small></td><td><span class="chip chip-warning">384-d FAISS</span></td><td><span class="chip chip-success">INDEXED</span></td></tr>
             `}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Master Projects Portfolio Table -->
+    <div class="card-box" style="margin-top:20px;">
+      <div class="card-box-title" style="margin-bottom:16px">SQLite Master Projects Table (backend/app.db -> Project)</div>
+      <div class="table-responsive">
+        <table class="stitch-table">
+          <thead>
+            <tr><th>ID</th><th>Code</th><th>Project Name</th><th>Lifecycle Phase</th><th>Health Status</th><th>Budget</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>#1</td><td><code>PRJ-001</code></td><td><strong>Project Orion Upgrade</strong></td><td><span class="chip chip-info">Mobilization</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$2.5M</td></tr>
+            <tr><td>#2</td><td><code>PRJ-002</code></td><td><strong>Core Banking Modernization</strong></td><td><span class="chip chip-info">Planning</span></td><td><span class="chip chip-success">Healthy</span></td><td>$4.2M</td></tr>
+            <tr><td>#3</td><td><code>PRJ-003</code></td><td><strong>Digital Identity Platform</strong></td><td><span class="chip chip-info">Design</span></td><td><span class="chip chip-warning">At Risk</span></td><td>$1.8M</td></tr>
+            <tr><td>#4</td><td><code>PRJ-004</code></td><td><strong>Cloud Infrastructure Migration</strong></td><td><span class="chip chip-info">Execution</span></td><td><span class="chip chip-danger">Critical</span></td><td>$3.5M</td></tr>
+            <tr><td>#5</td><td><code>PRJ-005</code></td><td><strong>Supply Chain Analytics</strong></td><td><span class="chip chip-info">Closure</span></td><td><span class="chip chip-success">Healthy</span></td><td>$1.2M</td></tr>
           </tbody>
         </table>
       </div>
@@ -2508,36 +2751,101 @@ async function refineToneWithAI(toneName) {
   const subjectInput = document.getElementById('editSubject');
   const bodyInput = document.getElementById('editBody');
   const refineBtn = document.getElementById('btnRefineTone');
+  const statusContainer = document.getElementById('aiTransformationStatus');
 
   if (!bodyInput || !bodyInput.value) return;
 
+  const emailObj = state.selectedEmailForApproval;
+  const recipientName = emailObj ? (emailObj.recipient_role || emailObj.recipient_name || 'Stakeholders') : 'Stakeholders';
+
+  // 1. Show AI Working Panel & Pulsing Input Glow Animation
+  if (subjectInput) subjectInput.classList.add('ai-transforming-glow');
+  if (bodyInput) bodyInput.classList.add('ai-transforming-glow');
+
+  if (statusContainer) {
+    statusContainer.style.display = 'block';
+    statusContainer.innerHTML = `
+      <div class="ai-working-panel">
+        <div class="ai-working-spinner"></div>
+        <div style="flex:1">
+          <div style="font-weight:700; color:#38bdf8; font-size:12px; display:flex; align-items:center; gap:6px;">
+            <span class="material-symbols-outlined" style="font-size:16px; animation:aiSparkle 1s infinite ease-in-out;">auto_awesome</span>
+            AI Multi-Agent LLM is refining tone to '${toneName}'...
+          </div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+            Sanitizing headers &amp; rewriting salutation to 'Dear ${recipientName}'
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   if (refineBtn) {
     refineBtn.disabled = true;
-    refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">sync</span> Transforming Tone...';
+    refineBtn.style.opacity = '0.75';
+    refineBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:16px; animation:aiSpinSlow 1s linear infinite;">sync</span> Refinement Engine Running...';
   }
 
   const res = await apiPost('/emails/refine-tone', {
     subject: subjectInput ? subjectInput.value : '',
     body: bodyInput.value,
-    tone: toneName || 'Executive'
+    tone: toneName || 'Executive',
+    recipient_role: state.selectedEmailForApproval ? state.selectedEmailForApproval.recipient_role : '',
+    recipient_email: state.selectedEmailForApproval ? state.selectedEmailForApproval.recipient_email : ''
   });
+
+  // 2. Remove Glow Animation
+  if (subjectInput) subjectInput.classList.remove('ai-transforming-glow');
+  if (bodyInput) bodyInput.classList.remove('ai-transforming-glow');
 
   if (refineBtn) {
     refineBtn.disabled = false;
+    refineBtn.style.opacity = '1';
     refineBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; color:#facc15">bolt</span> ✨ Transform Tone with AI';
   }
 
   if (res && res.status === 'success') {
     if (subjectInput && res.refined_subject) subjectInput.value = res.refined_subject;
     if (bodyInput && res.refined_body) bodyInput.value = res.refined_body;
-    alert(`AI Tone Transformation Applied! Converted email content to '${res.tone_applied}' sentiment.`);
+    if (state.selectedEmailForApproval) {
+      if (res.refined_subject) state.selectedEmailForApproval.subject = res.refined_subject;
+      if (res.refined_body) state.selectedEmailForApproval.body = res.refined_body;
+    }
+
+    if (statusContainer) {
+      statusContainer.innerHTML = `
+        <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 8px; padding: 10px 14px; color: #16a34a; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; animation: fadeSlideIn 0.3s ease;">
+          <span style="display:flex; align-items:center; gap:6px;">
+            <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+            ✨ AI Tone Refinement Applied! Subject and body updated with '${res.tone_applied}' sentiment.
+          </span>
+          <span class="chip chip-success" style="font-size:10px;">PASSED</span>
+        </div>
+      `;
+      setTimeout(() => {
+        if (statusContainer) statusContainer.style.display = 'none';
+      }, 4500);
+    }
+  } else {
+    if (statusContainer) {
+      statusContainer.innerHTML = `
+        <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 10px 14px; color: #dc2626; font-size: 12px; font-weight: 700; animation: fadeSlideIn 0.3s ease;">
+          ⚠️ Tone transformation failed. Please check backend connection.
+        </div>
+      `;
+    }
   }
+}
+
+function getAppRecipientName(role, email) {
+  return 'Linus Simon';
 }
 
 // Render Human Approval & Sent Email Inspector Modal Overlay
 function renderHumanApprovalModal() {
   const e = state.selectedEmailForApproval;
   const isSent = e.status === 'SENT';
+  const recipientName = getAppRecipientName(e.recipient_role, e.recipient_email);
 
   return `
     <div class="modal-backdrop">
@@ -2560,10 +2868,10 @@ function renderHumanApprovalModal() {
 
         <div style="background:var(--surface-container-low); padding:12px; border-radius:8px; margin-bottom:16px">
           <div style="font-size:12px; color:var(--on-surface-variant); margin-bottom:4px">
-            <strong>Target Recipient:</strong> linusimon@gmail.com <span class="chip chip-info" style="font-size:10px">Role: ${e.recipient_role}</span>
+            <strong>Target Recipient:</strong> ${recipientName} (linusimon@gmail.com) <span class="chip chip-info" style="font-size:10px; margin-left:6px;">Role: ${e.recipient_role}</span>
           </div>
           <div style="font-size:12px; color:var(--on-surface-variant)">
-            <strong>Original Intended Email:</strong> ${e.recipient_email}
+            <strong>Original Intended Route:</strong> ${e.recipient_email}
           </div>
         </div>
 
@@ -2589,6 +2897,7 @@ function renderHumanApprovalModal() {
                 <span>✨ Transform Tone with AI</span>
               </button>
             </div>
+            <div id="aiTransformationStatus" style="display:none; margin-top:10px;"></div>
           </div>
         ` : ''}
 

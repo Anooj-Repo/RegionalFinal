@@ -43,6 +43,17 @@ export class CommsComponent implements OnInit {
     this.selectedProjectCode = code;
   }
 
+  onProjectChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    if (target) {
+      this.setProject(target.value);
+    }
+  }
+
+  getRecipientName(role?: string, email?: string): string {
+    return 'Linus Simon';
+  }
+
   getFilteredEmails(): EmailDraft[] {
     if (this.selectedProjectCode === 'ALL') {
       return this.emails;
@@ -74,7 +85,7 @@ export class CommsComponent implements OnInit {
     const e = this.selectedEmail;
     this.isRefiningTone = true;
 
-    this.apiService.refineEmailTone(e.subject, e.body, this.selectedTone).subscribe(res => {
+    this.apiService.refineEmailTone(e.subject, e.body, this.selectedTone, '', e.recipient_role || '', e.recipient_email || '').subscribe(res => {
       this.isRefiningTone = false;
       if (res && res.status === 'success') {
         if (res.refined_subject) e.subject = res.refined_subject;

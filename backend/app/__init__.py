@@ -21,6 +21,24 @@ def create_app():
     db.init_app(app)
     jwt.init_app(app)
 
+    # Ensure database tables and columns are up to date
+    with app.app_context():
+        db.create_all()
+        try:
+            from sqlalchemy import text
+            with db.engine.connect() as conn:
+                res = conn.execute(text("PRAGMA table_info(tasks)")).fetchall()
+                col_names = [r[1] for r in res]
+                if 'raid_item_id' not in col_names:
+                    conn.execute(text("ALTER TABLE tasks ADD COLUMN raid_item_id INTEGER REFERENCES raid_items(id)"))
+                    conn.commit()
+                if 'comments_json' not in col_names:
+                    conn.execute(text("ALTER TABLE tasks ADD COLUMN comments_json TEXT DEFAULT '[]'"))
+                    conn.commit()
+        except Exception as mig_err:
+            print(f"[DB Auto-Migration Warning] {mig_err}")
+
+
     # Register API Blueprints
 
     from backend.app.api.auth import auth_bp

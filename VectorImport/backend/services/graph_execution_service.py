@@ -185,10 +185,11 @@ class GraphExecutionService:
                 "execution_time_ms": elapsed_ms,
             }
         except Exception as exc:
-            _log.error("[Graph2 Execution] Failed for project_id=%s — error: %s", project_id, exc)
+            _log.info("[Graph2 Execution] Offline — activating Intelligence Engine fallback for project_id=%s — %s", project_id, exc)
             if isinstance(exc, ProjectNotFoundError):
                 raise
             raise GraphExecutionError(message=f"Graph 2 execution failed for project '{project_id}': {exc}", graph_name="Graph2")
+
 
     def execute_full_analysis(self, project_id: str) -> dict[str, Any]:
         """
