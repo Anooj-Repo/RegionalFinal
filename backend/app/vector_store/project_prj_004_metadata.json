@@ -1,0 +1,80 @@
+[
+  {
+    "index_pos": 0,
+    "chunk_id": "chk_PRJ-004_task_8",
+    "doc_id": "doc_PRJ-004_tasks",
+    "source": "TaskAdapter",
+    "title": "Legacy DB Script Extraction",
+    "text": "WBS Task [WBS-4.1] Legacy DB Script Extraction (Status: Completed, Priority: High)",
+    "metadata": {
+      "project_code": "PRJ-004",
+      "type": "task",
+      "wbs_code": "WBS-4.1",
+      "status": "Completed"
+    }
+  },
+  {
+    "index_pos": 1,
+    "chunk_id": "chk_PRJ-004_task_9",
+    "doc_id": "doc_PRJ-004_tasks",
+    "source": "TaskAdapter",
+    "title": "Target Schema Validation",
+    "text": "WBS Task [WBS-4.2] Target Schema Validation (Status: In Progress, Priority: High)",
+    "metadata": {
+      "project_code": "PRJ-004",
+      "type": "task",
+      "wbs_code": "WBS-4.2",
+      "status": "In Progress"
+    }
+  },
+  {
+    "index_pos": 2,
+    "chunk_id": "chk_PRJ-004_raid_7",
+    "doc_id": "doc_PRJ-004_raid",
+    "source": "RiskRegisterAdapter",
+    "title": "ETL Data Migration Validation & Foreign Key Loss Risk",
+    "text": "RAID Item [Risk] ETL Data Migration Validation & Foreign Key Loss Risk: Potential loss of non-null foreign key references during 10M+ customer record migration. (Score: 90, Owner: Neha Singh)",
+    "metadata": {
+      "project_code": "PRJ-004",
+      "type": "raid",
+      "category": "Risk",
+      "risk_score": 90
+    }
+  },
+  {
+    "index_pos": 3,
+    "chunk_id": "chk_PRJ-004_raid_8",
+    "doc_id": "doc_PRJ-004_raid",
+    "source": "RiskRegisterAdapter",
+    "title": "Staging Database Storage Disk I/O Bottleneck",
+    "text": "RAID Item [Issue] Staging Database Storage Disk I/O Bottleneck: Heavy ETL validation script run exceeds disk IOPS threshold on staging server. (Score: 82, Owner: Neha Singh)",
+    "metadata": {
+      "project_code": "PRJ-004",
+      "type": "raid",
+      "category": "Issue",
+      "risk_score": 82
+    }
+  },
+  {
+    "index_pos": 4,
+    "chunk_id": "chk_PRJ-004_comm_88",
+    "doc_id": "doc_PRJ-004_comms",
+    "source": "ChatAdapter",
+    "title": "Chat from Neha Singh",
+    "text": "Communication Log [Teams] Neha Singh -> Karan Patel: Staging ETL run completed with 2% orphan records. Primary keys mismatch on legacy customer table.",
+    "metadata": {
+      "project_code": "PRJ-004"
+    }
+  },
+  {
+    "index_pos": 5,
+    "chunk_id": "chk_PRJ-004_comm_89",
+    "doc_id": "doc_PRJ-004_comms",
+    "source": "ChatAdapter",
+    "title": "Chat from Dev Lead",
+    "text": "Communication Log [Slack] Dev Lead -> Neha Singh: Dry run script fixed 15,000 orphan records. Running full validation now.",
+    "metadata": {
+      "project_code": "PRJ-004"
+    }
+  }
+]
