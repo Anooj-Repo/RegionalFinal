@@ -18,9 +18,9 @@ class CommunicationGraph:
     """Communication LangGraph Workflow Node enforcing Mandatory Human Approval."""
 
     @staticmethod
-    def generate_role_tailored_copy(recipient_role: str, project_code: str, raid_item: Dict[str, Any], mitigations: list) -> Dict[str, str]:
+    def generate_role_tailored_copy(recipient_role: str, project_code: str, raid_item: Dict[str, Any], mitigations: list, recipient_email: str = 'linusimon@gmail.com') -> Dict[str, str]:
         """
-        Generates distinct communication wording tailored by recipient role.
+        Generates distinct communication wording tailored by recipient role using TCSGenAIClient LLM.
         """
         role = recipient_role.capitalize()
         title = raid_item.get('title', 'Project Risk Alert')
@@ -29,50 +29,52 @@ class CommunicationGraph:
         cause = raid_item.get('root_cause', 'Dependency delay')
         mitigation_title = mitigations[0]['title'] if mitigations else "Deploy mock endpoint"
 
-        if role == 'Executive':
-            subject = f"Executive Alert: {project_code} Risk Score Escalated ({score}/100)"
-            body = (
-                f"Dear Executive Leadership,\n\n"
-                f"We are providing an executive alert regarding {project_code}.\n"
-                f"Key Issue: {title} (Risk Score: {score}/100).\n"
-                f"Strategic Impact: Potential 5-day schedule impact to critical path milestone.\n"
-                f"Mitigation Action Plan: {mitigation_title}.\n\n"
-                f"No immediate financial budget adjustment is required. PMO will provide a follow-up briefing on Friday.\n\n"
-                f"Sincerely,\nProgram Management AI Assistant"
-            )
-        elif role in ['Tech Lead', 'Developer']:
-            subject = f"Technical Action Required: {project_code} - {title}"
-            body = (
-                f"Hi Technical Team,\n\n"
-                f"Technical risk flagged for {project_code}.\n"
-                f"Root Cause Details: {cause}.\n"
-                f"API / Component Impact: {desc}\n"
-                f"Action Item: {mitigation_title}. Please review mock server swagger specs in repository.\n\n"
-                f"Regards,\nTech Lead & PM AI"
-            )
-        elif role == 'Client':
-            subject = f"Project Update: {project_code} Quality Assurance & Delivery Plan"
-            body = (
-                f"Dear Valued Partner,\n\n"
-                f"We are sharing a routine delivery update for {project_code}.\n"
-                f"Our engineering teams are conducting rigorous pre-deployment testing on external integrations to ensure 100% reliability.\n"
-                f"Our team is executing: {mitigation_title} to maintain delivery timelines without compromising quality.\n\n"
-                f"Best regards,\nCustomer Success & Delivery Team"
-            )
-        else: # Program Manager / Project Manager default
-            subject = f"PM Alert [{project_code}]: {title}"
-            body = (
-                f"Hi Program Management Team,\n\n"
-                f"Project {project_code} RAID alert recorded:\n"
-                f"- Category: {raid_item.get('category', 'Risk')}\n"
-                f"- Title: {title}\n"
-                f"- Risk Score: {score}/100\n"
-                f"- Root Cause: {cause}\n"
-                f"- Proposed Mitigation: {mitigation_title}\n\n"
-                f"Draft created in Communication Center for Human Approval.\n\n"
-                f"Regards,\nPM AI Assistant"
-            )
+        # Set target recipient person name to Linus Simon
+        recipient_name = 'Linus Simon'
 
+        from backend.app.core.tcs_genai_client import TCSGenAIClient
+        client = TCSGenAIClient()
+
+        prompt = f"""
+Generate an enterprise email draft for a stakeholder communication.
+
+Recipient Name: {recipient_name}
+Recipient Role: {role}
+Project Code: {project_code}
+Risk Title: {title}
+Risk Score: {score}/100
+Root Cause: {cause}
+Proposed Mitigation: {mitigation_title}
+
+Directive: Address the email to "Dear {recipient_name}," and write a role-tailored summary.
+Return ONLY JSON format:
+{{
+  "subject": "...",
+  "body": "..."
+}}
+"""
+        try:
+            res = client.generate_completion(prompt)
+            content = res.get('content', '')
+            if 'subject' in content and 'body' in content:
+                import json
+                clean_json = content.replace('```json', '').replace('```', '').strip()
+                parsed = json.loads(clean_json)
+                return {"subject": parsed['subject'], "body": parsed['body']}
+        except Exception as e:
+            print(f"[Comms Graph Warning] LLM copy generation fallback: {e}")
+
+        # Deterministic dynamic fallback
+        subject = f"PM Alert [{project_code}]: {title}"
+        body = (
+            f"Dear {recipient_name},\n\n"
+            f"Project {project_code} RAID alert recorded:\n"
+            f"• Risk Title: {title} (Score: {score}/100)\n"
+            f"• Root Cause: {cause}\n"
+            f"• Proposed Mitigation: {mitigation_title}\n\n"
+            f"Best regards,\n"
+            f"Program Management Office"
+        )
         return {"subject": subject, "body": body}
 
     @classmethod
@@ -92,7 +94,7 @@ class CommunicationGraph:
         recipient_email = state.get('recipient_email', 'linusimon@gmail.com')
 
         # Generate Tailored Copy
-        copy = cls.generate_role_tailored_copy(recipient_role, project_code, primary_raid, mitigations)
+        copy = cls.generate_role_tailored_copy(recipient_role, project_code, primary_raid, mitigations, recipient_email)
 
         # Database Insertion if app_context is active or standard Flask session
         draft_id = None
